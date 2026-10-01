@@ -22,7 +22,7 @@
           <gridbag weightx="0.0" weighty="1.0"/>
         </constraints>
         <properties>
-          <text value="Select you weigth type:"/>
+          <text value="Select you unit type:"/>
         </properties>
       </component>
       <component id="bf13d" class="javax.swing.JRadioButton" binding="metricUnitsKgCmRadioButton" default-binding="true">
