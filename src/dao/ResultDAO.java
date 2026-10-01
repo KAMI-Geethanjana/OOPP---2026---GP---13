@@ -1,124 +1,70 @@
 package dao;
 
-import java.io.InputStream;
+import config.DBConn;
+import model.Result;
+
 import java.sql.*;
-import java.util.Properties;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ResultDAO {
 
-    // Main.java එකේ පාවිච්චි කළ DB connection logic එක
-    private Connection getConnection() throws Exception {
-        Properties props = new Properties();
-        try (InputStream input = getClass().getClassLoader().getResourceAsStream("db.properties")) {
-            if (input == null) {
-                throw new Exception("Unable to find db.properties");
-            }
-            props.load(input);
-            return DriverManager.getConnection(
-                    props.getProperty("db.url"),
-                    props.getProperty("db.user"),
-                    props.getProperty("db.password")
-            );
-        }
-    }
-
-    // Grade ගණනය කිරීමේ සරල Helper Methods
-    private String calculateGrade(double totalMark) {
-        if (totalMark >= 85) return "A+";
-        if (totalMark >= 80) return "A";
-        if (totalMark >= 75) return "A-";
-        if (totalMark >= 70) return "B+";
-        if (totalMark >= 65) return "B";
-        if (totalMark >= 60) return "B-";
-        if (totalMark >= 55) return "C+";
-        if (totalMark >= 50) return "C";
-        if (totalMark >= 45) return "C-";
-        if (totalMark >= 40) return "D+";
-        if (totalMark >= 35) return "D";
-        return "E";
-    }
-
-    private double calculateGPAPoints(String grade) {
-        switch (grade) {
-            case "A+": case "A": return 4.00;
-            case "A-": return 3.70;
-            case "B+": return 3.30;
-            case "B": return 3.00;
-            case "B-": return 2.70;
-            case "C+": return 2.30;
-            case "C": return 2.00;
-            case "C-": return 1.70;
-            case "D+": return 1.30;
-            case "D": return 1.00;
-            default: return 0.00;
-        }
-    }
-
-    public boolean calculateAndSaveResult(int enrollmentId) {
-        String query = "SELECT " +
-                "  SUM(CASE WHEN a.component_type = 'CA' THEN (IFNULL(m.marks, 0) * a.weight / 100) ELSE 0 END) * 100 / " +
-                "  NULLIF(SUM(CASE WHEN a.component_type = 'CA' THEN a.weight ELSE 0 END), 0) AS ca_percentage, " +
-                "  MAX(CASE WHEN a.component_type = 'FINAL' THEN m.marks ELSE NULL END) AS final_exam_mark " +
+    // Course Code එකට අදාළව සියලුම සිසුන්ගේ ලකුණු ලබා ගැනීම
+    public List<Result> getResultsByCourse(String courseCode) {
+        List<Result> list = new ArrayList<>();
+        String sql = "SELECT e.enrollment_id, e.student_id AS index_no, u.full_name, e.course_code, " +
+                "r.ca_mark AS ca_marks, r.final_exam_mark AS final_marks, r.total_mark AS total_marks, r.grade " +
                 "FROM enrollment e " +
-                "JOIN assessment a ON a.course_code = e.course_code " +
-                "LEFT JOIN mark m ON m.enrollment_id = e.enrollment_id AND m.assessment_id = a.assessment_id " +
-                "WHERE e.enrollment_id = ?";
+                "JOIN undergraduate ug ON e.student_id = ug.student_id " +
+                "JOIN users u ON ug.user_id = u.user_id " +
+                "LEFT JOIN result r ON e.enrollment_id = r.enrollment_id " +
+                "WHERE e.course_code = ?";
 
-        Double caMark = null;
-        Double finalMark = null;
+        try (Connection conn = DBConn.getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+            ps.setString(1, courseCode);
+            ResultSet rs = ps.executeQuery();
 
-            stmt.setInt(1, enrollmentId);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                caMark = rs.getObject("ca_percentage") != null ? rs.getDouble("ca_percentage") : 0.0;
-                Object finalObj = rs.getObject("final_exam_mark");
-                if (finalObj != null) {
-                    finalMark = rs.getDouble("final_exam_mark");
-                }
+            while (rs.next()) {
+                list.add(new Result(
+                        rs.getInt("enrollment_id"),
+                        rs.getString("index_no"),
+                        rs.getString("full_name"),
+                        rs.getString("course_code"),
+                        rs.getDouble("ca_marks"),
+                        rs.getDouble("final_marks"),
+                        rs.getDouble("total_marks"),
+                        rs.getString("grade")
+                ));
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
-            return false;
         }
+        return list;
+    }
 
-        String eligibilityStatus = (caMark != null && caMark >= 40.0) ? "ELIGIBLE" : "NOT_ELIGIBLE";
-        Double totalMark = null;
-        String grade = null;
-        Double gpaPoints = null;
-
-        if ("ELIGIBLE".equals(eligibilityStatus) && finalMark != null) {
-            totalMark = (caMark * 0.40) + (finalMark * 0.60);
-            grade = calculateGrade(totalMark);
-            gpaPoints = calculateGPAPoints(grade);
-        }
-
-        String upsertQuery = "INSERT INTO result (enrollment_id, ca_mark, final_exam_mark, total_mark, eligibility_status, grade, grade_point) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?) " +
+    // සිසුවෙකුගේ Marks Database එකට ඇතුළත් කිරීම හෝ Update කිරීම
+    public boolean saveOrUpdateMarks(int enrollmentId, double caMarks, double finalMarks, double totalMarks, String grade) {
+        String sql = "INSERT INTO result (enrollment_id, ca_mark, final_exam_mark, total_mark, grade) " +
+                "VALUES (?, ?, ?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE " +
                 "ca_mark = VALUES(ca_mark), " +
                 "final_exam_mark = VALUES(final_exam_mark), " +
                 "total_mark = VALUES(total_mark), " +
-                "eligibility_status = VALUES(eligibility_status), " +
-                "grade = VALUES(grade), " +
-                "grade_point = VALUES(grade_point)";
+                "grade = VALUES(grade)";
 
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(upsertQuery)) {
+        try (Connection conn = DBConn.getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, enrollmentId);
-            stmt.setObject(2, caMark);
-            stmt.setObject(3, finalMark);
-            stmt.setObject(4, totalMark);
-            stmt.setString(5, eligibilityStatus);
-            stmt.setObject(6, grade);
-            stmt.setObject(7, gpaPoints);
+            ps.setInt(1, enrollmentId);
+            ps.setDouble(2, caMarks);
+            ps.setDouble(3, finalMarks);
+            ps.setDouble(4, totalMarks);
+            ps.setString(5, grade);
 
-            return stmt.executeUpdate() > 0;
-        } catch (Exception e) {
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
