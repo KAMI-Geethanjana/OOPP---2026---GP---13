@@ -8,7 +8,7 @@ public class DBConn {
 
     private static final String URL = "jdbc:mysql://localhost:3306/ftms_db?useSSL=false&allowPublicKeyRetrieval=true";
     private static final String USER = "root";
-    private static final String PASSWORD = "2004"; // MySQL එකට Password එකක් තියෙනවා නම් මෙතැනට දාන්න
+    private static final String PASSWORD = ""; // MySQL එකට Password එකක් තියෙනවා නම් මෙතැනට දාන්න
 
     private static Connection conn = null;
 
