@@ -126,12 +126,29 @@ INSERT INTO department (department_id, department_name, department_code) VALUES
 INSERT INTO users (user_id, username, password_hash, full_name, email, role) VALUES
                                                                                  (1, 'admin', '1234', 'System Admin', 'admin@fot.ruh.ac.lk', 'ADMIN'),
                                                                                  (2, 'lecturer1', '1234', 'Dr. Perera', 'perera@fot.ruh.ac.lk', 'LECTURER'),
-                                                                                 (3, 'tg2001', 'hashed_pass_3', 'Kamal Silva', 'kamal@gmail.com', 'UNDERGRADUATE'),
-                                                                                 (4, 'tg2002', 'hashed_pass_4', 'Nimali Fernando', 'nimali@gmail.com', 'UNDERGRADUATE'),
-                                                                                 (5, 'tg2003', 'hashed_pass_5', 'Student Three', 'st3@gmail.com', 'UNDERGRADUATE'),
-                                                                                 (6, 'tg2004', 'hashed_pass_6', 'Student Four', 'st4@gmail.com', 'UNDERGRADUATE'),
-                                                                                 (7, 'tg2088', '1234', 'Thenuwara Hannadige Dasula Wosada', 'wosad@gmail.com', 'UNDERGRADUATE');
-
+INSERT INTO users
+(username, password_hash, full_name, email, phone_no, profile_pic, role, is_active, failed_logins)
+VALUES
+    ('tg2001', 'tg@2001', 'Nethmi Perera', 'tg20242001@student.ruh.ac.lk', '0712345601', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2002', 'tg@2002', 'Kavindu Silva', 'tg20242002@student.ruh.ac.lk', '0723456702', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2003', 'tg@2003', 'Dinithi Fernando', 'tg20242003@student.ruh.ac.lk', '0754567803', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2004', 'tg@2004', 'Hasitha Jayawardena', 'tg20242004@student.ruh.ac.lk', '0765678904', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2005', 'tg@2005', 'Sachini Perera', 'tg20242005@student.ruh.ac.lk', '0776789005', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2006', 'tg@2006', 'Tharindu Bandara', 'tg20242006@student.ruh.ac.lk', '0717890106', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2007', 'tg@2007', 'Minsara Wijesinghe', 'tg20242007@student.ruh.ac.lk', '0728901207', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2008', 'tg@2008', 'Ishara Madushani', 'tg20242008@student.ruh.ac.lk', '0759012308', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2009', 'tg@2009', 'Dinuka Rathnayake', 'tg20242009@student.ruh.ac.lk', '0760123409', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2010', 'tg@2010', 'Senuri Gunawardena', 'tg20242010@student.ruh.ac.lk', '0771234510', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2011', 'tg@2011', 'Pasindu Lakshan', 'tg20242011@student.ruh.ac.lk', '0712345611', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2012', 'tg@2012', 'Amaya Sandaruwani', 'tg20242012@student.ruh.ac.lk', '0723456712', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2013', 'tg@2013', 'Chamod Perera', 'tg20242013@student.ruh.ac.lk', '0754567813', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2014', 'tg@2014', 'Hiruni Madushika', 'tg20242014@student.ruh.ac.lk', '0765678914', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2015', 'tg@2015', 'Ravindu Dissanayake', 'tg20242015@student.ruh.ac.lk', '0776789015', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2016', 'tg@2016', 'Kavisha Nethmini', 'tg20242016@student.ruh.ac.lk', '0717890116', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2017', 'tg@2017', 'Shehan Maduranga', 'tg20242017@student.ruh.ac.lk', '0728901217', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2018', 'tg@2018', 'Piumi Hansika', 'tg20242018@student.ruh.ac.lk', '0759012318', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg2019', 'tg@2019', 'Isuru Prabath', 'tg20242019@student.ruh.ac.lk', '0760123419', NULL, 'UNDERGRADUATE', 1, 0),
+    ('tg1980', 'tg@2080', 'Malith Sandeepa', 'tg20242020@student.ruh.ac.lk', '0771234520', NULL, 'UNDERGRADUATE', 1, 0);
 -- 3. Lecturer
 INSERT INTO lecturer (lecturer_id, user_id, employee_id, department_id) VALUES
     (1, 2, 'EMP/1001', 1);

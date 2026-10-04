@@ -11,7 +11,15 @@ public class Student {
         this.name = name;
     }
 
-    public int getStudentId() { return studentId; }
-    public String getIndexNo() { return indexNo; }
-    public String getName() { return name; }
+    public int getStudentId() {
+        return studentId;
+    }
+
+    public String getIndexNo() {
+        return indexNo;
+    }
+
+    public String getName() {
+        return name;
+    }
 }
