@@ -148,7 +148,7 @@ VALUES
     ('tg2017', 'tg@2017', 'Shehan Maduranga', 'tg20242017@student.ruh.ac.lk', '0728901217', NULL, 'UNDERGRADUATE', 1, 0),
     ('tg2018', 'tg@2018', 'Piumi Hansika', 'tg20242018@student.ruh.ac.lk', '0759012318', NULL, 'UNDERGRADUATE', 1, 0),
     ('tg2019', 'tg@2019', 'Isuru Prabath', 'tg20242019@student.ruh.ac.lk', '0760123419', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg1980', 'tg@2080', 'Malith Sandeepa', 'tg20242020@student.ruh.ac.lk', '0771234520', NULL, 'UNDERGRADUATE', 1, 0);
+    ('tg1980', 'tg@2080', 'Malith Sandeepa', 'tg20231980@student.ruh.ac.lk', '0771234520', NULL, 'UNDERGRADUATE', 1, 0);
 -- 3. Lecturer
 INSERT INTO lecturer (lecturer_id, user_id, employee_id, department_id) VALUES
     (1, 2, 'EMP/1001', 1);
