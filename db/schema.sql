@@ -191,6 +191,19 @@ INSERT INTO course (course_code, course_title, credit_theory, credit_practical, 
                                                                                                                 ('ICT1133', 'Data Structures and Algorithms', 2, 1, 1, 1),
                                                                                                                 ('ICT2132', 'Advanced Programming', 2, 0, 1, 1);
 
+INSERT INTO course
+(course_code, course_title, credit_theory, credit_practical, department_id, lecturer_id)
+VALUES
+    ('ENG2112', 'English III', 2, NULL, NULL, NULL),
+    ('ICT2113', 'Data Structures and Algorithms', 2, NULL, 1, NULL),
+    ('ICT2122', 'Object Oriented Programming', 2, NULL, 1, NULL),
+    ('ICT2132', 'Object Oriented Programming Practicum', NULL, 2, 1, NULL),
+    ('ICT2142', 'E-Business Systems', 2, NULL, 1, NULL),
+    ('ICT2152', 'Object Oriented Analysis and Design', 2, NULL, 1, NULL),
+    ('ICT2162', 'Management Information Systems', 2, NULL, 1, NULL),
+    ('TCS2112', 'Business Economics', 2, NULL, NULL, NULL),
+    ('TCS2121', 'Soft Skills', 2, NULL, NULL, NULL);
+
 -- 7. Enrollments
 INSERT INTO enrollment (enrollment_id, student_id, course_code, semester, attempt_type) VALUES
                                                                                             (1, 'TG/2024/2001', 'ICT2132', 1, 'PROPER'),
@@ -200,6 +213,231 @@ INSERT INTO enrollment (enrollment_id, student_id, course_code, semester, attemp
                                                                                             (5, 'TG/2024/2001', 'ICT1122', 1, 'PROPER'),
                                                                                             (6, 'TG/2024/2002', 'ICT1122', 1, 'PROPER'),
                                                                                             (8, 'TG/2024/2088', 'ICT1122', 1, 'PROPER');
+
+INSERT INTO enrollment
+(student_id, course_code, semester, attempt_type)
+VALUES
+
+-- TG/2024/2001
+('TG/2024/2001', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2001', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2001', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2001', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2001', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2001', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2001', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2001', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2001', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2002
+('TG/2024/2002', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2002', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2002', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2002', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2002', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2002', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2002', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2002', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2002', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2003
+('TG/2024/2003', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2003', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2003', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2003', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2003', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2003', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2003', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2003', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2003', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2004
+('TG/2024/2004', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2004', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2004', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2004', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2004', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2004', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2004', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2004', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2004', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2005
+('TG/2024/2005', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2005', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2005', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2005', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2005', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2005', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2005', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2005', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2005', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2006
+('TG/2024/2006', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2006', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2006', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2006', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2006', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2006', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2006', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2006', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2006', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2007
+('TG/2024/2007', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2007', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2007', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2007', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2007', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2007', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2007', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2007', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2007', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2008
+('TG/2024/2008', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2008', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2008', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2008', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2008', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2008', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2008', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2008', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2008', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2009
+('TG/2024/2009', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2009', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2009', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2009', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2009', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2009', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2009', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2009', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2009', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2010
+('TG/2024/2010', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2010', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2010', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2010', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2010', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2010', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2010', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2010', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2010', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2011
+('TG/2024/2011', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2011', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2011', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2011', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2011', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2011', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2011', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2011', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2011', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2012
+('TG/2024/2012', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2012', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2012', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2012', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2012', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2012', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2012', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2012', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2012', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2013
+('TG/2024/2013', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2013', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2013', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2013', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2013', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2013', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2013', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2013', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2013', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2014
+('TG/2024/2014', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2014', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2014', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2014', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2014', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2014', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2014', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2014', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2014', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2015
+('TG/2024/2015', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2015', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2015', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2015', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2015', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2015', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2015', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2015', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2015', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2016
+('TG/2024/2016', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2016', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2016', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2016', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2016', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2016', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2016', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2016', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2016', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2017
+('TG/2024/2017', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2017', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2017', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2017', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2017', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2017', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2017', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2017', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2017', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2024/2018
+('TG/2024/2018', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2018', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2018', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2018', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2018', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2018', 'ICT2152', 1, 'PROPER'),
+('TG/2024/2018', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2018', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2018', 'TCS2121', 1, 'REPEAT'),
+
+-- TG/2024/2019
+('TG/2024/2019', 'ENG2112', 1, 'PROPER'),
+('TG/2024/2019', 'ICT2113', 1, 'PROPER'),
+('TG/2024/2019', 'ICT2122', 1, 'PROPER'),
+('TG/2024/2019', 'ICT2132', 1, 'PROPER'),
+('TG/2024/2019', 'ICT2142', 1, 'PROPER'),
+('TG/2024/2019', 'ICT2152', 1, 'REPEAT'),
+('TG/2024/2019', 'ICT2162', 1, 'PROPER'),
+('TG/2024/2019', 'TCS2112', 1, 'PROPER'),
+('TG/2024/2019', 'TCS2121', 1, 'PROPER'),
+
+-- TG/2023/1980 (Batch-missed student)
+('TG/2023/1980', 'ENG2112', 1, 'PROPER'),
+('TG/2023/1980', 'ICT2113', 1, 'REPEAT'),
+('TG/2023/1980', 'ICT2122', 1, 'REPEAT'),
+('TG/2023/1980', 'ICT2132', 1, 'PROPER'),
+('TG/2023/1980', 'ICT2142', 1, 'PROPER'),
+('TG/2023/1980', 'ICT2152', 1, 'PROPER'),
+('TG/2023/1980', 'ICT2162', 1, 'PROPER'),
+('TG/2023/1980', 'TCS2112', 1, 'PROPER'),
+('TG/2023/1980', 'TCS2121', 1, 'PROPER');
+
 
 -- 8. Results / Marks
 INSERT INTO result (result_id, enrollment_id, ca_mark, final_exam_mark, total_mark, eligibility_status, grade, grade_point, total_marks) VALUES
