@@ -1,5 +1,7 @@
 -- ==========================================================
--- FTMS Database Final Setup Script (Based on your Terminal state)
+-- Faculty of Technology Management System (FTMS)
+-- Group 13 - Database Schema
+-- Aligned with UML Class Diagram & ER Diagram
 -- ==========================================================
 
 DROP DATABASE IF EXISTS ftms_db;
@@ -9,219 +11,163 @@ USE ftms_db;
 -- 1. Department Table
 CREATE TABLE department (
                             department_id INT AUTO_INCREMENT PRIMARY KEY,
-                            department_name VARCHAR(100) NOT NULL,
-                            department_code VARCHAR(10) UNIQUE NOT NULL
+                            department_name VARCHAR(150) NOT NULL,
+                            department_code VARCHAR(20) NOT NULL UNIQUE
 );
 
--- 2. Users Table
+-- 2. Users Table (Base entity for all user roles)
 CREATE TABLE users (
                        user_id INT AUTO_INCREMENT PRIMARY KEY,
                        username VARCHAR(50) UNIQUE NOT NULL,
                        password_hash VARCHAR(255) NOT NULL,
-                       full_name VARCHAR(100) NOT NULL,
+                       full_name VARCHAR(150) NOT NULL,
                        email VARCHAR(100),
-                       phone_no VARCHAR(20),
-                       profile_pic VARCHAR(255),
+                       phone_no VARCHAR(25),
+                       profile_pic VARCHAR(255) DEFAULT 'default_avatar.png',
                        role ENUM('ADMIN', 'LECTURER', 'TECH_OFFICER', 'UNDERGRADUATE') NOT NULL,
-                       is_active TINYINT(1) DEFAULT 1,
+                       is_active BOOLEAN DEFAULT TRUE,
                        failed_logins INT DEFAULT 0
 );
 
--- 3. Lecturer Table
+-- 3. Admin Table
+CREATE TABLE admin (
+                       admin_id INT AUTO_INCREMENT PRIMARY KEY,
+                       user_id INT UNIQUE NOT NULL,
+                       FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- 4. Lecturer Table
 CREATE TABLE lecturer (
                           lecturer_id INT AUTO_INCREMENT PRIMARY KEY,
                           user_id INT UNIQUE NOT NULL,
-                          employee_id VARCHAR(20) UNIQUE NOT NULL,
+                          employee_id VARCHAR(50) UNIQUE NOT NULL,
                           department_id INT NOT NULL,
                           FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
                           FOREIGN KEY (department_id) REFERENCES department(department_id)
 );
 
--- 4. Student Table
-CREATE TABLE student (
-                         student_id INT AUTO_INCREMENT PRIMARY KEY,
-                         index_no VARCHAR(50) NOT NULL UNIQUE,
-                         full_name VARCHAR(255) NOT NULL
+-- 5. Technical Officer Table
+CREATE TABLE technical_officer (
+                                   to_id INT AUTO_INCREMENT PRIMARY KEY,
+                                   user_id INT UNIQUE NOT NULL,
+                                   employee_id VARCHAR(50) UNIQUE NOT NULL,
+                                   department_id INT NOT NULL,
+                                   FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+                                   FOREIGN KEY (department_id) REFERENCES department(department_id)
 );
 
--- 5. Undergraduate Table
+-- 6. Undergraduate Table
 CREATE TABLE undergraduate (
-                               student_id VARCHAR(20) PRIMARY KEY,
+                               student_id INT AUTO_INCREMENT PRIMARY KEY,
                                user_id INT UNIQUE NOT NULL,
+                               reg_no VARCHAR(50) NOT NULL UNIQUE,
+                               batch_year INT NOT NULL,
+                               status ENUM('ACTIVE', 'REPEAT', 'BATCH_MISSED') DEFAULT 'ACTIVE',
                                department_id INT NOT NULL,
-                               batch VARCHAR(10) NOT NULL,
+                               contact_no VARCHAR(25),
                                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
                                FOREIGN KEY (department_id) REFERENCES department(department_id)
 );
 
--- 6. Course Table
+-- 7. Course Table
 CREATE TABLE course (
-                        course_code VARCHAR(10) PRIMARY KEY,
+                        course_code VARCHAR(20) PRIMARY KEY,
                         course_title VARCHAR(150) NOT NULL,
-                        credit_theory TINYINT NOT NULL DEFAULT 0,
-                        credit_practical TINYINT NOT NULL DEFAULT 0,
+                        credit_theory INT NOT NULL DEFAULT 0,
+                        credit_practical INT NOT NULL DEFAULT 0,
                         department_id INT NOT NULL,
                         lecturer_id INT,
                         FOREIGN KEY (department_id) REFERENCES department(department_id),
                         FOREIGN KEY (lecturer_id) REFERENCES lecturer(lecturer_id) ON DELETE SET NULL
 );
 
--- 7. Enrollment Table
+-- 8. Course Material Table (Lecturer uploads)
+CREATE TABLE course_material (
+                                 material_id INT AUTO_INCREMENT PRIMARY KEY,
+                                 course_code VARCHAR(20) NOT NULL,
+                                 lecturer_id INT NOT NULL,
+                                 title VARCHAR(150) NOT NULL,
+                                 file_path VARCHAR(255) NOT NULL,
+                                 uploaded_date DATE NOT NULL,
+                                 FOREIGN KEY (course_code) REFERENCES course(course_code) ON DELETE CASCADE,
+                                 FOREIGN KEY (lecturer_id) REFERENCES lecturer(lecturer_id) ON DELETE CASCADE
+);
+
+-- 9. Timetable Table
+CREATE TABLE timetable (
+                           timetable_id INT AUTO_INCREMENT PRIMARY KEY,
+                           department_id INT NOT NULL,
+                           course_code VARCHAR(20) NOT NULL,
+                           day_of_week ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday') NOT NULL,
+                           start_time TIME NOT NULL,
+                           end_time TIME NOT NULL,
+                           venue VARCHAR(100) NOT NULL,
+                           session_type ENUM('THEORY', 'PRACTICAL') NOT NULL,
+                           FOREIGN KEY (department_id) REFERENCES department(department_id),
+                           FOREIGN KEY (course_code) REFERENCES course(course_code) ON DELETE CASCADE
+);
+
+-- 10. Notice Table
+CREATE TABLE notice (
+                        notice_id INT AUTO_INCREMENT PRIMARY KEY,
+                        title VARCHAR(200) NOT NULL,
+                        content TEXT NOT NULL,
+                        target_audience ENUM('ALL', 'LECTURER', 'TECH_OFFICER', 'UNDERGRADUATE') DEFAULT 'ALL',
+                        created_date DATE NOT NULL,
+                        posted_by VARCHAR(100) DEFAULT 'System Admin'
+);
+
+-- 11. Enrollment Table
 CREATE TABLE enrollment (
                             enrollment_id INT AUTO_INCREMENT PRIMARY KEY,
-                            student_id VARCHAR(20) NOT NULL,
-                            course_code VARCHAR(10) NOT NULL,
+                            student_id INT NOT NULL,
+                            course_code VARCHAR(20) NOT NULL,
+                            academic_year INT NOT NULL,
                             semester INT NOT NULL,
-                            attempt_type VARCHAR(20) DEFAULT 'PROPER',
+                            attempt_type ENUM('PROPER', 'REPEAT', 'BATCH_MISSED') DEFAULT 'PROPER',
+                            UNIQUE (student_id, course_code, academic_year, semester),
                             FOREIGN KEY (student_id) REFERENCES undergraduate(student_id) ON DELETE CASCADE,
                             FOREIGN KEY (course_code) REFERENCES course(course_code) ON DELETE CASCADE
 );
 
--- 8. Assessment Table
-CREATE TABLE assessment (
-                            assessment_id INT AUTO_INCREMENT PRIMARY KEY,
-                            course_code VARCHAR(10) NOT NULL,
-                            component_name VARCHAR(50) NOT NULL,
-                            component_type ENUM('CA', 'FINAL') NOT NULL,
-                            weight DECIMAL(5,2) NOT NULL,
-                            FOREIGN KEY (course_code) REFERENCES course(course_code) ON DELETE CASCADE
+-- 12. Attendance Table (Marked by Technical Officer)
+CREATE TABLE attendance (
+                            attendance_id INT AUTO_INCREMENT PRIMARY KEY,
+                            student_id INT NOT NULL,
+                            course_code VARCHAR(20) NOT NULL,
+                            session_date DATE NOT NULL,
+                            session_type ENUM('THEORY', 'PRACTICAL') NOT NULL,
+                            status ENUM('PRESENT', 'ABSENT') NOT NULL,
+                            to_id INT,
+                            FOREIGN KEY (student_id) REFERENCES undergraduate(student_id) ON DELETE CASCADE,
+                            FOREIGN KEY (course_code) REFERENCES course(course_code) ON DELETE CASCADE,
+                            FOREIGN KEY (to_id) REFERENCES technical_officer(to_id) ON DELETE SET NULL
 );
 
--- 9. Mark Table
-CREATE TABLE mark (
-                      mark_id INT AUTO_INCREMENT PRIMARY KEY,
-                      enrollment_id INT NOT NULL,
-                      assessment_id INT NOT NULL,
-                      marks DECIMAL(5,2) NOT NULL,
-                      ca_marks DOUBLE DEFAULT 0,
-                      final_marks DOUBLE DEFAULT 0,
-                      FOREIGN KEY (enrollment_id) REFERENCES enrollment(enrollment_id) ON DELETE CASCADE,
-                      FOREIGN KEY (assessment_id) REFERENCES assessment(assessment_id) ON DELETE CASCADE
+-- 13. Medical Records Table (Submitted by student, reviewed by Tech Officer)
+CREATE TABLE medical (
+                         medical_id INT AUTO_INCREMENT PRIMARY KEY,
+                         student_id INT NOT NULL,
+                         course_code VARCHAR(20) NOT NULL,
+                         medical_date DATE NOT NULL,
+                         reason TEXT NOT NULL,
+                         document_path VARCHAR(255),
+                         status ENUM('PENDING', 'APPROVED', 'REJECTED') DEFAULT 'PENDING',
+                         reviewed_by_to_id INT,
+                         FOREIGN KEY (student_id) REFERENCES undergraduate(student_id) ON DELETE CASCADE,
+                         FOREIGN KEY (course_code) REFERENCES course(course_code) ON DELETE CASCADE,
+                         FOREIGN KEY (reviewed_by_to_id) REFERENCES technical_officer(to_id) ON DELETE SET NULL
 );
 
--- 10. Result Table
+-- 14. Result / Marks Table (Maintained by Lecturer)
 CREATE TABLE result (
                         result_id INT AUTO_INCREMENT PRIMARY KEY,
                         enrollment_id INT UNIQUE NOT NULL,
-                        ca_mark DECIMAL(5,2),
-                        final_exam_mark DECIMAL(5,2),
-                        total_mark DECIMAL(5,2),
-                        eligibility_status ENUM('ELIGIBLE','NOT_ELIGIBLE') DEFAULT 'NOT_ELIGIBLE',
-                        grade VARCHAR(3),
-                        grade_point DECIMAL(3,2),
-                        total_marks DOUBLE DEFAULT 0,
+                        ca_mark DECIMAL(5,2) DEFAULT 0.00,
+                        final_exam_mark DECIMAL(5,2) DEFAULT 0.00,
+                        total_mark DECIMAL(5,2) DEFAULT 0.00,
+                        eligibility_status ENUM('ELIGIBLE', 'NOT_ELIGIBLE') DEFAULT 'NOT_ELIGIBLE',
+                        grade VARCHAR(5) DEFAULT '-',
+                        grade_point DECIMAL(3,2) DEFAULT 0.00,
                         FOREIGN KEY (enrollment_id) REFERENCES enrollment(enrollment_id) ON DELETE CASCADE
 );
-
-
--- ==========================================================
--- INITIAL SAMPLE DATA INSERTION
--- ==========================================================
-
--- 1. Department
-INSERT INTO department (department_id, department_name, department_code) VALUES
-    (1, 'Department of Information and Communication Technology', 'DICT');
-
--- 2. Users (Admin, Lecturer, and Undergraduates)
-INSERT INTO users (user_id, username, password_hash, full_name, email, role) VALUES
-                                                                                 (1, 'admin', '1234', 'System Admin', 'admin@fot.ruh.ac.lk', 'ADMIN'),
-                                                                                 (2, 'lecturer1', '1234', 'Dr. Perera', 'perera@fot.ruh.ac.lk', 'LECTURER'),
-INSERT INTO users
-(username, password_hash, full_name, email, phone_no, profile_pic, role, is_active, failed_logins)
-VALUES
-    ('tg2001', 'tg@2001', 'Nethmi Perera', 'tg20242001@student.ruh.ac.lk', '0712345601', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2002', 'tg@2002', 'Kavindu Silva', 'tg20242002@student.ruh.ac.lk', '0723456702', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2003', 'tg@2003', 'Dinithi Fernando', 'tg20242003@student.ruh.ac.lk', '0754567803', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2004', 'tg@2004', 'Hasitha Jayawardena', 'tg20242004@student.ruh.ac.lk', '0765678904', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2005', 'tg@2005', 'Sachini Perera', 'tg20242005@student.ruh.ac.lk', '0776789005', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2006', 'tg@2006', 'Tharindu Bandara', 'tg20242006@student.ruh.ac.lk', '0717890106', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2007', 'tg@2007', 'Minsara Wijesinghe', 'tg20242007@student.ruh.ac.lk', '0728901207', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2008', 'tg@2008', 'Ishara Madushani', 'tg20242008@student.ruh.ac.lk', '0759012308', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2009', 'tg@2009', 'Dinuka Rathnayake', 'tg20242009@student.ruh.ac.lk', '0760123409', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2010', 'tg@2010', 'Senuri Gunawardena', 'tg20242010@student.ruh.ac.lk', '0771234510', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2011', 'tg@2011', 'Pasindu Lakshan', 'tg20242011@student.ruh.ac.lk', '0712345611', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2012', 'tg@2012', 'Amaya Sandaruwani', 'tg20242012@student.ruh.ac.lk', '0723456712', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2013', 'tg@2013', 'Chamod Perera', 'tg20242013@student.ruh.ac.lk', '0754567813', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2014', 'tg@2014', 'Hiruni Madushika', 'tg20242014@student.ruh.ac.lk', '0765678914', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2015', 'tg@2015', 'Ravindu Dissanayake', 'tg20242015@student.ruh.ac.lk', '0776789015', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2016', 'tg@2016', 'Kavisha Nethmini', 'tg20242016@student.ruh.ac.lk', '0717890116', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2017', 'tg@2017', 'Shehan Maduranga', 'tg20242017@student.ruh.ac.lk', '0728901217', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2018', 'tg@2018', 'Piumi Hansika', 'tg20242018@student.ruh.ac.lk', '0759012318', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg2019', 'tg@2019', 'Isuru Prabath', 'tg20242019@student.ruh.ac.lk', '0760123419', NULL, 'UNDERGRADUATE', 1, 0),
-    ('tg1980', 'tg@2080', 'Malith Sandeepa', 'tg20231980@student.ruh.ac.lk', '0771234520', NULL, 'UNDERGRADUATE', 1, 0);
--- 3. Lecturer
-INSERT INTO lecturer (lecturer_id, user_id, employee_id, department_id) VALUES
-    (1, 2, 'EMP/1001', 1);
-
--- 4. Student (Table with Index No)
-INSERT INTO student (student_id, index_no, full_name) VALUES
-    (1, 'TG/2024/2088', 'Thenuwara Hannadige Dasula Wosada');
-
--- 5. Undergraduate Students
-INSERT INTO undergraduate (student_id, user_id, department_id, batch) VALUES
-INSERT INTO undergraduate
-(student_id, user_id, department_id, batch)
-VALUES
-    ('TG/2024/2001', 8, 1, '2023/2024'),
-    ('TG/2024/2002', 9, 1, '2023/2024'),
-    ('TG/2024/2003', 10, 1, '2023/2024'),
-    ('TG/2024/2004', 11, 1, '2023/2024'),
-    ('TG/2024/2005', 12, 1, '2023/2024'),
-    ('TG/2024/2006', 13, 1, '2023/2024'),
-    ('TG/2024/2007', 14, 1, '2023/2024'),
-    ('TG/2024/2008', 15, 1, '2023/2024'),
-    ('TG/2024/2009', 16, 1, '2023/2024'),
-    ('TG/2024/2010', 17, 1, '2023/2024'),
-    ('TG/2024/2011', 18, 1, '2023/2024'),
-    ('TG/2024/2012', 19, 1, '2023/2024'),
-    ('TG/2024/2013', 20, 1, '2023/2024'),
-    ('TG/2024/2014', 21, 1, '2023/2024'),
-    ('TG/2024/2015', 22, 1, '2023/2024'),
-    ('TG/2024/2016', 23, 1, '2023/2024'),
-    ('TG/2024/2017', 24, 1, '2023/2024'),
-    ('TG/2024/2018', 25, 1, '2023/2024'),
-    ('TG/2024/2019', 26, 1, '2023/2024'),
-    ('TG/2023/1980', 27, 1, '2022/2023');
-
-
--- 6. Courses
-INSERT INTO course (course_code, course_title, credit_theory, credit_practical, department_id, lecturer_id) VALUES
-                                                                                                                ('ICT1113', 'Introduction to ICT', 2, 1, 1, 1),
-                                                                                                                ('ICT1122', 'Object Oriented Programming', 1, 2, 1, 1),
-                                                                                                                ('ICT1133', 'Data Structures and Algorithms', 2, 1, 1, 1),
-                                                                                                                ('ICT2132', 'Advanced Programming', 2, 0, 1, 1);
-
-INSERT INTO course
-(course_code, course_title, credit_theory, credit_practical, department_id, lecturer_id)
-VALUES
-    ('ENG2112', 'English III', 2, NULL, NULL, NULL),
-    ('ICT2113', 'Data Structures and Algorithms', 2, NULL, 1, NULL),
-    ('ICT2122', 'Object Oriented Programming', 2, NULL, 1, NULL),
-    ('ICT2132', 'Object Oriented Programming Practicum', NULL, 2, 1, NULL),
-    ('ICT2142', 'E-Business Systems', 2, NULL, 1, NULL),
-    ('ICT2152', 'Object Oriented Analysis and Design', 2, NULL, 1, NULL),
-    ('ICT2162', 'Management Information Systems', 2, NULL, 1, NULL),
-    ('TCS2112', 'Business Economics', 2, NULL, NULL, NULL),
-    ('TCS2121', 'Soft Skills', 2, NULL, NULL, NULL);
-
--- 7. Enrollments
-INSERT INTO enrollment (enrollment_id, student_id, course_code, semester, attempt_type) VALUES
-                                                                                            (1, 'TG/2024/2001', 'ICT2132', 1, 'PROPER'),
-                                                                                            (2, 'TG/2024/2002', 'ICT2132', 1, 'PROPER'),
-                                                                                            (3, 'TG/2024/2003', 'ICT2132', 1, 'PROPER'),
-                                                                                            (4, 'TG/2024/2004', 'ICT2132', 1, 'PROPER'),
-                                                                                            (5, 'TG/2024/2001', 'ICT1122', 1, 'PROPER'),
-                                                                                            (6, 'TG/2024/2002', 'ICT1122', 1, 'PROPER'),
-                                                                                            (8, 'TG/2024/2088', 'ICT1122', 1, 'PROPER');
-
-INSERT INTO enrollment
-(student_id, course_code, semester, attempt_type)
-VALUES
-
-
-
--- 8. Results / Marks
-INSERT INTO result (result_id, enrollment_id, ca_mark, final_exam_mark, total_mark, eligibility_status, grade, grade_point, total_marks) VALUES
-                                                                                                                                             (1, 5, 65.00, 70.00, 67.50, 'ELIGIBLE', 'B', 3.00, 67.50),
-                                                                                                                                             (2, 6, 50.00, 55.00, 52.50, 'ELIGIBLE', 'C', 2.00, 52.50),
-                                                                                                                                             (3, 8, 35.00, 50.00, 85.00, 'ELIGIBLE', 'A', 4.00, 85.00);
