@@ -64,8 +64,88 @@ public class UndergraduateDAO {
                     "WHERE e.student_id = ? " +
                     "GROUP BY e.course_code, c.course_title, m.med_count " +
                     "ORDER BY e.course_code";
+
+            try(Connection conn = DBConection .getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, studentId);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("courseCode", rs.getString("course_code"));
+                    map.put("courseTitle", rs.getString("course_title"));
+
+                    int present = rs.getInt("present_count");
+                    int absent = rs.getInt("absent_count");
+                    int approvedMeds = rs.getInt("approved_medicals");
+                    int totalSessions = 15; // Per brief: 15 sessions per component
+
+                    double rawPercentage = (present * 100.0) / totalSessions;
+                    double excusedPercentage = ((present + approvedMeds) * 100.0) / totalSessions;
+                    if (excusedPercentage > 100.0) excusedPercentage = 100.0;
+
+                    map.put("presentCount", present);
+                    map.put("totalSessions", totalSessions);
+                    map.put("approvedMedicals", approvedMeds);
+                    map.put("rawPercentage", Math.round(rawPercentage * 10.0) / 10.0);
+                    map.put("excusedPercentage", Math.round(excusedPercentage * 10.0) / 10.0);
+                    map.put("isEligible", excusedPercentage >= 80.0);
+
+                    list.add(map);
+                }
+            }catch (SQLException e) {
+                e.printStackTrace();
+            }
+            retutn list;
         }
 
-    }
+
+        /**
+         * Gets student medical submission records.
+         */
+        public List<Medical> getMedicalRecords(int studentId) {
+            List<Medical> list = new ArrayList<>();
+            String sql = "SELECT * FROM medical WHERE student_id = ? ORDER BY medical_date DESC";
+
+            try (Connection conn = DBConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+
+                ps.setInt(1, studentId);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    list.add(new Medical(
+                            rs.getInt("medical_id"),
+                            rs.getInt("student_id"),
+                            rs.getString("course_code"),
+                            rs.getDate("medical_date"),
+                            rs.getString("reason"),
+                            rs.getString("document_path"),
+                            rs.getString("status"),
+                            (Integer) rs.getObject("reviewed_by_to_id")
+                    ));
+
+            } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                return list;
 
 }
+            /**
+             * Submits a new medical certificate request.
+             */
+            public boolean submitMedical(Medical m){
+                String sql = "INSERT INTO medical (student_id, course_code, medical_date, reason, document_path, status) VALUES (?, ?, ?, ?, ?, 'PENDING')";
+                try (Connection conn = DBConnection.getConnection();
+                     PreparedStatement ps = conn.prepareStatement(sql)) {
+
+                    ps.setInt(1, m.getStudentId());
+                    ps.setString(2, m.getCourseCode());
+                    ps.setDate(3, m.getMedicalDate());
+                    ps.setString(4, m.getReason());
+                    ps.setString(5, m.getDocumentPath());
+
+                    return ps.executeUpdate() > 0;
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            }
