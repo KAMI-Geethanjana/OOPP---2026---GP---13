@@ -24,13 +24,13 @@ public class UndergraduateDashboard extends JFrame {
     private JButton btnNavNotice;
     private JButton btnNavTimetable;
 
-   private JLabel IblWelcomeName;
-   private JLabel IblRegNo;
+   private JLabel lblWelcomeName;
+   private JLabel lblRegNo;
 
-   private JLabel IblGpaVal;
-   private JLabel IblCourseVal;
-   private JLabel IblAttendanceVal;
-   private JLabel IblMedicalVal;
+   private JLabel lblGpaVal;
+   private JLabel lblCourseVal;
+   private JLabel lblAttendanceVal;
+   private JLabel lblMedicalVal;
 
     private JTable tblAttendance;
     private DefaultTableModel attModel;
@@ -47,9 +47,34 @@ public class UndergraduateDashboard extends JFrame {
     private JTable tblMaterials;
     private DefaultTableModel materialsModel;
 
+    private JTable tblGrades;
+    private DefaultTableModel gradesModel;
+    private JLabel lblSgpa;
+
+
     private JTable tblTimetable;
     private DefaultTableModel timetableModel;
 
+private JTable tblNotices;
+private DefaultTableModel noticesModel;
+
+private JTextField txtProfEmail, txtProfPhone;
+private JLabel lblProfRegNo, lblProfBatch, lblProfDept, lblProfStatus;
+
+    public UndergraduateDashboard(Undergraduate student) {
+        this.student = student;
+        this.studentDAO = new UndergrduateDAO();
+        this.noticeDAO = new NoticeDAO();
+
+        if (student != null && student.getDepartmentName() == null) {
+            Undergraduate fullStu = studentDAO.getUndergraduateByUserId(student.getUserId());
+            if (fullStu != null) {
+                this.student = fullStu;
+            }
+        }
+
+        initUI();
+    }
 
 
 
