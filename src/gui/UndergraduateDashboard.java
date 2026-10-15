@@ -23,6 +23,13 @@ public class UndergraduateDashboard extends JFrame {
     private JButton btnNavNotice;
     private JButton btnNavTimetable;
 
+   private JLabel IblWelcomeName;
+   private JLabel IblRegNo;
+
+   private JLabel IblGpaVal;
+   private JLabel IblCourseVal;
+   private JLabel IblAttendanceVal;
+   private JLabel IblMedicalVal;
 
 
 
