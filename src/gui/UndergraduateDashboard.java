@@ -4,6 +4,7 @@ import dao.UndergrduateDAO;
 import model.Undergraduate;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
 public class UndergraduateDashboard extends JFrame {
@@ -30,6 +31,25 @@ public class UndergraduateDashboard extends JFrame {
    private JLabel IblCourseVal;
    private JLabel IblAttendanceVal;
    private JLabel IblMedicalVal;
+
+    private JTable tblAttendance;
+    private DefaultTableModel attModel;
+
+    private JLabel tblMedical;
+    private DefaultTableModel medModel;
+    private JComboBox<String> cbMedCourse;
+    private JTextField txtMedDate;
+    private JTextArea txtMedReason;
+    private JTextField txtMedPath;
+
+    private JTable tblCourses;
+    private DefaultTableModel courseModel;
+    private JTable tblMaterials;
+    private DefaultTableModel materialsModel;
+
+    private JTable tblTimetable;
+    private DefaultTableModel timetableModel;
+
 
 
 
