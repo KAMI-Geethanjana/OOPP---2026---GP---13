@@ -20,6 +20,18 @@ public class Undergraduate extends User {
         super(userId,username,passwordHash,fullname,email,phoneNo, "UNDERGRADUATE");
         this.studentId = studentId;
         this.regNo = regNo;
+        this.batchYear = batchYear;
+        this.status = status;
+        this.departmentId = departmentId;
+
+
+    }
+
+    public String getRoleDisplayName(){
+        return "Undergraduate Student";
+    }
+
+    public void openDashboard(JFrame parent){
 
     }
 
