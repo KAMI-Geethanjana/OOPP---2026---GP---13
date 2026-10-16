@@ -104,7 +104,7 @@ public class AdminDashboardUI extends JFrame {
             int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to log out?", "Logout Confirmation", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 dispose();
-                System.exit(0);
+                new LoginUI().setVisible(true);
             }
         });
 
