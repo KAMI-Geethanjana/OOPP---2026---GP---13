@@ -7,6 +7,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
+
 public class UndergraduateDashboard extends JFrame {
     private Undergraduate student;
     private UndergrduateDAO studentDAO;
@@ -74,6 +75,17 @@ private JLabel lblProfRegNo, lblProfBatch, lblProfDept, lblProfStatus;
         }
 
         initUI();
+    }
+    private void intUI(){
+        setTitle("Student Portal - Faculty of Technology");
+        setSize(1180,720);
+        setMinimumSize(new Dimension(1000,620));
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        getContentPane().setBackground(UITheme.CONTENT_BG);
+        setLayout(new BorderLayout());
+
+        add(createSidebar(),BorderLayout.WEST);
     }
 
 
