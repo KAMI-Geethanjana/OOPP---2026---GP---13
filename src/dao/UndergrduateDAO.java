@@ -26,4 +26,35 @@ public class UndergrduateDAO {
                 "WHERE ug.user_id = ?";
 
 
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Undergraduate ug = new Undergraduate(
+                        rs.getInt("user_id"),
+                        rs.getString("username"),
+                        rs.getString("password_hash"),
+                        rs.getString("full_name"),
+                        rs.getString("email"),
+                        rs.getString("phone_no"),
+                        rs.getInt("student_id"),
+                        rs.getString("reg_no"),
+                        rs.getInt("batch_year"),
+                        rs.getString("status"),
+                        rs.getInt("department_id")
+                );
+                ug.setDepartmentName(rs.getString("department_name"));
+                ug.setContactNo(rs.getString("contact_no"));
+                return ug;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
+
+
+
+}
