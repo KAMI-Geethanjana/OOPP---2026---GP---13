@@ -1,9 +1,14 @@
 package model;
 
+/**
+ * Department entity model.
+ */
 public class Department {
     private int departmentId;
     private String departmentName;
     private String departmentCode;
+
+    public Department() {}
 
     public Department(int departmentId, String departmentName, String departmentCode) {
         this.departmentId = departmentId;
@@ -19,4 +24,9 @@ public class Department {
 
     public String getDepartmentCode() { return departmentCode; }
     public void setDepartmentCode(String departmentCode) { this.departmentCode = departmentCode; }
+
+    @Override
+    public String toString() {
+        return departmentCode + " - " + departmentName;
+    }
 }
