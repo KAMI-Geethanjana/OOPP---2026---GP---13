@@ -55,6 +55,59 @@ public class UndergrduateDAO {
         return null;
     }
 
+    /**
+     * Retrieves attendance summary per course for an undergraduate.
+     * Computes raw attendance % and excused attendance % taking approved medicals into account.
+     */
+    public List<Map<String, Object>> getAttendanceSummary(int studentId) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String sql = "SELECT e.course_code, c.course_title, " +
+                "SUM(CASE WHEN a.status = 'PRESENT' THEN 1 ELSE 0 END) AS present_count, " +
+                "SUM(CASE WHEN a.status = 'ABSENT' THEN 1 ELSE 0 END) AS absent_count, " +
+                "COALESCE(m.med_count, 0) AS approved_medicals " +
+                "FROM enrollment e " +
+                "JOIN course c ON e.course_code = c.course_code " +
+                "LEFT JOIN attendance a ON a.student_id = e.student_id AND a.course_code = e.course_code " +
+                "LEFT JOIN (SELECT student_id, course_code, COUNT(*) AS med_count FROM medical WHERE status = 'APPROVED' GROUP BY student_id, course_code) m " +
+                "  ON m.student_id = e.student_id AND m.course_code = e.course_code " +
+                "WHERE e.student_id = ? " +
+                "GROUP BY e.course_code, c.course_title, m.med_count " +
+                "ORDER BY e.course_code";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, studentId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("courseCode", rs.getString("course_code"));
+                map.put("courseTitle", rs.getString("course_title"));
+
+                int present = rs.getInt("present_count");
+                int absent = rs.getInt("absent_count");
+                int approvedMeds = rs.getInt("approved_medicals");
+                int totalSessions = 15; // Per brief: 15 sessions per component
+
+                double rawPercentage = (present * 100.0) / totalSessions;
+                double excusedPercentage = ((present + approvedMeds) * 100.0) / totalSessions;
+                if (excusedPercentage > 100.0) excusedPercentage = 100.0;
+
+                map.put("presentCount", present);
+                map.put("totalSessions", totalSessions);
+                map.put("approvedMedicals", approvedMeds);
+                map.put("rawPercentage", Math.round(rawPercentage * 10.0) / 10.0);
+                map.put("excusedPercentage", Math.round(excusedPercentage * 10.0) / 10.0);
+                map.put("isEligible", excusedPercentage >= 80.0);
+
+                list.add(map);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
 
 
 }
