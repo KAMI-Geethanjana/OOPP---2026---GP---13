@@ -6,8 +6,8 @@ import common.model.Medical;
 import common.model.Result;
 import common.model.Timetable;
 import model.Undergraduate;
-import tg2082.model.Undergraduate;
-import tg2088.model.CourseMaterial;
+import model.Undergraduate;
+import model.CourseMaterial;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -24,5 +24,6 @@ public class UndergrduateDAO {
                 "JOIN users u ON ug.user_id = u.user_id " +
                 "JOIN department d ON ug.department_id = d.department_id " +
                 "WHERE ug.user_id = ?";
+
 
     }

@@ -9,9 +9,9 @@ import common.model.Result;
 import common.model.Timetable;
 import common.util.UITheme;
 import common.util.UserSession;
-import tg2082.dao.UndergraduateDAO;
-import tg2082.model.Undergraduate;
-import tg2088.model.CourseMaterial;
+import dao.UndergrduateDAO;
+import model.Undergraduate;
+import model.CourseMaterial;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
