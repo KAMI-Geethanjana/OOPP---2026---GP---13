@@ -1,4 +1,4 @@
-package tg2082.gui;
+package gui;
 
 import common.auth.LoginFrame;
 import common.dao.NoticeDAO;
