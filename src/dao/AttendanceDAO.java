@@ -1,7 +1,7 @@
 
 package dao;
 
-import config.DBConn;
+import config.DBConnection;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -35,7 +35,7 @@ public class AttendanceDAO {
                 ORDER BY u.full_name
                 """;
 
-        try (Connection con = DBConn.getConnection();
+        try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, courseCode);
@@ -87,7 +87,7 @@ public class AttendanceDAO {
                   AND session_type = ?
                 """;
 
-        try (Connection con = DBConn.getConnection()) {
+        try (Connection con = DBConnection.getConnection()) {
             try (PreparedStatement check =
                          con.prepareStatement(checkSql)) {
 
