@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+public class LecturerDAO {
 
     public Lecturer getLecturerByUserId(int userId) {
         String sql = "SELECT l.lecturer_id, l.employee_id, l.department_id, d.department_name, " +
