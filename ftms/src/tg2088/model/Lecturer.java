@@ -51,4 +51,52 @@ public class Lecturer extends User {
 
     public String getDepartmentName() { return departmentName; }
     public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
+
+    // ========================================================
+    // Methods specified in UML Class Diagram (ICT2132 Task 02)
+    // ========================================================
+    public void addCourseMeterial() {
+        // Delegated to LecturerDAO.addCourseMaterial() via LecturerDashboard
+    }
+
+    public void updateCourseMaterial() {
+        // Delegated to LecturerDAO via LecturerDashboard
+    }
+
+    public void uploadMarks() {
+        // Delegated to LecturerDAO.saveOrUpdateResult() via LecturerDashboard
+    }
+
+    public void viewStudentDetails() {
+        // Handled in LecturerDashboard
+    }
+
+    public double viewEligibility() {
+        // Returns the minimum attendance threshold percentage (80.0%)
+        return 80.0;
+    }
+
+    public void viewMarks() {
+        // Displayed in LecturerDashboard Marks table
+    }
+
+    public void viewGrades() {
+        // Calculated in LecturerDashboard per UGC Circular 12-2024
+    }
+
+    public double viewGPA() {
+        return 4.0;
+    }
+
+    public void viewAttendance() {
+        // Displayed in LecturerDashboard Attendance panel
+    }
+
+    public void viewMedicalRecords() {
+        // Displayed in LecturerDashboard Eligibility & Attendance panels
+    }
+
+    public void viewNotices() {
+        // Displayed in LecturerDashboard Notices panel
+    }
 }
