@@ -1,7 +1,7 @@
 
 package dao;
 
-import config.DBConn;
+import config.DBConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,7 +23,7 @@ public class TimetableDAO {
                 WHERE department_id = ?
                 """;
 
-        try (Connection con = DBConn.getConnection();
+        try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, departmentId);
