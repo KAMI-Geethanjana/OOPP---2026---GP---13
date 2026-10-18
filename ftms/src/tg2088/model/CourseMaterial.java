@@ -39,4 +39,19 @@ public class CourseMaterial {
 
     public Date getUploadedDate() { return uploadedDate; }
     public void setUploadedDate(Date uploadedDate) { this.uploadedDate = uploadedDate; }
+
+    // ========================================================
+    // Methods specified in UML Class Diagram (ICT2132 Task 02)
+    // ========================================================
+    public void upload() {
+        // Upload logic handled by LecturerDAO.addCourseMaterial(this)
+    }
+
+    public void update() {
+        // Update logic handled by LecturerDAO
+    }
+
+    public void delete() {
+        // Delete logic handled by LecturerDAO.deleteCourseMaterial(this.materialId)
+    }
 }
