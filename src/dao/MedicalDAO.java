@@ -1,7 +1,7 @@
 
 package dao;
 
-import config.DBConn;
+import config.DBConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -26,7 +26,7 @@ public class MedicalDAO {
                 ORDER BY m.medical_date DESC
                 """;
 
-        try (Connection con = DBConn.getConnection();
+        try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -53,7 +53,7 @@ public class MedicalDAO {
                 WHERE medical_id = ?
                 """;
 
-        try (Connection con = DBConn.getConnection();
+        try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, status);
