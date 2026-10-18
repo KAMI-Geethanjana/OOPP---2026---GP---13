@@ -9,16 +9,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-/**
- * LoginFrame - Central Authentication Portal for FTMS.
- * Faithfully mirrors the design in the provided reference screenshot:
- * - Centered card on a clean, soft modern background
- * - Faculty of Technology crest / emblem
- * - Username & Password inputs with rounded borders
- * - Blue action login button
- * - Polymorphically launches the appropriate dashboard for the user role
- * - Enforces account lock after 5 consecutive failed attempts (FR-AUTH-05)
- */
+
 public class LoginFrame extends JFrame {
 
     private JTextField txtUsername;

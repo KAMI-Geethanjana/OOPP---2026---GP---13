@@ -13,10 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/**
- * AuthDAO - Handles user authentication, credential checking,
- * failed login attempt counting, and account locking (FR-AUTH-05).
- */
+
 public class AuthDAO {
 
     private static final int MAX_FAILED_ATTEMPTS = 5;

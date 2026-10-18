@@ -1,8 +1,5 @@
 -- ==========================================================
 -- Faculty of Technology Management System (FTMS)
--- Group 13 - Seed Data Script
--- Populates 1 Admin, 5 Lecturers, 4 Tech Officers, 20 Undergraduates,
--- Timetables, Notices, Attendance (all 5 scenarios), Medicals, & Marks
 -- ==========================================================
 
 USE ftms_db;
@@ -15,7 +12,7 @@ INSERT INTO department (department_id, department_name, department_code) VALUES
                                                                              (4, 'Department of Biosystems Technology', 'BST');
 
 -- 2. Users
--- Passwords are plain text or simple hash '1234' for clear viva demonstration
+
 INSERT INTO users (user_id, username, password_hash, full_name, email, phone_no, role) VALUES
 -- Admin (Member 1: TG/2024/2086)
 (1, 'admin', '1234', 'K.A.M.I. Geethanjana (Admin)', 'admin@fot.ruh.ac.lk', '0711112233', 'ADMIN'),

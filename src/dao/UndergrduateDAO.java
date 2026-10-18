@@ -55,10 +55,7 @@ public class UndergrduateDAO {
         return null;
     }
 
-    /**
-     * Retrieves attendance summary per course for an undergraduate.
-     * Computes raw attendance % and excused attendance % taking approved medicals into account.
-     */
+
     public List<Map<String, Object>> getAttendanceSummary(int studentId) {
         List<Map<String, Object>> list = new ArrayList<>();
         String sql = "SELECT e.course_code, c.course_title, " +
@@ -109,5 +106,30 @@ public class UndergrduateDAO {
     }
 
 
+    public List<Medical> getMedicalRecords(int studentId) {
+        List<Medical> list = new ArrayList<>();
+        String sql = "SELECT * FROM medical WHERE student_id = ? ORDER BY medical_date DESC";
 
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, studentId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new Medical(
+                        rs.getInt("medical_id"),
+                        rs.getInt("student_id"),
+                        rs.getString("course_code"),
+                        rs.getDate("medical_date"),
+                        rs.getString("reason"),
+                        rs.getString("document_path"),
+                        rs.getString("status"),
+                        (Integer) rs.getObject("reviewed_by_to_id")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 }

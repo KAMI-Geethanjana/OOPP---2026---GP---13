@@ -10,7 +10,7 @@ import java.sql.ResultSet;
 public class UserDAO {
 
     public User authenticate(String username, String password) {
-        // SQL Query එකේ password වෙනුවට password_hash ලෙස වෙනස් කරන ලදී
+
         String sql = "SELECT * FROM users WHERE username = ? AND password_hash = ?";
         try (Connection conn = DBConn.getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -23,7 +23,7 @@ public class UserDAO {
                 return new User(
                         rs.getInt("user_id"),
                         rs.getString("username"),
-                        rs.getString("password_hash"), // ResultSet එකෙන් ගන්නකොටත් password_hash විය යුතුය
+                        rs.getString("password_hash"),
                         rs.getString("role")
                 );
             }
