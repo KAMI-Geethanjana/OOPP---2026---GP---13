@@ -2,7 +2,6 @@
 package dao;
 
 import config.DBConnection;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,52 +13,61 @@ public class MedicalDAO {
 
     public List<String[]> getAllMedicalRequests() throws SQLException {
 
-        List<String[]> requests = new ArrayList<>();
+        List<String[]> medicalRequests = new ArrayList<>();
 
-        String sql = """
-                SELECT m.medical_id, u.full_name,
-                       m.medical_date, m.reason, m.status
-                FROM medical m
-                JOIN undergraduate ug
-                    ON m.undergraduate_id = ug.undergraduate_id
-                JOIN users u ON ug.user_id = u.user_id
-                ORDER BY m.medical_date DESC
-                """;
+        String sql =
+                "SELECT m.medical_id, ug.reg_no, u.full_name, " +
+                        "m.medical_date, m.reason, m.status " +
+                        "FROM medical m " +
+                        "JOIN undergraduate ug ON m.student_id = ug.student_id " +
+                        "JOIN users u ON ug.user_id = u.user_id " +
+                        "ORDER BY m.medical_date DESC";
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement =
+                     connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
 
-            while (rs.next()) {
-                requests.add(new String[]{
-                        rs.getString("medical_id"),
-                        rs.getString("full_name"),
-                        rs.getString("medical_date"),
-                        rs.getString("reason"),
-                        rs.getString("status")
-                });
+            while (resultSet.next()) {
+
+                String[] request = {
+                        String.valueOf(resultSet.getInt("medical_id")),
+                        resultSet.getString("reg_no"),
+                        resultSet.getString("full_name"),
+                        String.valueOf(resultSet.getDate("medical_date")),
+                        resultSet.getString("reason"),
+                        resultSet.getString("status")
+                };
+
+                medicalRequests.add(request);
             }
         }
 
-        return requests;
+        return medicalRequests;
     }
 
-    public boolean updateMedicalStatus(
-            int medicalId, String status) throws SQLException {
+    public boolean updateMedicalStatus(int medicalId, String status)
+            throws SQLException {
 
-        String sql = """
-                UPDATE medical
-                SET status = ?
-                WHERE medical_id = ?
-                """;
+        if (status == null ||
+                !(status.equals("PENDING")
+                        || status.equals("APPROVED")
+                        || status.equals("REJECTED"))) {
+            throw new IllegalArgumentException(
+                    "Invalid medical status: " + status);
+        }
 
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        String sql =
+                "UPDATE medical SET status = ? WHERE medical_id = ?";
 
-            ps.setString(1, status);
-            ps.setInt(2, medicalId);
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
 
-            return ps.executeUpdate() > 0;
+            statement.setString(1, status);
+            statement.setInt(2, medicalId);
+
+            return statement.executeUpdate() > 0;
         }
     }
 }
