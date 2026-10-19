@@ -5,8 +5,6 @@ package model;
  * Demonstrates:
  * 1. Inheritance (extends abstract User)
  * 2. Polymorphism (overrides getRoleDisplayName)
- *
- * Authored under: Module TG2086 (K.A.M.I. Geethanjana)
  */
 public class Admin extends User {
     private int adminId;

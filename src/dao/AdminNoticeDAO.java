@@ -11,8 +11,6 @@ import java.util.List;
  * AdminNoticeDAO - Data Access Object for Notice Publishing and Maintenance.
  * Implements FR-ADM-03 (Create and maintain notices with target audience)
  * and FR-NOT-01 (Notices display most recent first).
- *
- * Authored under: Module TG2086 (K.A.M.I. Geethanjana)
  */
 public class AdminNoticeDAO {
 

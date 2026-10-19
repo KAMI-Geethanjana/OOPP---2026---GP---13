@@ -4,8 +4,6 @@ import java.sql.Timestamp;
 
 /**
  * Notice model representing administrative announcements.
- *
- * Authored under: Module TG2086 (Admin Module)
  */
 public class Notice {
     private int noticeId;

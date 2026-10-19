@@ -1,5 +1,5 @@
 -- ==========================================================
--- FTMS Database - Module: Admin (TG/2024/2086)
+-- FTMS Database - Module: Admin
 -- Covers: User Management, Departments, Courses, Notices, Timetable
 -- ==========================================================
 

@@ -10,8 +10,6 @@ import java.util.List;
 /**
  * AdminTimetableDAO - Data Access Object for Academic and Examination Schedules.
  * Implements FR-ADM-04 (Create and maintain timetables for lectures, practicals, examinations).
- *
- * Authored under: Module TG2086 (K.A.M.I. Geethanjana)
  */
 public class AdminTimetableDAO {
 

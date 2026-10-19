@@ -21,8 +21,6 @@ import java.util.Map;
 /**
  * AdminDashboardUI - Complete Graphical Desktop Management Interface.
  * Implements FR-ADM-01 through FR-ADM-06 and FR-AUTH-05.
- *
- * Authored under: Module TG2086 (K.A.M.I. Geethanjana)
  */
 public class AdminDashboardUI extends JFrame {
 

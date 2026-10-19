@@ -4,8 +4,6 @@ import java.sql.Time;
 
 /**
  * Timetable model representing scheduled academic sessions.
- *
- * Authored under: Module TG2086 (Admin Module)
  */
 public class Timetable {
     private int timetableId;

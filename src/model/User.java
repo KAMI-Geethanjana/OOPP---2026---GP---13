@@ -5,8 +5,6 @@ package model;
  * Demonstrates:
  * 1. Abstraction (abstract method getRoleDisplayName)
  * 2. Encapsulation (private fields with controlled getters and setters)
- *
- * Authored under: Module TG2086 (K.A.M.I. Geethanjana)
  */
 public abstract class User {
     private int userId;

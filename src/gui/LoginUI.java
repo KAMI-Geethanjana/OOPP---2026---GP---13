@@ -19,7 +19,6 @@ import java.sql.ResultSet;
  * Faculty of Technology - University of Ruhuna
  *
  * Implements modern card-based Login UI matching system specifications.
- * Authored under: Module TG2086 (K.A.M.I. Geethanjana)
  */
 public class LoginUI extends JFrame {
 

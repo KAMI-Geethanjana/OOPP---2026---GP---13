@@ -17,8 +17,6 @@ import java.util.Map;
  * Demonstrates:
  * 1. Database Handling (JDBC transactions with rollback)
  * 2. Exception Handling (SQLException handling and clean resource closing)
- *
- * Authored under: Module TG2086 (K.A.M.I. Geethanjana)
  */
 public class AdminUserDAO {
 

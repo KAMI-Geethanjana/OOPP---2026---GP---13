@@ -3,8 +3,6 @@ package model;
 /**
  * Course entity model representing academic modules.
  * Matches UML Class Diagram and ER schema.
- *
- * Authored under: Module TG2086 (Admin Module)
  */
 public class Course {
     private String courseCode;

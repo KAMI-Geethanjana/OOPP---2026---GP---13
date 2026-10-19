@@ -10,8 +10,6 @@ import java.util.List;
 /**
  * AdminCourseDAO - Data Access Object for Academic Course Modules.
  * Implements FR-ADM-02 (Course CRUD) and FR-ADM-06 (Assign Lecturer to Course).
- *
- * Authored under: Module TG2086 (K.A.M.I. Geethanjana)
  */
 public class AdminCourseDAO {
 
