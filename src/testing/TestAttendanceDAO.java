@@ -1,6 +1,7 @@
 package testing;
 
 import dao.AttendanceDAO;
+
 import java.sql.Date;
 import java.sql.SQLException;
 import java.util.List;
@@ -11,12 +12,11 @@ public class TestAttendanceDAO {
 
         AttendanceDAO dao = new AttendanceDAO();
 
-        String courseCode = "ICT2132";
-        Date sessionDate = Date.valueOf("2026-10-18");
-        String sessionType = "LECTURE";
+        String courseCode = "ICT1122";
+        Date sessionDate = Date.valueOf("2026-08-10");
+        String sessionType = "THEORY";
 
         try {
-
             List<String[]> students =
                     dao.getStudentsForAttendance(
                             courseCode,
@@ -28,9 +28,9 @@ public class TestAttendanceDAO {
 
             for (String[] student : students) {
                 System.out.println(
-                        "Student ID: " + student[0] +
-                                " | Name: " + student[1] +
-                                " | Status: " + student[2]
+                        "Student ID: " + student[0]
+                                + " | Name: " + student[1]
+                                + " | Attendance: " + student[2]
                 );
             }
 
