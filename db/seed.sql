@@ -14,23 +14,22 @@ INSERT INTO department (department_id, department_name, department_code) VALUES
 -- 2. Users
 
 INSERT INTO users (user_id, username, password_hash, full_name, email, phone_no, role) VALUES
--- Admin (Member 1: TG/2024/2086)
+
 (1, 'admin', '1234', 'K.A.M.I. Geethanjana (Admin)', 'admin@fot.ruh.ac.lk', '0711112233', 'ADMIN'),
 
--- 5 Lecturers (Member 2: TG/2024/2088 T.H.D. Wosada + 4 others)
+
 (2, 'wosada', '1234', 'Mr. T.H.D. Wosada', 'wosada@fot.ruh.ac.lk', '0772223344', 'LECTURER'),
 (3, 'kamal', '1234', 'Dr. Kamal Perera', 'kamal@fot.ruh.ac.lk', '0773334455', 'LECTURER'),
 (4, 'nimal', '1234', 'Prof. Nimal Silva', 'nimal@fot.ruh.ac.lk', '0774445566', 'LECTURER'),
 (5, 'anura', '1234', 'Dr. Anura Fernando', 'anura@fot.ruh.ac.lk', '0775556677', 'LECTURER'),
 (6, 'chamari', '1234', 'Mrs. Chamari Jayasinghe', 'chamari@fot.ruh.ac.lk', '0776667788', 'LECTURER'),
 
--- 4 Technical Officers (Member 3: TG/2024/2123 Weerawardhana + 3 others)
 (7, 'to_weera', '1234', 'Mr. B.G.N.M. Weerawardhana', 'weera@fot.ruh.ac.lk', '0714445566', 'TECH_OFFICER'),
 (8, 'to_saman', '1234', 'Mr. Saman Kumara', 'saman@fot.ruh.ac.lk', '0715556677', 'TECH_OFFICER'),
 (9, 'to_sunil', '1234', 'Mr. Sunil Shantha', 'sunil@fot.ruh.ac.lk', '0716667788', 'TECH_OFFICER'),
 (10, 'to_ruwan', '1234', 'Mr. Ruwan Gamage', 'ruwan@fot.ruh.ac.lk', '0717778899', 'TECH_OFFICER'),
 
--- 20 Undergraduates (Member 4: TG/2024/2082 Kaveesha, Student accounts for members, plus classmates & repeat/batch-missed)
+
 (11, 'tg2082', '1234', 'W.D.P. Kaveesha', 'kaveesha@student.ruh.ac.lk', '0781112201', 'UNDERGRADUATE'),
 (12, 'tg2088', '1234', 'T.H.D. Wosada', 'wosada@student.ruh.ac.lk', '0781112202', 'UNDERGRADUATE'),
 (13, 'tg2086', '1234', 'K.A.M.I. Geethanjana', 'geethanjana@student.ruh.ac.lk', '0781112203', 'UNDERGRADUATE'),
@@ -131,33 +130,33 @@ INSERT INTO notice (notice_id, title, content, target_audience, created_date, po
 
 -- 11. Enrollments (Students enrolled in ICT2122 and ICT2132)
 INSERT INTO enrollment (enrollment_id, student_id, course_code, academic_year, semester, attempt_type) VALUES
--- Student 1 (Kaveesha TG2082)
+
 (1, 1, 'ICT2122', 2026, 1, 'PROPER'),
 (2, 1, 'ICT2132', 2026, 1, 'PROPER'),
--- Student 2 (Wosada TG2088)
+
 (3, 2, 'ICT2122', 2026, 1, 'PROPER'),
 (4, 2, 'ICT2132', 2026, 1, 'PROPER'),
--- Student 3 (Geethanjana TG2086)
+
 (5, 3, 'ICT2122', 2026, 1, 'PROPER'),
 (6, 3, 'ICT2132', 2026, 1, 'PROPER'),
--- Student 4 (Weerawardhana TG2123)
+
 (7, 4, 'ICT2122', 2026, 1, 'PROPER'),
 (8, 4, 'ICT2132', 2026, 1, 'PROPER'),
--- Student 5 (Kasun TG2001 - Scenario B: Exactly 80%)
+
 (9, 5, 'ICT2122', 2026, 1, 'PROPER'),
--- Student 6 (Nimali TG2002 - Scenario C: < 80% without medicals)
+
 (10, 6, 'ICT2122', 2026, 1, 'PROPER'),
--- Student 7 (Chathura TG2003 - Scenario D: > 80% with medicals)
+
 (11, 7, 'ICT2122', 2026, 1, 'PROPER'),
--- Student 8 (Dinithi TG2004 - Scenario E: < 80% with medicals)
+
 (12, 8, 'ICT2122', 2026, 1, 'PROPER'),
--- Student 9 (Sahan TG2005)
+
 (13, 9, 'ICT2122', 2026, 1, 'PROPER'),
--- Student 10 (Dilki TG2006)
+
 (14, 10, 'ICT2122', 2026, 1, 'PROPER'),
--- Student 19 (Malith TG1950 - Repeat Student!)
+
 (15, 19, 'ICT2122', 2026, 1, 'REPEAT'),
--- Student 20 (Keshara TG1955 - Batch Missed!)
+
 (16, 20, 'ICT2122', 2026, 1, 'BATCH_MISSED');
 
 -- 12. Attendance Records (15 Sessions per course component)
