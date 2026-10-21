@@ -90,33 +90,79 @@ INSERT INTO undergraduate (student_id, user_id, reg_no, batch_year, status, depa
                                                                                                            (20, 30, 'TG/2023/1955', 2023, 'BATCH_MISSED', 1, '0781112220');
 
 -- 7. Courses
-INSERT INTO course (course_code, course_title, credit_theory, credit_practical, department_id, lecturer_id) VALUES
-                                                                                                                ('ICT2113', 'Data Structures and Algorithms', 3, 0, 1, 2),
-                                                                                                                ('ICT2122', 'Object Oriented Programming', 2, 0, 1, 1),
-                                                                                                                ('ICT2132', 'Object Oriented Programming Practicum', 0, 2, 1, 1),
-                                                                                                                ('ICT2142', 'E-Business Systems', 2, 0, 1, 5),
-                                                                                                                ('ICT2152', 'Object Oriented Analysis and Design', 2, 0, 1, 3),
-                                                                                                                ('ENG2112', 'English III', 2, 0, 2, 4),
-                                                                                                                ('TCS2112', 'Business Economics', 2, 0, 2, 4);
-
+INSERT INTO course
+    (course_code, course_title, credit_theory, credit_practical,
+     department_id, lecturer_id)
+VALUES
+    ('ICT2113', 'Data Structures and Algorithms', 3, 0, 1, 2),
+    ('ICT2122', 'Object Oriented Programming', 2, 0, 1, 1),
+    ('ICT2132', 'Object Oriented Programming Practicum', 0, 2, 1, 1),
+    ('ICT2142', 'E-Business Systems', 2, 0, 1, 5),
+    ('ICT2152', 'Object Oriented Analysis and Design', 2, 0, 1, 3),
+    ('ENG2112', 'English III', 2, 0, 2, 4),
+    ('TCS2112', 'Business Economics', 2, 0, 2, 4),
+    ('TCS2121', 'Soft Skills', 2, 0, 2, 4),
+    ('ICT2162', 'Management Information Systems', 2, 0, 2, 4);
+    
 -- 8. Course Materials
-INSERT INTO course_material (material_id, course_code, lecturer_id, title, file_path, uploaded_date) VALUES
-                                                                                                         (1, 'ICT2122', 1, 'Lecture 01 - Intro to OOP & Classes', 'materials/ICT2122_Lec01.pdf', '2026-02-10'),
-                                                                                                         (2, 'ICT2122', 1, 'Lecture 02 - Inheritance & Polymorphism', 'materials/ICT2122_Lec02.pdf', '2026-02-17'),
-                                                                                                         (3, 'ICT2122', 1, 'Lecture 03 - Abstraction & Interfaces', 'materials/ICT2122_Lec03.pdf', '2026-02-24'),
-                                                                                                         (4, 'ICT2132', 1, 'Lab 01 - Java Swing GUI Development', 'materials/ICT2132_Lab01.pdf', '2026-03-01'),
-                                                                                                         (5, 'ICT2132', 1, 'Lab 02 - JDBC & Database Connectivity', 'materials/ICT2132_Lab02.pdf', '2026-03-08'),
-                                                                                                         (6, 'ICT2113', 2, 'DSA Chapter 1 - Algorithmic Complexity', 'materials/ICT2113_Ch01.pdf', '2026-02-12');
+INSERT INTO course_material
+    (material_id, course_code, lecturer_id, title, file_path, uploaded_date)
+VALUES
+    (1, 'ICT2122', 1, 'Lecture 01 - Intro to OOP & Classes',
+     'materials/ICT2122_Lec01.pdf', '2026-02-10'),
+
+    (2, 'ICT2122', 1, 'Lecture 02 - Inheritance & Polymorphism',
+     'materials/ICT2122_Lec02.pdf', '2026-02-17'),
+
+    (3, 'ICT2122', 1, 'Lecture 03 - Abstraction & Interfaces',
+     'materials/ICT2122_Lec03.pdf', '2026-02-24'),
+
+    (4, 'ICT2132', 1, 'Lab 01 - Java Swing GUI Development',
+     'materials/ICT2132_Lab01.pdf', '2026-03-01'),
+
+    (5, 'ICT2132', 1, 'Lab 02 - JDBC & Database Connectivity',
+     'materials/ICT2132_Lab02.pdf', '2026-03-08'),
+
+    (6, 'ICT2113', 2, 'DSA Chapter 1 - Algorithmic Complexity',
+     'materials/ICT2113_Ch01.pdf', '2026-02-12');
+
 
 -- 9. Timetable
-INSERT INTO timetable (timetable_id, department_id, course_code, day_of_week, start_time, end_time, venue, session_type) VALUES
-                                                                                                                             (1, 1, 'ICT2122', 'Monday', '08:30:00', '10:30:00', 'Hall C', 'THEORY'),
-                                                                                                                             (2, 1, 'ICT2132', 'Monday', '10:30:00', '12:30:00', 'Computer Lab 01', 'PRACTICAL'),
-                                                                                                                             (3, 1, 'ICT2113', 'Tuesday', '08:30:00', '11:30:00', 'Hall B', 'THEORY'),
-                                                                                                                             (4, 1, 'ICT2142', 'Wednesday', '08:30:00', '10:30:00', 'Hall A', 'THEORY'),
-                                                                                                                             (5, 1, 'ICT2152', 'Thursday', '10:30:00', '12:30:00', 'Hall C', 'THEORY'),
-                                                                                                                             (6, 2, 'ENG2112', 'Friday', '08:30:00', '10:30:00', 'Language Lab', 'THEORY'),
-                                                                                                                             (7, 2, 'TCS2112', 'Friday', '13:30:00', '15:30:00', 'Seminar Room 1', 'THEORY');
+INSERT INTO timetable
+    (timetable_id, department_id, course_code, day_of_week,
+     start_time, end_time, venue, session_type)
+VALUES
+    -- Monday
+    (1, 1, 'ICT2122', 'Monday',
+     '08:30:00', '10:30:00', 'Hall C', 'THEORY'),
+
+    (2, 1, 'ICT2132', 'Monday',
+     '10:30:00', '12:30:00', 'Computer Lab 01', 'PRACTICAL'),
+
+    -- Tuesday
+    (3, 1, 'ICT2113', 'Tuesday',
+     '08:30:00', '11:30:00', 'Hall B', 'THEORY'),
+
+    -- Wednesday
+    (4, 1, 'ICT2142', 'Wednesday',
+     '08:30:00', '10:30:00', 'Hall A', 'THEORY'),
+
+    (5, 2, 'TCS2121', 'Wednesday',
+     '10:00:00', '12:00:00', 'ICT Hardware Lab', 'PRACTICAL'),
+
+    -- Thursday
+    (6, 1, 'ICT2152', 'Thursday',
+     '10:30:00', '12:30:00', 'Hall C', 'THEORY'),
+
+    -- Friday
+    (7, 2, 'ENG2112', 'Friday',
+     '08:30:00', '10:30:00', 'Language Lab', 'THEORY'),
+
+    (8, 2, 'ICT2162', 'Friday',
+     '10:00:00', '12:00:00', 'ICT New Lab', 'THEORY'),
+
+    (9, 2, 'TCS2112', 'Friday',
+     '13:30:00', '15:30:00', 'Seminar Room 1', 'THEORY');
 
 -- 10. Notices
 INSERT INTO notice (notice_id, title, content, target_audience, created_date, posted_by) VALUES
