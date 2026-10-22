@@ -1,6 +1,7 @@
 package dao;
 
 import config.DBConn;
+import exception.AdminOperationException;
 import model.Department;
 
 import java.sql.*;
@@ -11,20 +12,28 @@ import java.util.Map;
 
 /**
  * AdminUserDAO - Data Access Object for complete User Profile Lifecycle.
- * Implements FR-ADM-01 (Create, update, deactivate, delete users)
- * and FR-AUTH-05 (Unlock account after consecutive failed attempts).
- *
  * Demonstrates:
- * 1. Database Handling (JDBC transactions with rollback)
- * 2. Exception Handling (SQLException handling and clean resource closing)
+ * 1. Interface Implementation (implements UserOperations - Lesson 04)
+ * 2. Exception Handling (throws custom AdminOperationException - Lesson 05)
+ * 3. Method Overloading (deleteUser by ID vs username, getAllUsers with/without filter - Lesson 03 Part 02)
+ * 4. Database Handling (JDBC transactions with rollback, PreparedStatements - Lesson 07)
+ * 5. Default and static interface methods invocation (Lesson 04 Slide 32-33)
  */
-public class AdminUserDAO {
+public class AdminUserDAO implements UserOperations {
 
     /**
      * Atomically creates a user and their role-specific record (Undergraduate, Lecturer, Technical Officer).
      */
+    @Override
     public boolean createUser(String username, String password, String fullName, String email,
-                              String phoneNo, String role, String extraId, int departmentId, String batch) {
+                              String phoneNo, String role, String extraId, int departmentId, String batch)
+            throws AdminOperationException {
+
+        // Validate role using static method from UserOperations interface (Lesson 04 Slide 33)
+        if (!UserOperations.isValidRole(role)) {
+            throw new AdminOperationException("Invalid user role specified: " + role);
+        }
+
         String insertUserSql = "INSERT INTO users (username, password_hash, full_name, email, phone_no, role, is_active, failed_logins) " +
                                "VALUES (?, ?, ?, ?, ?, ?, 1, 0)";
 
@@ -34,11 +43,11 @@ public class AdminUserDAO {
 
         try {
             conn = DBConn.getConn();
-            conn.setAutoCommit(false); // Begin transaction
+            conn.setAutoCommit(false); // Begin JDBC transaction (Lesson 07 Slide 41)
 
             psUser = conn.prepareStatement(insertUserSql, Statement.RETURN_GENERATED_KEYS);
             psUser.setString(1, username.trim());
-            psUser.setString(2, password.trim());
+            psUser.setString(2, (password != null && !password.isEmpty()) ? password.trim() : DEFAULT_PASSWORD);
             psUser.setString(3, fullName.trim());
             psUser.setString(4, email != null ? email.trim() : "");
             psUser.setString(5, phoneNo != null ? phoneNo.trim() : "");
@@ -93,24 +102,27 @@ public class AdminUserDAO {
                     break;
 
                 case "ADMIN":
-                    // Admin only needs entry in users table
+                    // Admin only requires entry in users table
                     break;
             }
 
-            conn.commit(); // Transaction successful
+            conn.commit(); // Commit transaction
+
+            // Invoke default interface method (Lesson 04 Slide 32)
+            logAudit("CREATE_USER", "Created user " + username + " with role " + role);
             return true;
 
         } catch (SQLException e) {
             if (conn != null) {
                 try {
-                    conn.rollback();
+                    conn.rollback(); // Rollback transaction on failure (Lesson 07 Slide 41)
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
             }
-            e.printStackTrace();
-            return false;
+            throw new AdminOperationException("Database error creating user: " + e.getMessage(), e);
         } finally {
+            // Clean up resources in finally block (Lesson 05 Slide 33-36)
             try {
                 if (psRole != null) psRole.close();
                 if (psUser != null) psUser.close();
@@ -125,36 +137,74 @@ public class AdminUserDAO {
     }
 
     /**
-     * Updates common profile attributes and active status for any user.
+     * Interface method implementation: Full user update
      */
-    public boolean updateUser(int userId, String fullName, String email, String phoneNo, boolean isActive) {
+    @Override
+    public boolean updateUser(int userId, String fullName, String email, String phoneNo,
+                              String role, boolean isActive, String extraId, int departmentId, String batch)
+            throws AdminOperationException {
+        return updateUser(userId, fullName, email, phoneNo, isActive);
+    }
+
+    /**
+     * Overloaded method: Updates common profile attributes and active status for any user.
+     */
+    public boolean updateUser(int userId, String fullName, String email, String phoneNo, boolean isActive)
+            throws AdminOperationException {
         String sql = "UPDATE users SET full_name = ?, email = ?, phone_no = ?, is_active = ? WHERE user_id = ?";
         try (Connection conn = DBConn.getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, fullName.trim());
-            ps.setString(2, email.trim());
-            ps.setString(3, phoneNo.trim());
+            ps.setString(2, email != null ? email.trim() : "");
+            ps.setString(3, phoneNo != null ? phoneNo.trim() : "");
             ps.setInt(4, isActive ? 1 : 0);
             ps.setInt(5, userId);
-            return ps.executeUpdate() > 0;
+
+            boolean success = ps.executeUpdate() > 0;
+            if (success) {
+                logAudit("UPDATE_USER", "Updated user ID: " + userId);
+            }
+            return success;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            throw new AdminOperationException("Database error updating user: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Deletes user by ID. Cascades to role-specific tables via Foreign Key.
+     * Method Overloading: Deletes user by ID (Lesson 03 Part 02)
      */
-    public boolean deleteUser(int userId) {
+    @Override
+    public boolean deleteUser(int userId) throws AdminOperationException {
         String sql = "DELETE FROM users WHERE user_id = ?";
         try (Connection conn = DBConn.getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
-            return ps.executeUpdate() > 0;
+            boolean success = ps.executeUpdate() > 0;
+            if (success) {
+                logAudit("DELETE_USER", "Deleted user ID: " + userId);
+            }
+            return success;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            throw new AdminOperationException("Database error deleting user ID " + userId + ": " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Method Overloading: Deletes user by Username (Lesson 03 Part 02)
+     */
+    @Override
+    public boolean deleteUser(String username) throws AdminOperationException {
+        String sql = "DELETE FROM users WHERE username = ?";
+        try (Connection conn = DBConn.getConn();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            boolean success = ps.executeUpdate() > 0;
+            if (success) {
+                logAudit("DELETE_USER", "Deleted username: " + username);
+            }
+            return success;
+        } catch (SQLException e) {
+            throw new AdminOperationException("Database error deleting username " + username + ": " + e.getMessage(), e);
         }
     }
 
@@ -162,67 +212,98 @@ public class AdminUserDAO {
      * Unlocks a locked user account (FR-AUTH-05).
      * Resets failed login attempts back to 0 and re-activates account.
      */
-    public boolean unlockUserAccount(int userId) {
+    @Override
+    public boolean unlockAccount(int userId) throws AdminOperationException {
         String sql = "UPDATE users SET failed_logins = 0, is_active = 1 WHERE user_id = ?";
         try (Connection conn = DBConn.getConn();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
-            return ps.executeUpdate() > 0;
+            boolean success = ps.executeUpdate() > 0;
+            if (success) {
+                logAudit("UNLOCK_ACCOUNT", "Unlocked user ID: " + userId);
+            }
+            return success;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            throw new AdminOperationException("Database error unlocking account for user ID " + userId + ": " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Backward-compatible alias for existing UI caller
+     */
+    public boolean unlockUserAccount(int userId) throws AdminOperationException {
+        return unlockAccount(userId);
     }
 
     /**
      * Retrieves all users in the system with their role details.
      */
-    public List<Map<String, Object>> getAllUsers() {
+    @Override
+    public List<Map<String, Object>> getAllUsers() throws AdminOperationException {
+        return getAllUsers(null);
+    }
+
+    /**
+     * Method Overloading: Retrieves users optionally filtered by role (Lesson 03 Part 02)
+     */
+    @Override
+    public List<Map<String, Object>> getAllUsers(String roleFilter) throws AdminOperationException {
         List<Map<String, Object>> list = new ArrayList<>();
-        String sql = "SELECT u.user_id, u.username, u.full_name, u.email, u.phone_no, u.role, u.is_active, u.failed_logins, " +
-                     "ug.student_id, ug.batch, " +
-                     "lec.employee_id AS lec_emp_id, " +
-                     "tow.employee_id AS to_emp_id, " +
-                     "COALESCE(du.department_name, dl.department_name, dt.department_name, 'Administration') AS department_name " +
-                     "FROM users u " +
-                     "LEFT JOIN undergraduate ug ON u.user_id = ug.user_id " +
-                     "LEFT JOIN department du ON ug.department_id = du.department_id " +
-                     "LEFT JOIN lecturer lec ON u.user_id = lec.user_id " +
-                     "LEFT JOIN department dl ON lec.department_id = dl.department_id " +
-                     "LEFT JOIN technical_officer tow ON u.user_id = tow.user_id " +
-                     "LEFT JOIN department dt ON tow.department_id = dt.department_id " +
-                     "ORDER BY u.user_id DESC";
+        StringBuilder sql = new StringBuilder(
+                "SELECT u.user_id, u.username, u.full_name, u.email, u.phone_no, u.role, u.is_active, u.failed_logins, " +
+                "ug.student_id, ug.batch, " +
+                "lec.employee_id AS lec_emp_id, " +
+                "tow.employee_id AS to_emp_id, " +
+                "COALESCE(du.department_name, dl.department_name, dt.department_name, 'Administration') AS department_name " +
+                "FROM users u " +
+                "LEFT JOIN undergraduate ug ON u.user_id = ug.user_id " +
+                "LEFT JOIN department du ON ug.department_id = du.department_id " +
+                "LEFT JOIN lecturer lec ON u.user_id = lec.user_id " +
+                "LEFT JOIN department dl ON lec.department_id = dl.department_id " +
+                "LEFT JOIN technical_officer tow ON u.user_id = tow.user_id " +
+                "LEFT JOIN department dt ON tow.department_id = dt.department_id "
+        );
+
+        if (roleFilter != null && !roleFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(roleFilter.trim())) {
+            sql.append("WHERE u.role = ? ");
+        }
+        sql.append("ORDER BY u.user_id DESC");
 
         try (Connection conn = DBConn.getConn();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
-            while (rs.next()) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("userId", rs.getInt("user_id"));
-                map.put("username", rs.getString("username"));
-                map.put("fullName", rs.getString("full_name"));
-                map.put("email", rs.getString("email"));
-                map.put("phoneNo", rs.getString("phone_no"));
-                map.put("role", rs.getString("role"));
-                map.put("isActive", rs.getInt("is_active") == 1);
-                map.put("failedLogins", rs.getInt("failed_logins"));
-                map.put("departmentName", rs.getString("department_name"));
+            if (roleFilter != null && !roleFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(roleFilter.trim())) {
+                ps.setString(1, roleFilter.trim().toUpperCase());
+            }
 
-                String refId = "-";
-                if ("UNDERGRADUATE".equalsIgnoreCase(rs.getString("role"))) {
-                    refId = rs.getString("student_id") != null ? rs.getString("student_id") : "-";
-                } else if ("LECTURER".equalsIgnoreCase(rs.getString("role"))) {
-                    refId = rs.getString("lec_emp_id") != null ? rs.getString("lec_emp_id") : "-";
-                } else if ("TECH_OFFICER".equalsIgnoreCase(rs.getString("role"))) {
-                    refId = rs.getString("to_emp_id") != null ? rs.getString("to_emp_id") : "-";
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("userId", rs.getInt("user_id"));
+                    map.put("username", rs.getString("username"));
+                    map.put("fullName", rs.getString("full_name"));
+                    map.put("email", rs.getString("email"));
+                    map.put("phoneNo", rs.getString("phone_no"));
+                    map.put("role", rs.getString("role"));
+                    map.put("isActive", rs.getInt("is_active") == 1);
+                    map.put("failedLogins", rs.getInt("failed_logins"));
+                    map.put("departmentName", rs.getString("department_name"));
+
+                    String refId = "-";
+                    if ("UNDERGRADUATE".equalsIgnoreCase(rs.getString("role"))) {
+                        refId = rs.getString("student_id") != null ? rs.getString("student_id") : "-";
+                    } else if ("LECTURER".equalsIgnoreCase(rs.getString("role"))) {
+                        refId = rs.getString("lec_emp_id") != null ? rs.getString("lec_emp_id") : "-";
+                    } else if ("TECH_OFFICER".equalsIgnoreCase(rs.getString("role"))) {
+                        refId = rs.getString("to_emp_id") != null ? rs.getString("to_emp_id") : "-";
+                    }
+                    map.put("refId", refId);
+
+                    list.add(map);
                 }
-                map.put("refId", refId);
-
-                list.add(map);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new AdminOperationException("Database error loading users: " + e.getMessage(), e);
         }
         return list;
     }
@@ -230,7 +311,7 @@ public class AdminUserDAO {
     /**
      * Consolidated system counts for the Administrator Overview (FR-ADM-05).
      */
-    public Map<String, Integer> getSystemStats() {
+    public Map<String, Integer> getSystemStats() throws AdminOperationException {
         Map<String, Integer> stats = new HashMap<>();
         stats.put("totalUsers", 0);
         stats.put("students", 0);
@@ -254,7 +335,7 @@ public class AdminUserDAO {
                 stats.put(rs.getString("stat"), rs.getInt("count"));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new AdminOperationException("Database error loading system statistics: " + e.getMessage(), e);
         }
         return stats;
     }
@@ -262,7 +343,7 @@ public class AdminUserDAO {
     /**
      * Returns list of all departments.
      */
-    public List<Department> getAllDepartments() {
+    public List<Department> getAllDepartments() throws AdminOperationException {
         List<Department> list = new ArrayList<>();
         String sql = "SELECT department_id, department_name, department_code FROM department ORDER BY department_id";
         try (Connection conn = DBConn.getConn();
@@ -277,7 +358,7 @@ public class AdminUserDAO {
                 ));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new AdminOperationException("Database error loading departments: " + e.getMessage(), e);
         }
         return list;
     }
@@ -285,7 +366,7 @@ public class AdminUserDAO {
     /**
      * Returns list of all lecturers for assignment dropdowns.
      */
-    public List<Map<String, Object>> getAllLecturers() {
+    public List<Map<String, Object>> getAllLecturers() throws AdminOperationException {
         List<Map<String, Object>> list = new ArrayList<>();
         String sql = "SELECT l.lecturer_id, l.employee_id, u.full_name, d.department_name " +
                      "FROM lecturer l " +
@@ -306,7 +387,7 @@ public class AdminUserDAO {
                 list.add(map);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new AdminOperationException("Database error loading lecturers: " + e.getMessage(), e);
         }
         return list;
     }

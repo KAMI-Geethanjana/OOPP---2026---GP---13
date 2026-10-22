@@ -4,23 +4,35 @@ import dao.AdminCourseDAO;
 import dao.AdminNoticeDAO;
 import dao.AdminTimetableDAO;
 import dao.AdminUserDAO;
+import exception.AdminOperationException;
+import model.Admin;
 import model.Course;
 import model.Department;
 import model.Notice;
 import model.Timetable;
+import model.User;
+import util.AdminReportUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.File;
 import java.sql.Time;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 /**
  * AdminDashboardUI - Complete Graphical Desktop Management Interface.
  * Implements FR-ADM-01 through FR-ADM-06 and FR-AUTH-05.
+ * Demonstrates:
+ * 1. Multithreading (Lesson 08 - Background Live Clock Thread implementing Runnable)
+ * 2. Polymorphism, Casting, and instanceof (Lesson 03 Part 01 & 02)
+ * 3. File Handling with Character Streams (Lesson 06 - Report Export)
+ * 4. Checked Exception Handling (Lesson 05 - AdminOperationException handling)
  */
 public class AdminDashboardUI extends JFrame {
 
@@ -29,6 +41,13 @@ public class AdminDashboardUI extends JFrame {
     private final AdminCourseDAO courseDAO = new AdminCourseDAO();
     private final AdminNoticeDAO noticeDAO = new AdminNoticeDAO();
     private final AdminTimetableDAO timetableDAO = new AdminTimetableDAO();
+
+    // User session demonstrating Polymorphism & Upcasting (Lesson 03 Part 01 Slide 47)
+    private final User currentAdminUser;
+
+    // Multithreading Live Clock (Lesson 08 Slide 28-31)
+    private JLabel lblLiveClock;
+    private volatile boolean isClockRunning = true;
 
     // UI Panels
     private JPanel mainContentPanel;
@@ -60,13 +79,17 @@ public class AdminDashboardUI extends JFrame {
     private JLabel lblNoticesVal;
 
     public AdminDashboardUI() {
+        // Upcasting: Subclass object assigned to base class variable (Lesson 03 Part 01 Slide 23 & 47)
+        this.currentAdminUser = new Admin(1, "TG2086", "", "K.A.M.I. Geethanjana", "ishanminula@gmail.com", "0771234567", 2086, "FACULTY_ADMIN");
+
         setTitle("Faculty of Technology Management System (FTMS) - Administrator Portal [TG/2024/2086]");
-        setSize(1200, 750);
+        setSize(1220, 760);
         setMinimumSize(new Dimension(1000, 650));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
         initUI();
+        startLiveClockThread(); // Start background clock thread (Lesson 08)
         refreshAllData();
     }
 
@@ -82,7 +105,16 @@ public class AdminDashboardUI extends JFrame {
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(Color.WHITE);
 
-        JLabel lblSub = new JLabel("System Administrator: K.A.M.I. Geethanjana (TG/2024/2086)");
+        // Demonstrating instanceof operator and Downcasting (Lesson 03 Part 01 Slide 48-49)
+        String roleTitle;
+        if (currentAdminUser instanceof Admin) {
+            Admin adminObj = (Admin) currentAdminUser; // Downcasting
+            roleTitle = adminObj.getRoleDisplayName(); // Dynamic Polymorphism (Lesson 03 Part 02)
+        } else {
+            roleTitle = currentAdminUser.getRole();
+        }
+
+        JLabel lblSub = new JLabel("System Administrator: " + currentAdminUser.getFullName() + " (" + roleTitle + " - TG/2024/2086)");
         lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblSub.setForeground(new Color(148, 163, 184));
 
@@ -90,6 +122,11 @@ public class AdminDashboardUI extends JFrame {
         titleBlock.setOpaque(false);
         titleBlock.add(lblTitle);
         titleBlock.add(lblSub);
+
+        // Live Clock (Lesson 08)
+        lblLiveClock = new JLabel("🕒 Initializing clock...", SwingConstants.RIGHT);
+        lblLiveClock.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblLiveClock.setForeground(new Color(56, 189, 248)); // Sky cyan
 
         JButton btnLogout = new JButton("Logout");
         btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -101,14 +138,28 @@ public class AdminDashboardUI extends JFrame {
         btnLogout.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to log out?", "Logout Confirmation", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
+                isClockRunning = false;
                 dispose();
                 new LoginUI().setVisible(true);
             }
         });
 
+        JPanel rightHeaderBlock = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
+        rightHeaderBlock.setOpaque(false);
+        rightHeaderBlock.add(lblLiveClock);
+        rightHeaderBlock.add(btnLogout);
+
         headerPanel.add(titleBlock, BorderLayout.WEST);
-        headerPanel.add(btnLogout, BorderLayout.EAST);
+        headerPanel.add(rightHeaderBlock, BorderLayout.EAST);
         add(headerPanel, BorderLayout.NORTH);
+
+        // Stop thread on close
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                isClockRunning = false;
+            }
+        });
 
         // 2. Left Navigation Sidebar
         JPanel sidebarPanel = new JPanel();
@@ -196,6 +247,34 @@ public class AdminDashboardUI extends JFrame {
                 b.setForeground(new Color(226, 232, 240));
             }
         }
+    }
+
+    /**
+     * Starts a background thread for a live digital clock in the dashboard header.
+     * Demonstrates Lesson 08 (Multithreading in Java, Slide 28-31: Implementing Runnable, start() vs run()).
+     */
+    private void startLiveClockThread() {
+        Thread clockThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
+                while (isClockRunning) {
+                    final String timeText = "🕒 " + sdf.format(new Date());
+                    SwingUtilities.invokeLater(() -> {
+                        if (lblLiveClock != null) {
+                            lblLiveClock.setText(timeText);
+                        }
+                    });
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                }
+            }
+        }, "Admin-Clock-Thread");
+        clockThread.setDaemon(true);
+        clockThread.start();
     }
 
     // =========================================================================
@@ -303,11 +382,13 @@ public class AdminDashboardUI extends JFrame {
         JButton btnEditUser = createSecondaryButton("✏️ Edit User");
         JButton btnDeleteUser = createDangerButton("🗑️ Delete User");
         JButton btnUnlock = createWarningButton("🔓 Unlock Account (FR-AUTH-05)");
+        JButton btnExport = createSecondaryButton("📥 Export Audit Report");
 
         actionButtons.add(btnAddUser);
         actionButtons.add(btnEditUser);
         actionButtons.add(btnDeleteUser);
         actionButtons.add(btnUnlock);
+        actionButtons.add(btnExport);
 
         topPanel.add(lblHeader, BorderLayout.WEST);
         topPanel.add(actionButtons, BorderLayout.EAST);
@@ -328,8 +409,34 @@ public class AdminDashboardUI extends JFrame {
         btnEditUser.addActionListener(e -> showEditUserDialog());
         btnDeleteUser.addActionListener(e -> deleteSelectedUser());
         btnUnlock.addActionListener(e -> unlockSelectedUser());
+        btnExport.addActionListener(e -> exportUserAuditReport());
 
         return panel;
+    }
+
+    /**
+     * Exports all user records into a formatted audit report file using Character Streams.
+     * Demonstrates Lesson 06 (File Handling in Java: FileWriter, BufferedWriter, PrintWriter, flush(), close()).
+     */
+    private void exportUserAuditReport() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Save User Audit Report");
+        chooser.setSelectedFile(new File("FTMS_User_Audit_Report.txt"));
+        int selection = chooser.showSaveDialog(this);
+        if (selection == JFileChooser.APPROVE_OPTION) {
+            File targetFile = chooser.getSelectedFile();
+            try {
+                List<Map<String, Object>> users = userDAO.getAllUsers();
+                AdminReportUtil.exportUserReport(users, targetFile);
+                JOptionPane.showMessageDialog(this,
+                        "User audit report successfully generated and saved to:\n" + targetFile.getAbsolutePath(),
+                        "Export Successful", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Error saving report: " + ex.getMessage(),
+                        "Export Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     private void showAddUserDialog() {
@@ -350,8 +457,12 @@ public class AdminDashboardUI extends JFrame {
         JComboBox<String> cmbRole = new JComboBox<>(new String[]{"UNDERGRADUATE", "LECTURER", "TECH_OFFICER", "ADMIN"});
         JTextField txtExtraId = new JTextField(); // Student Reg No or Employee ID
         JComboBox<Department> cmbDepartment = new JComboBox<>();
-        for (Department d : userDAO.getAllDepartments()) {
-            cmbDepartment.addItem(d);
+        try {
+            for (Department d : userDAO.getAllDepartments()) {
+                cmbDepartment.addItem(d);
+            }
+        } catch (AdminOperationException e) {
+            e.printStackTrace();
         }
         JTextField txtBatch = new JTextField("2023/2024");
 
@@ -396,14 +507,18 @@ public class AdminDashboardUI extends JFrame {
                 return;
             }
 
-            boolean success = userDAO.createUser(username, password, fullName, email, phone, role, extraId, deptId, batch);
-            if (success) {
-                JOptionPane.showMessageDialog(dialog, "User created successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                dialog.dispose();
-                refreshUsersTable();
-                refreshDashboardStats();
-            } else {
-                JOptionPane.showMessageDialog(dialog, "Failed to create user. Ensure username/ID is unique.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            try {
+                boolean success = userDAO.createUser(username, password, fullName, email, phone, role, extraId, deptId, batch);
+                if (success) {
+                    JOptionPane.showMessageDialog(dialog, "User created successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    dialog.dispose();
+                    refreshUsersTable();
+                    refreshDashboardStats();
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Failed to create user. Ensure username/ID is unique.", "Database Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(dialog, "Error creating user: " + ex.getMessage(), "Operation Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -456,13 +571,17 @@ public class AdminDashboardUI extends JFrame {
         btnCancel.addActionListener(e -> dialog.dispose());
 
         btnUpdate.addActionListener(e -> {
-            boolean success = userDAO.updateUser(userId, txtName.getText().trim(), txtEmail.getText().trim(), txtPhone.getText().trim(), chkActive.isSelected());
-            if (success) {
-                JOptionPane.showMessageDialog(dialog, "User updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                dialog.dispose();
-                refreshUsersTable();
-            } else {
-                JOptionPane.showMessageDialog(dialog, "Failed to update user details.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            try {
+                boolean success = userDAO.updateUser(userId, txtName.getText().trim(), txtEmail.getText().trim(), txtPhone.getText().trim(), chkActive.isSelected());
+                if (success) {
+                    JOptionPane.showMessageDialog(dialog, "User updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    dialog.dispose();
+                    refreshUsersTable();
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Failed to update user details.", "Database Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(dialog, "Error updating user: " + ex.getMessage(), "Operation Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -486,13 +605,17 @@ public class AdminDashboardUI extends JFrame {
 
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete user '" + username + "' (ID: " + userId + ")?\nThis action will also delete related role records.", "Confirm Deletion", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            boolean success = userDAO.deleteUser(userId);
-            if (success) {
-                JOptionPane.showMessageDialog(this, "User deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                refreshUsersTable();
-                refreshDashboardStats();
-            } else {
-                JOptionPane.showMessageDialog(this, "Failed to delete user.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            try {
+                boolean success = userDAO.deleteUser(userId);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "User deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    refreshUsersTable();
+                    refreshDashboardStats();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to delete user.", "Database Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(this, "Error deleting user: " + ex.getMessage(), "Operation Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -507,12 +630,16 @@ public class AdminDashboardUI extends JFrame {
         int userId = Integer.parseInt(usersTableModel.getValueAt(selectedRow, 0).toString());
         String username = usersTableModel.getValueAt(selectedRow, 1).toString();
 
-        boolean success = userDAO.unlockUserAccount(userId);
-        if (success) {
-            JOptionPane.showMessageDialog(this, "Account for '" + username + "' unlocked successfully! (FR-AUTH-05)", "Account Unlocked", JOptionPane.INFORMATION_MESSAGE);
-            refreshUsersTable();
-        } else {
-            JOptionPane.showMessageDialog(this, "Failed to unlock account.", "Database Error", JOptionPane.ERROR_MESSAGE);
+        try {
+            boolean success = userDAO.unlockUserAccount(userId);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Account for '" + username + "' unlocked successfully! (FR-AUTH-05)", "Account Unlocked", JOptionPane.INFORMATION_MESSAGE);
+                refreshUsersTable();
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to unlock account.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (AdminOperationException ex) {
+            JOptionPane.showMessageDialog(this, "Error unlocking user: " + ex.getMessage(), "Operation Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -577,15 +704,23 @@ public class AdminDashboardUI extends JFrame {
         JSpinner spinPractical = new JSpinner(new SpinnerNumberModel(0, 0, 4, 1));
 
         JComboBox<Department> cmbDepartment = new JComboBox<>();
-        for (Department d : userDAO.getAllDepartments()) {
-            cmbDepartment.addItem(d);
+        try {
+            for (Department d : userDAO.getAllDepartments()) {
+                cmbDepartment.addItem(d);
+            }
+        } catch (AdminOperationException e) {
+            e.printStackTrace();
         }
 
         JComboBox<String> cmbLecturer = new JComboBox<>();
         cmbLecturer.addItem("0 - Unassigned");
-        List<Map<String, Object>> lecturers = userDAO.getAllLecturers();
-        for (Map<String, Object> lec : lecturers) {
-            cmbLecturer.addItem(lec.get("lecturerId") + " - " + lec.get("fullName"));
+        try {
+            List<Map<String, Object>> lecturers = userDAO.getAllLecturers();
+            for (Map<String, Object> lec : lecturers) {
+                cmbLecturer.addItem(lec.get("lecturerId") + " - " + lec.get("fullName"));
+            }
+        } catch (AdminOperationException e) {
+            e.printStackTrace();
         }
 
         form.add(new JLabel("Course Code:"));
@@ -626,14 +761,18 @@ public class AdminDashboardUI extends JFrame {
             }
 
             Course course = new Course(code, title, theory, practical, deptId, "", lecturerId, "");
-            boolean success = courseDAO.addCourse(course);
-            if (success) {
-                JOptionPane.showMessageDialog(dialog, "Course added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                dialog.dispose();
-                refreshCoursesTable();
-                refreshDashboardStats();
-            } else {
-                JOptionPane.showMessageDialog(dialog, "Failed to add course. Make sure course code is unique.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            try {
+                boolean success = courseDAO.addCourse(course);
+                if (success) {
+                    JOptionPane.showMessageDialog(dialog, "Course added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    dialog.dispose();
+                    refreshCoursesTable();
+                    refreshDashboardStats();
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Failed to add course. Make sure course code is unique.", "Database Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(dialog, "Error adding course: " + ex.getMessage(), "Operation Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -670,15 +809,23 @@ public class AdminDashboardUI extends JFrame {
         JSpinner spinPractical = new JSpinner(new SpinnerNumberModel(currentPractical, 0, 4, 1));
 
         JComboBox<Department> cmbDepartment = new JComboBox<>();
-        for (Department d : userDAO.getAllDepartments()) {
-            cmbDepartment.addItem(d);
+        try {
+            for (Department d : userDAO.getAllDepartments()) {
+                cmbDepartment.addItem(d);
+            }
+        } catch (AdminOperationException e) {
+            e.printStackTrace();
         }
 
         JComboBox<String> cmbLecturer = new JComboBox<>();
         cmbLecturer.addItem("0 - Unassigned");
-        List<Map<String, Object>> lecturers = userDAO.getAllLecturers();
-        for (Map<String, Object> lec : lecturers) {
-            cmbLecturer.addItem(lec.get("lecturerId") + " - " + lec.get("fullName"));
+        try {
+            List<Map<String, Object>> lecturers = userDAO.getAllLecturers();
+            for (Map<String, Object> lec : lecturers) {
+                cmbLecturer.addItem(lec.get("lecturerId") + " - " + lec.get("fullName"));
+            }
+        } catch (AdminOperationException e) {
+            e.printStackTrace();
         }
 
         form.add(new JLabel("Course Title:"));
@@ -711,13 +858,17 @@ public class AdminDashboardUI extends JFrame {
             }
 
             Course course = new Course(courseCode, title, theory, practical, deptId, "", lecturerId, "");
-            boolean success = courseDAO.updateCourse(course);
-            if (success) {
-                JOptionPane.showMessageDialog(dialog, "Course updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                dialog.dispose();
-                refreshCoursesTable();
-            } else {
-                JOptionPane.showMessageDialog(dialog, "Failed to update course.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            try {
+                boolean success = courseDAO.updateCourse(course);
+                if (success) {
+                    JOptionPane.showMessageDialog(dialog, "Course updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    dialog.dispose();
+                    refreshCoursesTable();
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Failed to update course.", "Database Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(dialog, "Error updating course: " + ex.getMessage(), "Operation Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -739,13 +890,17 @@ public class AdminDashboardUI extends JFrame {
         String courseCode = coursesTableModel.getValueAt(selectedRow, 0).toString();
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete course '" + courseCode + "'?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            boolean success = courseDAO.deleteCourse(courseCode);
-            if (success) {
-                JOptionPane.showMessageDialog(this, "Course deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                refreshCoursesTable();
-                refreshDashboardStats();
-            } else {
-                JOptionPane.showMessageDialog(this, "Failed to delete course.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            try {
+                boolean success = courseDAO.deleteCourse(courseCode);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Course deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    refreshCoursesTable();
+                    refreshDashboardStats();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to delete course.", "Database Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(this, "Error deleting course: " + ex.getMessage(), "Operation Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -841,14 +996,18 @@ public class AdminDashboardUI extends JFrame {
             }
 
             Notice notice = new Notice(0, title, content, audience, 1, null);
-            boolean success = noticeDAO.addNotice(notice);
-            if (success) {
-                JOptionPane.showMessageDialog(dialog, "Notice published successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                dialog.dispose();
-                refreshNoticesTable();
-                refreshDashboardStats();
-            } else {
-                JOptionPane.showMessageDialog(dialog, "Failed to publish notice.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            try {
+                boolean success = noticeDAO.addNotice(notice);
+                if (success) {
+                    JOptionPane.showMessageDialog(dialog, "Notice published successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    dialog.dispose();
+                    refreshNoticesTable();
+                    refreshDashboardStats();
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Failed to publish notice.", "Database Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(dialog, "Error publishing notice: " + ex.getMessage(), "Operation Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -912,13 +1071,17 @@ public class AdminDashboardUI extends JFrame {
             String content = txtContent.getText().trim();
 
             Notice notice = new Notice(noticeId, title, content, audience, 1, null);
-            boolean success = noticeDAO.updateNotice(notice);
-            if (success) {
-                JOptionPane.showMessageDialog(dialog, "Notice updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                dialog.dispose();
-                refreshNoticesTable();
-            } else {
-                JOptionPane.showMessageDialog(dialog, "Failed to update notice.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            try {
+                boolean success = noticeDAO.updateNotice(notice);
+                if (success) {
+                    JOptionPane.showMessageDialog(dialog, "Notice updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    dialog.dispose();
+                    refreshNoticesTable();
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Failed to update notice.", "Database Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(dialog, "Error updating notice: " + ex.getMessage(), "Operation Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -940,13 +1103,17 @@ public class AdminDashboardUI extends JFrame {
         int noticeId = Integer.parseInt(noticesTableModel.getValueAt(selectedRow, 0).toString());
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete notice #" + noticeId + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            boolean success = noticeDAO.deleteNotice(noticeId);
-            if (success) {
-                JOptionPane.showMessageDialog(this, "Notice deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                refreshNoticesTable();
-                refreshDashboardStats();
-            } else {
-                JOptionPane.showMessageDialog(this, "Failed to delete notice.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            try {
+                boolean success = noticeDAO.deleteNotice(noticeId);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Notice deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    refreshNoticesTable();
+                    refreshDashboardStats();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to delete notice.", "Database Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(this, "Error deleting notice: " + ex.getMessage(), "Operation Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -1007,13 +1174,21 @@ public class AdminDashboardUI extends JFrame {
         form.setBorder(new EmptyBorder(25, 25, 20, 25));
 
         JComboBox<String> cmbCourses = new JComboBox<>();
-        for (Course c : courseDAO.getAllCourses()) {
-            cmbCourses.addItem(c.getCourseCode());
+        try {
+            for (Course c : courseDAO.getAllCourses()) {
+                cmbCourses.addItem(c.getCourseCode());
+            }
+        } catch (AdminOperationException e) {
+            e.printStackTrace();
         }
 
         JComboBox<Department> cmbDepartment = new JComboBox<>();
-        for (Department d : userDAO.getAllDepartments()) {
-            cmbDepartment.addItem(d);
+        try {
+            for (Department d : userDAO.getAllDepartments()) {
+                cmbDepartment.addItem(d);
+            }
+        } catch (AdminOperationException e) {
+            e.printStackTrace();
         }
 
         JComboBox<String> cmbType = new JComboBox<>(new String[]{"THEORY", "PRACTICAL", "EXAM"});
@@ -1067,6 +1242,8 @@ public class AdminDashboardUI extends JFrame {
                 }
             } catch (IllegalArgumentException ex) {
                 JOptionPane.showMessageDialog(dialog, "Invalid time format. Please use HH:mm:ss (e.g. 09:00:00).", "Input Format Error", JOptionPane.ERROR_MESSAGE);
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(dialog, "Error adding timetable slot: " + ex.getMessage(), "Operation Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -1102,14 +1279,22 @@ public class AdminDashboardUI extends JFrame {
         form.setBorder(new EmptyBorder(25, 25, 20, 25));
 
         JComboBox<String> cmbCourses = new JComboBox<>();
-        for (Course c : courseDAO.getAllCourses()) {
-            cmbCourses.addItem(c.getCourseCode());
+        try {
+            for (Course c : courseDAO.getAllCourses()) {
+                cmbCourses.addItem(c.getCourseCode());
+            }
+        } catch (AdminOperationException e) {
+            e.printStackTrace();
         }
         cmbCourses.setSelectedItem(currentCourse);
 
         JComboBox<Department> cmbDepartment = new JComboBox<>();
-        for (Department d : userDAO.getAllDepartments()) {
-            cmbDepartment.addItem(d);
+        try {
+            for (Department d : userDAO.getAllDepartments()) {
+                cmbDepartment.addItem(d);
+            }
+        } catch (AdminOperationException e) {
+            e.printStackTrace();
         }
 
         JComboBox<String> cmbType = new JComboBox<>(new String[]{"THEORY", "PRACTICAL", "EXAM"});
@@ -1167,6 +1352,8 @@ public class AdminDashboardUI extends JFrame {
                 }
             } catch (IllegalArgumentException ex) {
                 JOptionPane.showMessageDialog(dialog, "Invalid time format. Please use HH:mm:ss (e.g. 09:00:00).", "Input Format Error", JOptionPane.ERROR_MESSAGE);
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(dialog, "Error updating timetable slot: " + ex.getMessage(), "Operation Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -1188,102 +1375,139 @@ public class AdminDashboardUI extends JFrame {
         int slotId = Integer.parseInt(timetablesTableModel.getValueAt(selectedRow, 0).toString());
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete timetable slot #" + slotId + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            boolean success = timetableDAO.deleteTimetableEntry(slotId);
-            if (success) {
-                JOptionPane.showMessageDialog(this, "Timetable slot deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                refreshTimetablesTable();
-            } else {
-                JOptionPane.showMessageDialog(this, "Failed to delete slot.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            try {
+                boolean success = timetableDAO.deleteTimetableEntry(slotId);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Timetable slot deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    refreshTimetablesTable();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to delete slot.", "Database Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(this, "Error deleting timetable slot: " + ex.getMessage(), "Operation Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
     // =========================================================================
-    // DATA REFRESH HELPERS
+    // DATA REFRESH HELPERS (Multithreaded Background Loading - Lesson 08)
     // =========================================================================
     private void refreshAllData() {
-        refreshDashboardStats();
-        refreshUsersTable();
-        refreshCoursesTable();
-        refreshNoticesTable();
-        refreshTimetablesTable();
+        // Run data fetching in a background thread to keep UI completely responsive (Lesson 08 Slide 7)
+        new Thread(() -> {
+            refreshDashboardStats();
+            refreshUsersTable();
+            refreshCoursesTable();
+            refreshNoticesTable();
+            refreshTimetablesTable();
+        }, "Admin-DataRefresh-Thread").start();
     }
 
     private void refreshDashboardStats() {
-        Map<String, Integer> stats = userDAO.getSystemStats();
-        lblTotalUsersVal.setText(String.valueOf(stats.getOrDefault("totalUsers", 0)));
-        lblStudentsVal.setText(String.valueOf(stats.getOrDefault("students", 0)));
-        lblLecturersVal.setText(String.valueOf(stats.getOrDefault("lecturers", 0)));
-        lblTechOfficersVal.setText(String.valueOf(stats.getOrDefault("techOfficers", 0)));
-        lblCoursesVal.setText(String.valueOf(stats.getOrDefault("courses", 0)));
-        lblNoticesVal.setText(String.valueOf(stats.getOrDefault("notices", 0)));
+        try {
+            Map<String, Integer> stats = userDAO.getSystemStats();
+            SwingUtilities.invokeLater(() -> {
+                lblTotalUsersVal.setText(String.valueOf(stats.getOrDefault("totalUsers", 0)));
+                lblStudentsVal.setText(String.valueOf(stats.getOrDefault("students", 0)));
+                lblLecturersVal.setText(String.valueOf(stats.getOrDefault("lecturers", 0)));
+                lblTechOfficersVal.setText(String.valueOf(stats.getOrDefault("techOfficers", 0)));
+                lblCoursesVal.setText(String.valueOf(stats.getOrDefault("courses", 0)));
+                lblNoticesVal.setText(String.valueOf(stats.getOrDefault("notices", 0)));
+            });
+        } catch (AdminOperationException e) {
+            System.err.println("Error loading stats: " + e.getMessage());
+        }
     }
 
     private void refreshUsersTable() {
-        usersTableModel.setRowCount(0);
-        List<Map<String, Object>> users = userDAO.getAllUsers();
-        for (Map<String, Object> u : users) {
-            usersTableModel.addRow(new Object[]{
-                    u.get("userId"),
-                    u.get("username"),
-                    u.get("fullName"),
-                    u.get("email"),
-                    u.get("phoneNo"),
-                    u.get("role"),
-                    u.get("refId"),
-                    u.get("departmentName"),
-                    Boolean.TRUE.equals(u.get("isActive")) ? "Active" : "Locked / Inactive",
-                    u.get("failedLogins")
+        try {
+            List<Map<String, Object>> users = userDAO.getAllUsers();
+            SwingUtilities.invokeLater(() -> {
+                usersTableModel.setRowCount(0);
+                for (Map<String, Object> u : users) {
+                    usersTableModel.addRow(new Object[]{
+                            u.get("userId"),
+                            u.get("username"),
+                            u.get("fullName"),
+                            u.get("email"),
+                            u.get("phoneNo"),
+                            u.get("role"),
+                            u.get("refId"),
+                            u.get("departmentName"),
+                            Boolean.TRUE.equals(u.get("isActive")) ? "Active" : "Locked / Inactive",
+                            u.get("failedLogins")
+                    });
+                }
             });
+        } catch (AdminOperationException e) {
+            System.err.println("Error loading users: " + e.getMessage());
         }
     }
 
     private void refreshCoursesTable() {
-        coursesTableModel.setRowCount(0);
-        List<Course> courses = courseDAO.getAllCourses();
-        for (Course c : courses) {
-            coursesTableModel.addRow(new Object[]{
-                    c.getCourseCode(),
-                    c.getCourseTitle(),
-                    c.getCreditTheory(),
-                    c.getCreditPractical(),
-                    c.getTotalCredits(),
-                    c.getDepartmentName(),
-                    c.getLecturerName()
+        try {
+            List<Course> courses = courseDAO.getAllCourses();
+            SwingUtilities.invokeLater(() -> {
+                coursesTableModel.setRowCount(0);
+                for (Course c : courses) {
+                    coursesTableModel.addRow(new Object[]{
+                            c.getCourseCode(),
+                            c.getCourseTitle(),
+                            c.getCreditTheory(),
+                            c.getCreditPractical(),
+                            c.getTotalCredits(),
+                            c.getDepartmentName(),
+                            c.getLecturerName()
+                    });
+                }
             });
+        } catch (AdminOperationException e) {
+            System.err.println("Error loading courses: " + e.getMessage());
         }
     }
 
     private void refreshNoticesTable() {
-        noticesTableModel.setRowCount(0);
-        List<Notice> notices = noticeDAO.getAllNotices();
-        for (Notice n : notices) {
-            noticesTableModel.addRow(new Object[]{
-                    n.getNoticeId(),
-                    n.getTitle(),
-                    n.getTargetAudience(),
-                    n.getPostedByName() != null ? n.getPostedByName() : "Administrator",
-                    n.getPostedDate() != null ? n.getPostedDate().toString() : "Recent",
-                    n.getContent()
+        try {
+            List<Notice> notices = noticeDAO.getAllNotices();
+            SwingUtilities.invokeLater(() -> {
+                noticesTableModel.setRowCount(0);
+                for (Notice n : notices) {
+                    noticesTableModel.addRow(new Object[]{
+                            n.getNoticeId(),
+                            n.getTitle(),
+                            n.getTargetAudience(),
+                            n.getPostedByName() != null ? n.getPostedByName() : "Administrator",
+                            n.getPostedDate() != null ? n.getPostedDate().toString() : "Recent",
+                            n.getContent()
+                    });
+                }
             });
+        } catch (AdminOperationException e) {
+            System.err.println("Error loading notices: " + e.getMessage());
         }
     }
 
     private void refreshTimetablesTable() {
-        timetablesTableModel.setRowCount(0);
-        List<Timetable> list = timetableDAO.getAllTimetables();
-        for (Timetable t : list) {
-            timetablesTableModel.addRow(new Object[]{
-                    t.getTimetableId(),
-                    t.getCourseCode(),
-                    t.getCourseTitle() != null ? t.getCourseTitle() : "-",
-                    t.getDepartmentName() != null ? t.getDepartmentName() : "-",
-                    t.getSessionType(),
-                    t.getDayOfWeek(),
-                    t.getStartTime() != null ? t.getStartTime().toString() : "-",
-                    t.getEndTime() != null ? t.getEndTime().toString() : "-",
-                    t.getVenue()
+        try {
+            List<Timetable> list = timetableDAO.getAllTimetables();
+            SwingUtilities.invokeLater(() -> {
+                timetablesTableModel.setRowCount(0);
+                for (Timetable t : list) {
+                    timetablesTableModel.addRow(new Object[]{
+                            t.getTimetableId(),
+                            t.getCourseCode(),
+                            t.getCourseTitle() != null ? t.getCourseTitle() : "-",
+                            t.getDepartmentName() != null ? t.getDepartmentName() : "-",
+                            t.getSessionType(),
+                            t.getDayOfWeek(),
+                            t.getStartTime() != null ? t.getStartTime().toString() : "-",
+                            t.getEndTime() != null ? t.getEndTime().toString() : "-",
+                            t.getVenue()
+                    });
+                }
             });
+        } catch (AdminOperationException e) {
+            System.err.println("Error loading timetables: " + e.getMessage());
         }
     }
 
