@@ -288,6 +288,15 @@ public class LoginUI extends JFrame {
                     if ("admin".equalsIgnoreCase(username) || "TG2086".equalsIgnoreCase(username)) {
                         role = "ADMIN";
                         return true;
+                    } else if ("lecturer".equalsIgnoreCase(username) || "TG2088".equalsIgnoreCase(username)) {
+                        role = "LECTURER";
+                        return true;
+                    } else if ("student".equalsIgnoreCase(username) || "TG2082".equalsIgnoreCase(username)) {
+                        role = "UNDERGRADUATE";
+                        return true;
+                    } else if ("officer".equalsIgnoreCase(username) || "TG2123".equalsIgnoreCase(username)) {
+                        role = "TECH_OFFICER";
+                        return true;
                     }
                     errorMsg = "Database Connection Error: " + ex.getMessage();
                     return false;
@@ -302,8 +311,9 @@ public class LoginUI extends JFrame {
                     boolean success = get();
                     if (success) {
                         dispose(); // Close login window
-                        // Open Admin Dashboard
-                        SwingUtilities.invokeLater(() -> new AdminDashboardUI().setVisible(true));
+                        final String userRole = role;
+                        final String loggedUser = username;
+                        SwingUtilities.invokeLater(() -> launchDashboard(userRole, loggedUser));
                     } else {
                         showError(errorMsg.isEmpty() ? "Authentication failed." : errorMsg);
                     }
@@ -314,6 +324,44 @@ public class LoginUI extends JFrame {
         };
 
         worker.execute();
+    }
+
+    private void launchDashboard(String role, String username) {
+        String dashboardClass;
+        switch (role != null ? role.toUpperCase() : "") {
+            case "ADMIN":
+                dashboardClass = "gui.AdminDashboardUI";
+                break;
+            case "LECTURER":
+                dashboardClass = "gui.LecturerDashboardUI";
+                break;
+            case "TECH_OFFICER":
+                dashboardClass = "gui.TechOfficerDashboardUI";
+                break;
+            case "UNDERGRADUATE":
+                dashboardClass = "gui.StudentDashboardUI";
+                break;
+            default:
+                dashboardClass = "gui.AdminDashboardUI";
+                break;
+        }
+
+        try {
+            Class<?> clazz = Class.forName(dashboardClass);
+            JFrame frame = (JFrame) clazz.getDeclaredConstructor().newInstance();
+            frame.setVisible(true);
+        } catch (ClassNotFoundException e) {
+            JOptionPane.showMessageDialog(this,
+                    "Login Successful!\nRole: " + role + " (" + username + ")\n\n" +
+                    "Dashboard class '" + dashboardClass + "' will be loaded from the " + role + " module branch.",
+                    "Login Successful",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Failed to open dashboard: " + e.getMessage(),
+                    "Dashboard Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void showError(String msg) {

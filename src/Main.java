@@ -1,11 +1,10 @@
-import gui.AdminDashboardUI;
 import gui.LoginUI;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 /**
- * Main application launcher for the FTMS Admin Module.
- * Launches the Login Portal, which directs authenticated users to AdminDashboardUI.
+ * Main application launcher for the Faculty Technical Management System (FTMS).
+ * Launches the Login Portal.
  */
 public class Main {
     public static void main(String[] args) {
