@@ -150,5 +150,36 @@ public class UndergrduateDAO {
             return false;
         }
     }
+    public List<Course> getEnrolledCourses(int studentId) {
+        List<Course> list = new ArrayList<>();
+        String sql = "SELECT c.*, u.full_name AS lecturer_name FROM enrollment e " +
+                "JOIN course c ON e.course_code = c.course_code " +
+                "LEFT JOIN lecturer l ON c.lecturer_id = l.lecturer_id " +
+                "LEFT JOIN users u ON l.user_id = u.user_id " +
+                "WHERE e.student_id = ? ORDER BY c.course_code";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, studentId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Course c = new Course(
+                        rs.getString("course_code"),
+                        rs.getString("course_title"),
+                        rs.getInt("credit_theory"),
+                        rs.getInt("credit_practical"),
+                        rs.getInt("department_id"),
+                        (Integer) rs.getObject("lecturer_id")
+                );
+                c.setLecturerName(rs.getString("lecturer_name"));
+                list.add(c);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
 }
 
