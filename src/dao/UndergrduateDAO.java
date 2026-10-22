@@ -253,6 +253,36 @@ public class UndergrduateDAO {
         return list;
     }
 
+    public List<Timetable> getTimetableForStudent(int studentId) {
+        List<Timetable> list = new ArrayList<>();
+        String sql = "SELECT t.* FROM enrollment e " +
+                "JOIN timetable t ON e.course_code = t.course_code " +
+                "WHERE e.student_id = ? " +
+                "ORDER BY FIELD(t.day_of_week, 'Monday','Tuesday','Wednesday','Thursday','Friday'), t.start_time";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, studentId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new Timetable(
+                        rs.getInt("timetable_id"),
+                        rs.getInt("department_id"),
+                        rs.getString("course_code"),
+                        rs.getString("day_of_week"),
+                        rs.getTime("start_time"),
+                        rs.getTime("end_time"),
+                        rs.getString("venue"),
+                        rs.getString("session_type")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
 }
 
 
