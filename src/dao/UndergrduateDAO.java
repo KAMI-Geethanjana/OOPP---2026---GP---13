@@ -181,5 +181,78 @@ public class UndergrduateDAO {
         return list;
     }
 
+    public List<CourseMaterial> getCourseMaterialsForStudent(int studentId) {
+        List<CourseMaterial> list = new ArrayList<>();
+        String sql = "SELECT cm.* FROM enrollment e " +
+                "JOIN course_material cm ON e.course_code = cm.course_code " +
+                "WHERE e.student_id = ? ORDER BY cm.uploaded_date DESC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, studentId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new CourseMaterial(
+                        rs.getInt("material_id"),
+                        rs.getString("course_code"),
+                        rs.getInt("lecturer_id"),
+                        rs.getString("title"),
+                        rs.getString("file_path"),
+                        rs.getDate("uploaded_date")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Result> getResultsForStudent(int studentId) {
+        List<Result> list = new ArrayList<>();
+        String sql = "SELECT e.enrollment_id, e.student_id, ug.reg_no, u.full_name, e.course_code, " +
+                "e.attempt_type, " +
+                "COALESCE(r.result_id, 0) AS result_id, " +
+                "COALESCE(r.ca_mark, 0.0) AS ca_mark, " +
+                "COALESCE(r.final_exam_mark, 0.0) AS final_exam_mark, " +
+                "COALESCE(r.total_mark, 0.0) AS total_mark, " +
+                "COALESCE(r.eligibility_status, 'ELIGIBLE') AS eligibility_status, " +
+                "COALESCE(r.grade, '-') AS grade, " +
+                "COALESCE(r.grade_point, 0.0) AS grade_point " +
+                "FROM enrollment e " +
+                "JOIN undergraduate ug ON e.student_id = ug.student_id " +
+                "JOIN users u ON ug.user_id = u.user_id " +
+                "LEFT JOIN result r ON e.enrollment_id = r.enrollment_id " +
+                "WHERE e.student_id = ? ORDER BY e.course_code";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, studentId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new Result(
+                        rs.getInt("result_id"),
+                        rs.getInt("enrollment_id"),
+                        rs.getInt("student_id"),
+                        rs.getString("reg_no"),
+                        rs.getString("full_name"),
+                        rs.getString("course_code"),
+                        rs.getString("attempt_type"),
+                        rs.getDouble("ca_mark"),
+                        rs.getDouble("final_exam_mark"),
+                        rs.getDouble("total_mark"),
+                        rs.getString("eligibility_status"),
+                        rs.getString("grade"),
+                        rs.getDouble("grade_point")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
 }
+
 
