@@ -129,40 +129,20 @@ VALUES
 
 -- 9. Timetable
 INSERT INTO timetable
-    (timetable_id, department_id, course_code, day_of_week,
-     start_time, end_time, venue, session_type)
+(timetable_id, department_id, course_code, day_of_week, start_time, end_time, venue, session_type)
 VALUES
-    -- Monday
-    (1, 1, 'ICT2122', 'Monday',
-     '08:30:00', '10:30:00', 'Hall C', 'THEORY'),
-
-    (2, 1, 'ICT2132', 'Monday',
-     '10:30:00', '12:30:00', 'Computer Lab 01', 'PRACTICAL'),
-
-    -- Tuesday
-    (3, 1, 'ICT2113', 'Tuesday',
-     '08:30:00', '11:30:00', 'Hall B', 'THEORY'),
-
-    -- Wednesday
-    (4, 1, 'ICT2142', 'Wednesday',
-     '08:30:00', '10:30:00', 'Hall A', 'THEORY'),
-
-    (5, 2, 'TCS2121', 'Wednesday',
-     '10:00:00', '12:00:00', 'ICT Hardware Lab', 'PRACTICAL'),
-
-    -- Thursday
-    (6, 1, 'ICT2152', 'Thursday',
-     '10:30:00', '12:30:00', 'Hall C', 'THEORY'),
-
-    -- Friday
-    (7, 2, 'ENG2112', 'Friday',
-     '08:30:00', '10:30:00', 'Language Lab', 'THEORY'),
-
-    (8, 2, 'ICT2162', 'Friday',
-     '10:00:00', '12:00:00', 'ICT New Lab', 'THEORY'),
-
-    (9, 2, 'TCS2112', 'Friday',
-     '13:30:00', '15:30:00', 'Seminar Room 1', 'THEORY');
+(1, 1, 'ICT2113', 'Monday', '09:00:00', '11:00:00', 'ICT Lab 11', 'THEORY'),
+(2, 1, 'ICT2113', 'Monday', '11:00:00', '13:00:00', 'ICT Lab 11', 'PRACTICAL'),
+(3, 1, 'ICT2142', 'Tuesday', '09:00:00', '12:00:00', 'ICT New Lab', 'THEORY'),
+(4, 1, 'ICT2152', 'Tuesday', '13:00:00', '15:00:00', 'ICT Lab 12', 'THEORY'),
+(5, 2, 'TCS2112', 'Wednesday', '08:00:00', '09:00:00', 'ICT ILT', 'THEORY'),
+(6, 2, 'TCS2121', 'Wednesday', '10:00:00', '12:00:00', 'ICT Hardware Lab', 'PRACTICAL'),
+(7, 1, 'ICT2122', 'Thursday', '09:00:00', '11:00:00', 'ICT Lab 11', 'THEORY'),
+(8, 1, 'ICT2132', 'Thursday', '11:00:00', '13:00:00', 'ICT Lab 11', 'PRACTICAL'),
+(9, 1, 'ICT2132', 'Thursday', '14:00:00', '16:00:00', 'ICT Lab 11', 'PRACTICAL'),
+(10, 2, 'TCS2112', 'Friday', '08:00:00', '10:00:00', 'ICT Hardware Lab', 'THEORY'),
+(11, 2, 'ICT2162', 'Friday', '10:00:00', '12:00:00', 'ICT New Lab', 'THEORY'),
+(12, 2, 'ENG2112', 'Friday', '13:00:00', '15:00:00', 'ICT Hardware Lab', 'THEORY');
 
 -- 10. Notices
 INSERT INTO notice (notice_id, title, content, target_audience, created_date, posted_by) VALUES
