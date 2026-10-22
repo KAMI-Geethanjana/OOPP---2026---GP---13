@@ -8,30 +8,53 @@ import common.model.Result;
 import common.util.GradeCalculator;
 import common.util.UITheme;
 import common.util.UserSession;
+import tg2088.dao.ILecturerDAO;
 import tg2088.dao.LecturerDAO;
+import tg2088.exception.LecturerOperationException;
 import tg2088.model.CourseMaterial;
 import tg2088.model.Lecturer;
+import tg2088.util.LecturerFileHandler;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
-
+/**
+ * ============================================================================
+ * Lessons 02, 04, 05, 06: GUI, Interfaces, Exception Handling & File Handling
+ * ============================================================================
+ * Reference:
+ * - Lesson 04, Slide 29: Using an Interface as a Type ('ILecturerDAO lecturerDAO')
+ * - Lesson 04, Slide 30: Using Interfaces for Callbacks (ActionListener event handlers)
+ * - Lesson 05, Slide 25-29: Structured try-catch blocks with custom checked exceptions
+ * - Lesson 06, Slide 12-18: Character stream report export (PrintWriter, FileWriter)
+ * - Lesson 06, Slide 27-33: Binary stream backup (DataOutputStream)
+ * - Lesson 02 Part 02, Slide 5-7: Usage of 'this' keyword as current object reference
+ * ============================================================================
+ */
 public class LecturerDashboard extends JFrame {
 
+    // ========================================================================
+    // Instance Fields (Encapsulation - Lesson 03 Part 04, Slide 11)
+    // ========================================================================
     private Lecturer lecturer;
-    private LecturerDAO lecturerDAO;
+    
+    // Interface as a Type (Lesson 04, Slide 29: Using an Interface as a Type)
+    private ILecturerDAO lecturerDAO;
     private NoticeDAO noticeDAO;
 
     // UI Panels
     private JPanel contentCards;
     private CardLayout cardLayout;
 
-    // Sidebar buttons
+    // Sidebar navigation buttons
     private JButton btnNavMarks;
     private JButton btnNavEligibility;
     private JButton btnNavMaterials;
@@ -73,14 +96,19 @@ public class LecturerDashboard extends JFrame {
     private JLabel lblProfUsername;
     private JLabel lblProfEmpId;
 
+    /**
+     * Parameterized Constructor (Lesson 02, Slide 38)
+     * Demonstrates 'this' keyword to initialize instance variables (Lesson 02 Part 02, Slide 5-7).
+     */
     public LecturerDashboard(Lecturer lecturer) {
         this.lecturer = lecturer;
+        // Instantiating interface implementation (Lesson 04, Slide 10 & 29)
         this.lecturerDAO = new LecturerDAO();
         this.noticeDAO = new NoticeDAO();
 
         // If lecturer model didn't have department populated, refresh from DB
-        if (lecturer != null && lecturer.getDepartmentName() == null) {
-            Lecturer fullLec = lecturerDAO.getLecturerByUserId(lecturer.getUserId());
+        if (this.lecturer != null && this.lecturer.getDepartmentName() == null) {
+            Lecturer fullLec = this.lecturerDAO.getLecturerByUserId(this.lecturer.getUserId());
             if (fullLec != null) {
                 this.lecturer = fullLec;
             }
@@ -91,7 +119,7 @@ public class LecturerDashboard extends JFrame {
 
     private void initUI() {
         setTitle("Faculty of Technology Management System - Lecturer Portal (" + (lecturer != null ? lecturer.getFullName() : "") + ")");
-        setSize(1180, 720);
+        setSize(1200, 740);
         setMinimumSize(new Dimension(1000, 620));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -162,7 +190,13 @@ public class LecturerDashboard extends JFrame {
         btnNavNotices = UITheme.createSidebarButton("Notices", false);
         btnNavProfile = UITheme.createSidebarButton("My Profile", false);
 
-        btnNavMarks.addActionListener(e -> switchCard("MARKS", btnNavMarks));
+        // Lesson 04 Slide 30: Using Interfaces for Callbacks (ActionListener event dispatch)
+        btnNavMarks.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                switchCard("MARKS", btnNavMarks);
+            }
+        });
         btnNavEligibility.addActionListener(e -> {
             switchCard("ELIGIBILITY", btnNavEligibility);
             loadEligibilityData();
@@ -272,9 +306,9 @@ public class LecturerDashboard extends JFrame {
         }
     }
 
-    // ==========================================
+    // ========================================================================
     // 1. MARKS & GRADING PANEL
-    // ==========================================
+    // ========================================================================
     private JPanel createMarksPanel() {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
@@ -315,8 +349,14 @@ public class LecturerDashboard extends JFrame {
         JButton btnSave = UITheme.createButton("Save Results", UITheme.SUCCESS_GREEN, Color.WHITE);
         btnSave.addActionListener(e -> saveMarksToDatabase());
 
+        // Lesson 06: File Handling - Character Stream Export Button
+        JButton btnExport = UITheme.createButton("Export Report (.txt)", new Color(79, 70, 229), Color.WHITE);
+        btnExport.setToolTipText("Export marks to a character stream text report (Lesson 06)");
+        btnExport.addActionListener(e -> handleExportMarksReport());
+
         actionPanel.add(btnCalc);
         actionPanel.add(btnSave);
+        actionPanel.add(btnExport);
         topToolbar.add(actionPanel, BorderLayout.EAST);
 
         card.add(topToolbar, BorderLayout.NORTH);
@@ -338,7 +378,7 @@ public class LecturerDashboard extends JFrame {
         card.add(scroll, BorderLayout.CENTER);
 
         // Bottom Note
-        JLabel lblNote = new JLabel("Note: Double-click CA Marks or Final Exam cells to edit. Click 'Calculate Grades' then 'Save Results'. Repeat attempts capped at 'C'.");
+        JLabel lblNote = new JLabel("Note: Double-click CA Marks or Final Exam cells to edit. Click 'Calculate Grades' then 'Save Results'. Export report generates .txt via Lesson 06 Character Streams.");
         lblNote.setFont(UITheme.FONT_SMALL);
         lblNote.setForeground(UITheme.TEXT_MUTED);
         card.add(lblNote, BorderLayout.SOUTH);
@@ -346,9 +386,9 @@ public class LecturerDashboard extends JFrame {
         return card;
     }
 
-    // ==========================================
+    // ========================================================================
     // 2. EXAM ELIGIBILITY PANEL
-    // ==========================================
+    // ========================================================================
     private JPanel createEligibilityPanel() {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
@@ -394,9 +434,9 @@ public class LecturerDashboard extends JFrame {
         return card;
     }
 
-    // ==========================================
+    // ========================================================================
     // 3. COURSE MATERIALS PANEL
-    // ==========================================
+    // ========================================================================
     private JPanel createMaterialsPanel() {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
@@ -429,14 +469,14 @@ public class LecturerDashboard extends JFrame {
         // Upload Form Panel at bottom
         JPanel formPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 5));
         formPanel.setOpaque(false);
-        formPanel.setBorder(BorderFactory.createTitledBorder("Upload New Lecture Material"));
+        formPanel.setBorder(BorderFactory.createTitledBorder("Upload & Backup Lecture Materials"));
 
         formPanel.add(new JLabel("Title:"));
-        txtMaterialTitle = UITheme.createTextField(18);
+        txtMaterialTitle = UITheme.createTextField(16);
         formPanel.add(txtMaterialTitle);
 
         formPanel.add(new JLabel("File Path:"));
-        txtMaterialPath = UITheme.createTextField(22);
+        txtMaterialPath = UITheme.createTextField(18);
         formPanel.add(txtMaterialPath);
 
         JButton btnUpload = UITheme.createButton("Upload Material", UITheme.SUCCESS_GREEN, Color.WHITE);
@@ -447,13 +487,19 @@ public class LecturerDashboard extends JFrame {
         btnDelete.addActionListener(e -> handleDeleteMaterial());
         formPanel.add(btnDelete);
 
+        // Lesson 06: Binary Stream Backup Button (DataOutputStream)
+        JButton btnBinaryBackup = UITheme.createButton("Binary Backup (.dat)", new Color(13, 148, 136), Color.WHITE);
+        btnBinaryBackup.setToolTipText("Backup materials list to a binary stream file (Lesson 06)");
+        btnBinaryBackup.addActionListener(e -> handleBackupMaterials());
+        formPanel.add(btnBinaryBackup);
+
         card.add(formPanel, BorderLayout.SOUTH);
         return card;
     }
 
-    // ==========================================
+    // ========================================================================
     // 4. STUDENT ATTENDANCE PANEL
-    // ==========================================
+    // ========================================================================
     private JPanel createAttendancePanel() {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
@@ -486,9 +532,9 @@ public class LecturerDashboard extends JFrame {
         return card;
     }
 
-    // ==========================================
+    // ========================================================================
     // 5. NOTICES PANEL
-    // ==========================================
+    // ========================================================================
     private JPanel createNoticesPanel() {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
@@ -509,9 +555,9 @@ public class LecturerDashboard extends JFrame {
         return card;
     }
 
-    // ==========================================
+    // ========================================================================
     // 6. PROFILE PANEL
-    // ==========================================
+    // ========================================================================
     private JPanel createProfilePanel() {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new GridBagLayout());
@@ -567,9 +613,9 @@ public class LecturerDashboard extends JFrame {
         return card;
     }
 
-    // ==========================================
+    // ========================================================================
     // DATA LOADERS & ACTIONS
-    // ==========================================
+    // ========================================================================
     private void loadLecturerCourses() {
         int lecId = lecturer != null ? lecturer.getLecturerId() : 1;
         List<Course> courses = lecturerDAO.getCoursesByLecturer(lecId);
@@ -618,6 +664,7 @@ public class LecturerDashboard extends JFrame {
         int rows = marksTableModel.getRowCount();
         if (rows == 0) return;
 
+        // Structured Exception Handling (Lesson 05, Slide 25-29)
         try {
             for (int i = 0; i < rows; i++) {
                 String attempt = marksTableModel.getValueAt(i, 3).toString();
@@ -625,7 +672,7 @@ public class LecturerDashboard extends JFrame {
                 double ca = Double.parseDouble(marksTableModel.getValueAt(i, 4).toString());
                 double fin = Double.parseDouble(marksTableModel.getValueAt(i, 5).toString());
 
-                // Validate range (OOP Exception handling)
+                // Validate range with custom exception (Lesson 05, Slide 40 & 44)
                 GradeCalculator.validateMark(ca, "CA");
                 GradeCalculator.validateMark(fin, "Final Exam");
 
@@ -647,8 +694,14 @@ public class LecturerDashboard extends JFrame {
                 marksTableModel.setValueAt(gpv, i, 9);
             }
 
-            JOptionPane.showMessageDialog(this, "Marks and UGC grades calculated successfully!\nClick 'Save Results' to persist into database.", "Calculated", JOptionPane.INFORMATION_MESSAGE);
+            // 'this' passed as parent component to dialog (Lesson 02 Part 02, Slide 10)
+            JOptionPane.showMessageDialog(this,
+                    "Marks and UGC grades calculated successfully!\nClick 'Save Results' to persist into database.",
+                    "Calculated", JOptionPane.INFORMATION_MESSAGE);
 
+        } catch (NumberFormatException nfe) {
+            // Multiple Catch Blocks: catching specific format exception first (Lesson 05, Slide 28)
+            JOptionPane.showMessageDialog(this, "Please enter valid numeric marks: " + nfe.getMessage(), "Input Error", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Calculation Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -663,20 +716,59 @@ public class LecturerDashboard extends JFrame {
         if (rows == 0) return;
 
         int successCount = 0;
-        for (int i = 0; i < rows; i++) {
-            int enrollmentId = Integer.parseInt(marksTableModel.getValueAt(i, 0).toString());
-            double ca = Double.parseDouble(marksTableModel.getValueAt(i, 4).toString());
-            double fin = Double.parseDouble(marksTableModel.getValueAt(i, 5).toString());
-            double total = Double.parseDouble(marksTableModel.getValueAt(i, 6).toString());
-            String elig = marksTableModel.getValueAt(i, 7).toString();
-            String grade = marksTableModel.getValueAt(i, 8).toString();
-            double gpv = Double.parseDouble(marksTableModel.getValueAt(i, 9).toString());
+        try {
+            for (int i = 0; i < rows; i++) {
+                int enrollmentId = Integer.parseInt(marksTableModel.getValueAt(i, 0).toString());
+                double ca = Double.parseDouble(marksTableModel.getValueAt(i, 4).toString());
+                double fin = Double.parseDouble(marksTableModel.getValueAt(i, 5).toString());
+                double total = Double.parseDouble(marksTableModel.getValueAt(i, 6).toString());
+                String elig = marksTableModel.getValueAt(i, 7).toString();
+                String grade = marksTableModel.getValueAt(i, 8).toString();
+                double gpv = Double.parseDouble(marksTableModel.getValueAt(i, 9).toString());
 
-            boolean ok = lecturerDAO.saveOrUpdateResult(enrollmentId, ca, fin, total, elig, grade, gpv);
-            if (ok) successCount++;
+                boolean ok = lecturerDAO.saveOrUpdateResult(enrollmentId, ca, fin, total, elig, grade, gpv);
+                if (ok) successCount++;
+            }
+
+            JOptionPane.showMessageDialog(this, successCount + " marks records saved successfully to database!", "Success", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (LecturerOperationException loe) {
+            // Custom Checked Exception caught and presented gracefully (Lesson 05, Slide 25)
+            JOptionPane.showMessageDialog(this, "Operation Error: " + loe.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Unexpected Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Lesson 06: File Handling - Character Stream Export Handler
+     * Uses PrintWriter and BufferedWriter to write a formatted .txt report.
+     */
+    private void handleExportMarksReport() {
+        String courseCode = (String) cbMarksCourse.getSelectedItem();
+        if (courseCode == null) return;
+
+        List<Result> results = lecturerDAO.getResultsByCourse(courseCode);
+        if (results.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No student results found to export for " + courseCode, "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
         }
 
-        JOptionPane.showMessageDialog(this, successCount + " marks records saved successfully to database!", "Success", JOptionPane.INFORMATION_MESSAGE);
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setSelectedFile(new File("Course_" + courseCode + "_Marks_Report.txt"));
+        int choice = fileChooser.showSaveDialog(this);
+
+        if (choice == JFileChooser.APPROVE_OPTION) {
+            File chosenFile = fileChooser.getSelectedFile();
+            boolean success = LecturerFileHandler.exportMarksReport(courseCode, results, chosenFile);
+            if (success) {
+                JOptionPane.showMessageDialog(this,
+                        "Marks Report exported successfully using Character Streams!\nSaved to: " + chosenFile.getAbsolutePath(),
+                        "Export Successful", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to write report to file.", "Export Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     private void loadEligibilityData() {
@@ -709,7 +801,7 @@ public class LecturerDashboard extends JFrame {
             }
 
             boolean caElig = GradeCalculator.isCaEligible(r.getCaMark());
-            boolean attElig = excAtt >= 80.0;
+            boolean attElig = excAtt >= ILecturerDAO.MIN_ATTENDANCE_REQUIREMENT;
             boolean finalElig = caElig && attElig;
             if (finalElig) overallEligibleCount++;
 
@@ -758,15 +850,19 @@ public class LecturerDashboard extends JFrame {
 
         int lecId = lecturer != null ? lecturer.getLecturerId() : 1;
         CourseMaterial cm = new CourseMaterial(0, courseCode, lecId, title, path, new Date(System.currentTimeMillis()));
-        boolean ok = lecturerDAO.addCourseMaterial(cm);
 
-        if (ok) {
-            JOptionPane.showMessageDialog(this, "Course material uploaded successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-            txtMaterialTitle.setText("");
-            txtMaterialPath.setText("");
-            loadMaterialsData();
-        } else {
-            JOptionPane.showMessageDialog(this, "Failed to upload course material.", "Error", JOptionPane.ERROR_MESSAGE);
+        try {
+            boolean ok = lecturerDAO.addCourseMaterial(cm);
+            if (ok) {
+                JOptionPane.showMessageDialog(this, "Course material uploaded successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                txtMaterialTitle.setText("");
+                txtMaterialPath.setText("");
+                loadMaterialsData();
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to upload course material.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (LecturerOperationException loe) {
+            JOptionPane.showMessageDialog(this, loe.getMessage(), "Validation Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -783,6 +879,37 @@ public class LecturerDashboard extends JFrame {
             if (lecturerDAO.deleteCourseMaterial(matId)) {
                 JOptionPane.showMessageDialog(this, "Material deleted successfully!");
                 loadMaterialsData();
+            }
+        }
+    }
+
+    /**
+     * Lesson 06: Binary Stream Backup Handler
+     * Uses DataOutputStream and BufferedOutputStream to serialize materials into a .dat binary file.
+     */
+    private void handleBackupMaterials() {
+        String courseCode = (String) cbMaterialCourse.getSelectedItem();
+        if (courseCode == null) return;
+
+        List<CourseMaterial> materials = lecturerDAO.getCourseMaterials(courseCode);
+        if (materials.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No materials found to backup for " + courseCode, "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setSelectedFile(new File("Materials_" + courseCode + "_Backup.dat"));
+        int choice = fileChooser.showSaveDialog(this);
+
+        if (choice == JFileChooser.APPROVE_OPTION) {
+            File chosenFile = fileChooser.getSelectedFile();
+            boolean success = LecturerFileHandler.saveMaterialsToBinaryFile(materials, chosenFile);
+            if (success) {
+                JOptionPane.showMessageDialog(this,
+                        "Course Materials binary backup created successfully via DataOutputStream!\nFile: " + chosenFile.getAbsolutePath(),
+                        "Backup Successful", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to create binary backup.", "Backup Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
