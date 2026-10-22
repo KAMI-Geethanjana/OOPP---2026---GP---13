@@ -132,4 +132,23 @@ public class UndergrduateDAO {
         }
         return list;
     }
+
+    public boolean submitMedical(Medical m) {
+        String sql = "INSERT INTO medical (student_id, course_code, medical_date, reason, document_path, status) VALUES (?, ?, ?, ?, ?, 'PENDING')";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, m.getStudentId());
+            ps.setString(2, m.getCourseCode());
+            ps.setDate(3, m.getMedicalDate());
+            ps.setString(4, m.getReason());
+            ps.setString(5, m.getDocumentPath());
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
+
