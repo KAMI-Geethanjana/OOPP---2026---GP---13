@@ -1,11 +1,11 @@
-
+package dao;
 
 import common.config.DBConnection;
 import common.model.Course;
 import common.model.Medical;
 import common.model.Result;
 import common.model.Timetable;
-import model.Undergraduate;
+import  model.Undergraduate;
 import model.CourseMaterial;
 
 import java.sql.*;
@@ -373,4 +373,26 @@ public class UndergraduateDAO {
             return false;
         }
     }
+
+    public boolean deletePendingMedical(int medicalId, int studentId) {
+
+        String sql = "DELETE FROM medical " +
+                "WHERE medical_id = ? " +
+                "AND student_id = ? " +
+                "AND status = 'PENDING'";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, medicalId);
+            ps.setInt(2, studentId);
+
+            return ps.executeUpdate() == 1;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }
