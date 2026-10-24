@@ -1,17 +1,8 @@
-package gui;
-
 import common.auth.LoginFrame;
 import common.dao.NoticeDAO;
-import common.model.Course;
-import common.model.Medical;
-import common.model.Notice;
-import common.model.Result;
-import common.model.Timetable;
+import common.model.*;
 import common.util.UITheme;
 import common.util.UserSession;
-import dao.UndergrduateDAO;
-import model.Undergraduate;
-import model.CourseMaterial;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -21,7 +12,30 @@ import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
-/**
+/**package tg2082.gui;
+
+ import common.auth.LoginFrame;
+ import common.dao.NoticeDAO;
+ import common.model.Course;
+ import common.model.Medical;
+ import common.model.Notice;
+ import common.model.Result;
+ import common.model.Timetable;
+ import common.util.UITheme;
+ import common.util.UserSession;
+ import tg2082.dao.UndergraduateDAO;
+ import tg2082.model.Undergraduate;
+ import tg2088.model.CourseMaterial;
+
+ import javax.swing.*;
+ import javax.swing.border.EmptyBorder;
+ import javax.swing.table.DefaultTableModel;
+ import java.awt.*;
+ import java.sql.Date;
+ import java.util.List;
+ import java.util.Map;
+
+ /**
  * UndergraduateDashboard - Interactive student portal for FTMS.
  * Faithfully styled to match the Student Portal UI specification:
  * - Dark navy navigation sidebar with purple active pills
@@ -73,6 +87,7 @@ public class UndergraduateDashboard extends JFrame {
     private JTextField txtMedDate;
     private JTextArea txtMedReason;
     private JTextField txtMedPath;
+    private java.io.File selectedMedicalCertificate;
 
     // Courses & Materials components
     private JTable tblCourses;
@@ -96,6 +111,8 @@ public class UndergraduateDashboard extends JFrame {
     // Profile components
     private JTextField txtProfEmail, txtProfPhone;
     private JLabel lblProfRegNo, lblProfBatch, lblProfDept, lblProfStatus;
+    private JLabel lblProfilePicture;
+    private JLabel lblAvatar;
 
     public UndergraduateDashboard(Undergraduate student) {
         this.student = student;
@@ -239,17 +256,62 @@ public class UndergraduateDashboard extends JFrame {
         // Circular Avatar icon on right
         JPanel avatarPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         avatarPanel.setOpaque(false);
-        JLabel lblAvatar = new JLabel() {
+        lblAvatar = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(203, 213, 225));
-                g2.fillOval(0, 0, 40, 40);
-                g2.setColor(new Color(71, 85, 105));
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 15));
-                g2.drawString("S", 15, 25);
-                g2.dispose();
+                try {
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                            RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                            RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+
+                    int diameter = Math.min(getWidth(), getHeight()) - 2;
+                    int left = (getWidth() - diameter) / 2;
+                    int top = (getHeight() - diameter) / 2;
+                    java.awt.Shape circle = new java.awt.geom.Ellipse2D.Double(
+                            left, top, diameter, diameter);
+                    g2.setColor(new Color(203, 213, 225));
+                    g2.fill(circle);
+
+                    String path = student == null ? null : student.getProfilePic();
+                    java.io.File photo = path == null ? null : new java.io.File(path);
+                    Image image = null;
+                    if (photo != null && photo.isFile()) {
+                        ImageIcon icon = new ImageIcon(photo.getAbsolutePath());
+                        if (icon.getIconWidth() > 0 && icon.getIconHeight() > 0) {
+                            image = icon.getImage();
+                        }
+                    }
+
+                    if (image != null) {
+                        int imageWidth = image.getWidth(this);
+                        int imageHeight = image.getHeight(this);
+                        double scale = Math.max((double) diameter / imageWidth,
+                                (double) diameter / imageHeight);
+                        int width = (int) Math.ceil(imageWidth * scale);
+                        int height = (int) Math.ceil(imageHeight * scale);
+                        java.awt.Shape previousClip = g2.getClip();
+                        g2.clip(circle);
+                        g2.drawImage(image, left + (diameter - width) / 2,
+                                top + (diameter - height) / 2, width, height, this);
+                        g2.setClip(previousClip);
+                    } else {
+                        String name = student == null ? null : student.getFullName();
+                        String initial = (name == null || name.trim().isEmpty())
+                                ? "?" : name.trim().substring(0, 1).toUpperCase();
+                        g2.setColor(new Color(71, 85, 105));
+                        g2.setFont(new Font("Segoe UI", Font.BOLD, 15));
+                        FontMetrics metrics = g2.getFontMetrics();
+                        int textX = left + (diameter - metrics.stringWidth(initial)) / 2;
+                        int textY = top + (diameter - metrics.getHeight()) / 2
+                                + metrics.getAscent();
+                        g2.drawString(initial, textX, textY);
+                    }
+                } finally {
+                    g2.dispose();
+                }
             }
         };
         lblAvatar.setPreferredSize(new Dimension(42, 42));
@@ -316,7 +378,7 @@ public class UndergraduateDashboard extends JFrame {
         lblMedicalsVal = new JLabel("0", SwingConstants.CENTER);
 
         statsGrid.add(createStatCard("Enrolled Courses", lblCoursesVal, new Color(59, 130, 246)));
-        statsGrid.add(createStatCard("Semester GPA (SGPA)", lblGpaVal, new Color(16, 185, 129)));
+        statsGrid.add(createStatCard("Credit-weighted GPA", lblGpaVal, new Color(16, 185, 129)));
         statsGrid.add(createStatCard("Average Attendance", lblAttendanceVal, new Color(139, 92, 246)));
         statsGrid.add(createStatCard("Approved Medicals", lblMedicalsVal, new Color(245, 158, 11)));
 
@@ -387,32 +449,45 @@ public class UndergraduateDashboard extends JFrame {
         txtMedReason.setBorder(BorderFactory.createTitledBorder("Describe medical reason"));
         formPanel.add(new JScrollPane(txtMedReason), BorderLayout.CENTER);
 
-        JPanel rowFields = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        rowFields.setOpaque(false);
-        rowFields.add(new JLabel("Course:"));
+        // Two rows prevent the Choose File button from being pushed off-screen.
+        JPanel fieldsPanel = new JPanel(new GridLayout(2, 1, 0, 4));
+        fieldsPanel.setOpaque(false);
+
+        JPanel firstRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        firstRow.setOpaque(false);
+        firstRow.add(new JLabel("Course:"));
         cbMedCourse = new JComboBox<>();
         cbMedCourse.setPreferredSize(new Dimension(120, 32));
-        rowFields.add(cbMedCourse);
+        firstRow.add(cbMedCourse);
 
-        rowFields.add(new JLabel("Medical Date:"));
+        firstRow.add(new JLabel("Medical Date:"));
         txtMedDate = UITheme.createTextField(10);
         txtMedDate.setText(new Date(System.currentTimeMillis()).toString());
-        rowFields.add(txtMedDate);
+        firstRow.add(txtMedDate);
 
-        rowFields.add(new JLabel("Certificate Path:"));
+        JPanel secondRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        secondRow.setOpaque(false);
+        secondRow.add(new JLabel("Medical Certificate:"));
         txtMedPath = UITheme.createTextField(15);
-        txtMedPath.setText("docs/med_cert.pdf");
-        rowFields.add(txtMedPath);
+        txtMedPath.setText("No file selected");
+        txtMedPath.setEditable(false);
+        secondRow.add(txtMedPath);
+
+        JButton btnChooseMedical = UITheme.createButton("Choose File", UITheme.PRIMARY_BLUE, Color.WHITE);
+        btnChooseMedical.addActionListener(e -> chooseMedicalCertificate());
+        secondRow.add(btnChooseMedical);
 
         JButton btnSubmit = UITheme.createButton("Submit Request", UITheme.SUCCESS_GREEN, Color.WHITE);
         btnSubmit.addActionListener(e -> handleSubmitMedical());
-        rowFields.add(btnSubmit);
+        secondRow.add(btnSubmit);
 
         JButton btnRefresh = UITheme.createButton("Refresh List", UITheme.PRIMARY_BLUE, Color.WHITE);
         btnRefresh.addActionListener(e -> loadMedicalData());
-        rowFields.add(btnRefresh);
+        secondRow.add(btnRefresh);
 
-        formPanel.add(rowFields, BorderLayout.SOUTH);
+        fieldsPanel.add(firstRow);
+        fieldsPanel.add(secondRow);
+        formPanel.add(fieldsPanel, BorderLayout.SOUTH);
         centerPanel.add(formPanel, BorderLayout.NORTH);
 
         // Table Panel
@@ -492,13 +567,13 @@ public class UndergraduateDashboard extends JFrame {
         lblTitle.setFont(UITheme.FONT_HEADER);
         top.add(lblTitle, BorderLayout.WEST);
 
-        lblSgpa = new JLabel("Semester GPA (SGPA): 0.00");
+        lblSgpa = new JLabel("Credit-weighted GPA: 0.00");
         lblSgpa.setFont(UITheme.FONT_BODY_BOLD);
         lblSgpa.setForeground(UITheme.PRIMARY_BLUE);
         top.add(lblSgpa, BorderLayout.EAST);
         card.add(top, BorderLayout.NORTH);
 
-        String[] cols = {"Course Code", "Attempt", "CA Marks", "Final Exam", "Total Marks", "Eligibility", "Grade", "Grade Point (GPV)"};
+        String[] cols = {"Course Code", "Attempt", "Grade", "Grade Point (GPV)"};
         gradesModel = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -611,9 +686,20 @@ public class UndergraduateDashboard extends JFrame {
         gbc.gridx = 1; gbc.gridy = 6;
         card.add(txtProfEmail, gbc);
 
+        lblProfilePicture = new JLabel("No profile photo selected");
+        gbc.gridx = 0; gbc.gridy = 7;
+        card.add(new JLabel("Profile Picture:"), gbc);
+        gbc.gridx = 1; gbc.gridy = 7;
+        card.add(lblProfilePicture, gbc);
+
+        JButton btnPicture = UITheme.createButton("Choose Profile Picture", UITheme.PRIMARY_BLUE, Color.WHITE);
+        btnPicture.addActionListener(e -> handleProfilePicture());
+        gbc.gridx = 1; gbc.gridy = 8;
+        card.add(btnPicture, gbc);
+
         JButton btnUpdate = UITheme.createButton("Update Contact Details", UITheme.PRIMARY_BLUE, Color.WHITE);
         btnUpdate.addActionListener(e -> handleUpdateProfile());
-        gbc.gridx = 1; gbc.gridy = 7;
+        gbc.gridx = 1; gbc.gridy = 9;
         card.add(btnUpdate, gbc);
 
         return card;
@@ -624,7 +710,7 @@ public class UndergraduateDashboard extends JFrame {
     // ==========================================
     private void loadAttendanceData() {
         int stuId = student != null ? student.getStudentId() : 1;
-        List<Map<String, Object>> list = studentDAO.getAttendanceSummary(stuId);
+        java.util.List<Map<String, Object>> list = studentDAO.getAttendanceSummary(stuId);
         attModel.setRowCount(0);
 
         for (Map<String, Object> m : list) {
@@ -641,10 +727,10 @@ public class UndergraduateDashboard extends JFrame {
 
     private void loadDashboardOverview() {
         int stuId = student != null ? student.getStudentId() : 1;
-        List<Course> courses = studentDAO.getEnrolledCourses(stuId);
-        List<Map<String, Object>> attList = studentDAO.getAttendanceSummary(stuId);
-        List<Medical> meds = studentDAO.getMedicalRecords(stuId);
-        List<Result> results = studentDAO.getResultsForStudent(stuId);
+        java.util.List<Course> courses = studentDAO.getEnrolledCourses(stuId);
+        java.util.List<Map<String, Object>> attList = studentDAO.getAttendanceSummary(stuId);
+        java.util.List<Medical> meds = studentDAO.getMedicalRecords(stuId);
+        java.util.List<Result> results = studentDAO.getResultsForStudent(stuId);
 
         lblCoursesVal.setText(String.valueOf(courses.size()));
 
@@ -661,20 +747,13 @@ public class UndergraduateDashboard extends JFrame {
         }
         lblMedicalsVal.setText(String.valueOf(approvedMeds));
 
-        // GPA calculation
-        double totalGpvCredits = 0.0;
-        int totalCredits = 0;
-        for (Result r : results) {
-            totalGpvCredits += (r.getGradePoint() * 2); // default 2 credits
-            totalCredits += 2;
-        }
-        double gpa = totalCredits > 0 ? totalGpvCredits / totalCredits : 0.0;
+        double gpa = studentDAO.calculateGpa(stuId);
         lblGpaVal.setText(String.format("%.2f", gpa));
     }
 
     private void loadMedicalData() {
         int stuId = student != null ? student.getStudentId() : 1;
-        List<Medical> list = studentDAO.getMedicalRecords(stuId);
+        java.util.List<Medical> list = studentDAO.getMedicalRecords(stuId);
         medModel.setRowCount(0);
 
         for (Medical m : list) {
@@ -689,41 +768,107 @@ public class UndergraduateDashboard extends JFrame {
         }
 
         // Populate course dropdown for submission
-        List<Course> courses = studentDAO.getEnrolledCourses(stuId);
+        java.util.List<Course> courses = studentDAO.getEnrolledCourses(stuId);
         cbMedCourse.removeAllItems();
         for (Course c : courses) {
             cbMedCourse.addItem(c.getCourseCode());
         }
     }
 
+    // Let the student choose a medical certificate instead of typing a file path.
+    private void chooseMedicalCertificate() {
+        JFileChooser chooser = new JFileChooser();
+
+        chooser.setDialogTitle("Select Medical Certificate");
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                "Medical files (JPG, JPEG, PNG, PDF)", "jpg", "jpeg", "png", "pdf"));
+
+        int result;
+        try {
+            result = chooser.showOpenDialog(this);
+        } catch (RuntimeException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Cannot open file chooser: " + ex.getMessage(),
+                    "File Selection Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            java.io.File file = chooser.getSelectedFile();
+
+            if (file != null && file.isFile()) {
+                selectedMedicalCertificate = file;
+                txtMedPath.setText(file.getName());
+            }
+        }
+    }
+
     private void handleSubmitMedical() {
         String course = (String) cbMedCourse.getSelectedItem();
         String reason = txtMedReason.getText().trim();
-        String path = txtMedPath.getText().trim();
 
+        if (course == null || course.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Please select a course!", "Warning", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         if (reason.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please describe the medical reason!", "Warning", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        if (selectedMedicalCertificate == null || !selectedMedicalCertificate.isFile()) {
+            JOptionPane.showMessageDialog(this, "Please choose a medical certificate!", "Warning", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
+        Date dt;
         try {
-            Date dt = Date.valueOf(txtMedDate.getText().trim());
-            int stuId = student != null ? student.getStudentId() : 1;
-
-            Medical m = new Medical(0, stuId, course, dt, reason, path, "PENDING", null);
-            if (studentDAO.submitMedical(m)) {
-                JOptionPane.showMessageDialog(this, "Medical request submitted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                txtMedReason.setText("");
-                loadMedicalData();
-            }
+            dt = Date.valueOf(txtMedDate.getText().trim());
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this, "Please enter date in format YYYY-MM-DD", "Invalid Date", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        java.nio.file.Path target = null;
+        try {
+            java.nio.file.Path folder = java.nio.file.Paths.get("medical_certificates").toAbsolutePath();
+            java.nio.file.Files.createDirectories(folder);
+            String originalName = selectedMedicalCertificate.getName();
+            int dot = originalName.lastIndexOf('.');
+            String ext = dot < 0 ? "" : originalName.substring(dot).toLowerCase(java.util.Locale.ROOT);
+            if (!java.util.Arrays.asList(".jpg", ".jpeg", ".png", ".pdf").contains(ext)) {
+                JOptionPane.showMessageDialog(this, "Please select a JPG, PNG or PDF file.");
+                return;
+            }
+            // Unique name prevents one student's document overwriting another's.
+            target = folder.resolve("medical_" + student.getStudentId() + "_"
+                    + java.util.UUID.randomUUID() + ext);
+            java.nio.file.Files.copy(selectedMedicalCertificate.toPath(), target);
+
+            Medical medical = new Medical(0, student.getStudentId(), course, dt,
+                    reason, target.toString(), "PENDING", null);
+            if (studentDAO.submitMedical(medical)) {
+                JOptionPane.showMessageDialog(this, "Medical request submitted successfully!",
+                        "Success", JOptionPane.INFORMATION_MESSAGE);
+                txtMedReason.setText("");
+                selectedMedicalCertificate = null;
+                txtMedPath.setText("No file selected");
+                txtMedPath.setToolTipText(null);
+                loadMedicalData();
+            } else {
+                java.nio.file.Files.deleteIfExists(target);
+                JOptionPane.showMessageDialog(this, "Medical request could not be saved to the database.",
+                        "Submission Failed", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (java.io.IOException ex) {
+            JOptionPane.showMessageDialog(this, "Could not save medical certificate: " + ex.getMessage(),
+                    "File Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void loadCoursesData() {
         int stuId = student != null ? student.getStudentId() : 1;
-        List<Course> list = studentDAO.getEnrolledCourses(stuId);
+        java.util.List<Course> list = studentDAO.getEnrolledCourses(stuId);
         coursesModel.setRowCount(0);
 
         for (Course c : list) {
@@ -737,7 +882,7 @@ public class UndergraduateDashboard extends JFrame {
             });
         }
 
-        List<CourseMaterial> mats = studentDAO.getCourseMaterialsForStudent(stuId);
+        java.util.List<CourseMaterial> mats = studentDAO.getCourseMaterialsForStudent(stuId);
         materialsModel.setRowCount(0);
         for (CourseMaterial m : mats) {
             materialsModel.addRow(new Object[]{
@@ -752,35 +897,22 @@ public class UndergraduateDashboard extends JFrame {
 
     private void loadGradesData() {
         int stuId = student != null ? student.getStudentId() : 1;
-        List<Result> list = studentDAO.getResultsForStudent(stuId);
+        java.util.List<Result> list = studentDAO.getResultsForStudent(stuId);
         gradesModel.setRowCount(0);
-
-        double totalGpvCredits = 0.0;
-        int totalCredits = 0;
 
         for (Result r : list) {
             gradesModel.addRow(new Object[]{
-                    r.getCourseCode(),
-                    r.getAttemptType(),
-                    r.getCaMark(),
-                    r.getFinalExamMark(),
-                    r.getTotalMark(),
-                    r.getEligibilityStatus(),
-                    r.getGrade(),
-                    r.getGradePoint()
+                    r.getCourseCode(), r.getAttemptType(),
+                    r.getGrade(), r.getGradePoint()
             });
-
-            totalGpvCredits += (r.getGradePoint() * 2);
-            totalCredits += 2;
         }
-
-        double gpa = totalCredits > 0 ? totalGpvCredits / totalCredits : 0.0;
-        lblSgpa.setText(String.format("Semester GPA (SGPA): %.2f", gpa));
+        double gpa = studentDAO.calculateGpa(stuId);
+        lblSgpa.setText(String.format("Credit-weighted GPA: %.2f", gpa));
     }
 
     private void loadTimetableData() {
         int stuId = student != null ? student.getStudentId() : 1;
-        List<Timetable> list = studentDAO.getTimetableForStudent(stuId);
+        java.util.List<Timetable> list = studentDAO.getTimetableForStudent(stuId);
         timetableModel.setRowCount(0);
 
         for (Timetable t : list) {
@@ -817,6 +949,23 @@ public class UndergraduateDashboard extends JFrame {
             lblProfStatus.setText(student.getStatus());
             txtProfPhone.setText(student.getContactNo() != null ? student.getContactNo() : student.getPhoneNo());
             txtProfEmail.setText(student.getEmail());
+            String path = student.getProfilePic();
+
+            if (path != null && !path.isEmpty()
+                    && new java.io.File(path).exists()) {
+
+                ImageIcon icon = new ImageIcon(path);
+
+                Image image = icon.getImage().getScaledInstance(
+                        100, 100, Image.SCALE_SMOOTH);
+
+                lblProfilePicture.setText("");
+                lblProfilePicture.setIcon(new ImageIcon(image));
+
+            } else {
+                lblProfilePicture.setIcon(null);
+                lblProfilePicture.setText("No profile photo selected");
+            }
         }
     }
 
@@ -832,6 +981,38 @@ public class UndergraduateDashboard extends JFrame {
         }
     }
 
+    private void handleProfilePicture() {
+        if (student == null) return;
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Select a profile picture");
+        chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                "Images (JPG, JPEG, PNG)", "jpg", "jpeg", "png"));
+        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
+        java.io.File chosen = chooser.getSelectedFile();
+        if (!chosen.isFile()) return;
+        try {
+            // Copy to the app's own folder so the saved path survives moving the original image.
+            java.nio.file.Path folder = java.nio.file.Paths.get("profile_pictures");
+            java.nio.file.Files.createDirectories(folder);
+            String filename = chosen.getName().toLowerCase(java.util.Locale.ROOT);
+            String ext = filename.substring(filename.lastIndexOf('.'));
+            java.nio.file.Path target = folder.resolve("student_" + student.getUserId() + ext);
+            java.nio.file.Files.copy(chosen.toPath(), target,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            String saved = target.toString();
+            if (studentDAO.updateProfilePicture(student.getUserId(), saved)) {
+                student.setProfilePic(saved);
+                loadProfileData();
+                lblAvatar.repaint();
+                JOptionPane.showMessageDialog(this, "Profile picture updated successfully!");
+            } else {
+                JOptionPane.showMessageDialog(this, "Could not save profile picture to database.");
+            }
+        } catch (java.io.IOException ex) {
+            JOptionPane.showMessageDialog(this, "Cannot copy picture: " + ex.getMessage());
+        }
+    }
+
     private void handleSignOut() {
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to sign out?", "Confirm Sign Out", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
@@ -839,5 +1020,23 @@ public class UndergraduateDashboard extends JFrame {
             dispose();
             new LoginFrame().setVisible(true);
         }
+    }
+}
+
+
+ * Main - Application Entry Point for FTMS.
+ * Initializes desktop UI settings and displays LoginFrame.
+ */
+public class Main {
+    public static void main(String[] args) {
+        // Set system UI look and feel and antialiasing
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignored) {}
+
+        SwingUtilities.invokeLater(() -> {
+            LoginFrame loginFrame = new LoginFrame();
+            loginFrame.setVisible(true);
+        });
     }
 }
