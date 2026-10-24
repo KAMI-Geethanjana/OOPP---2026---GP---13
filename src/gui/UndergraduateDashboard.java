@@ -1,8 +1,17 @@
+package tg2082.gui;
+
 import common.auth.LoginFrame;
 import common.dao.NoticeDAO;
-import common.model.*;
+import common.model.Course;
+import common.model.Medical;
+import common.model.Notice;
+import common.model.Result;
+import common.model.Timetable;
 import common.util.UITheme;
 import common.util.UserSession;
+import tg2082.dao.UndergraduateDAO;
+import tg2082.model.Undergraduate;
+import tg2088.model.CourseMaterial;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -12,30 +21,7 @@ import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
-/**package tg2082.gui;
-
- import common.auth.LoginFrame;
- import common.dao.NoticeDAO;
- import common.model.Course;
- import common.model.Medical;
- import common.model.Notice;
- import common.model.Result;
- import common.model.Timetable;
- import common.util.UITheme;
- import common.util.UserSession;
- import tg2082.dao.UndergraduateDAO;
- import tg2082.model.Undergraduate;
- import tg2088.model.CourseMaterial;
-
- import javax.swing.*;
- import javax.swing.border.EmptyBorder;
- import javax.swing.table.DefaultTableModel;
- import java.awt.*;
- import java.sql.Date;
- import java.util.List;
- import java.util.Map;
-
- /**
+/**
  * UndergraduateDashboard - Interactive student portal for FTMS.
  * Faithfully styled to match the Student Portal UI specification:
  * - Dark navy navigation sidebar with purple active pills
@@ -506,6 +492,15 @@ public class UndergraduateDashboard extends JFrame {
         UITheme.styleTable(tblMedical);
         tableWrapper.add(new JScrollPane(tblMedical), BorderLayout.CENTER);
 
+        JButton btnDeleteMedical = UITheme.createButton(
+                "Delete Selected Medical", new Color(185, 28, 28), Color.WHITE);
+        btnDeleteMedical.addActionListener(e -> handleDeleteMedical());
+        JPanel medicalActions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        medicalActions.setOpaque(false);
+        medicalActions.add(btnDeleteMedical);
+        tableWrapper.add(medicalActions, BorderLayout.SOUTH);
+
+
         centerPanel.add(tableWrapper, BorderLayout.CENTER);
         card.add(centerPanel, BorderLayout.CENTER);
 
@@ -697,9 +692,14 @@ public class UndergraduateDashboard extends JFrame {
         gbc.gridx = 1; gbc.gridy = 8;
         card.add(btnPicture, gbc);
 
+        JButton btnDeletePicture = UITheme.createButton("Remove Profile Picture", new Color(185, 28, 28), Color.WHITE);
+        btnDeletePicture.addActionListener(e -> handleRemoveProfilePicture());
+        gbc.gridx = 1; gbc.gridy = 9;
+        card.add(btnDeletePicture, gbc);
+
         JButton btnUpdate = UITheme.createButton("Update Contact Details", UITheme.PRIMARY_BLUE, Color.WHITE);
         btnUpdate.addActionListener(e -> handleUpdateProfile());
-        gbc.gridx = 1; gbc.gridy = 9;
+        gbc.gridx = 1; gbc.gridy = 10;
         card.add(btnUpdate, gbc);
 
         return card;
@@ -710,7 +710,7 @@ public class UndergraduateDashboard extends JFrame {
     // ==========================================
     private void loadAttendanceData() {
         int stuId = student != null ? student.getStudentId() : 1;
-        java.util.List<Map<String, Object>> list = studentDAO.getAttendanceSummary(stuId);
+        List<Map<String, Object>> list = studentDAO.getAttendanceSummary(stuId);
         attModel.setRowCount(0);
 
         for (Map<String, Object> m : list) {
@@ -727,10 +727,10 @@ public class UndergraduateDashboard extends JFrame {
 
     private void loadDashboardOverview() {
         int stuId = student != null ? student.getStudentId() : 1;
-        java.util.List<Course> courses = studentDAO.getEnrolledCourses(stuId);
-        java.util.List<Map<String, Object>> attList = studentDAO.getAttendanceSummary(stuId);
-        java.util.List<Medical> meds = studentDAO.getMedicalRecords(stuId);
-        java.util.List<Result> results = studentDAO.getResultsForStudent(stuId);
+        List<Course> courses = studentDAO.getEnrolledCourses(stuId);
+        List<Map<String, Object>> attList = studentDAO.getAttendanceSummary(stuId);
+        List<Medical> meds = studentDAO.getMedicalRecords(stuId);
+        List<Result> results = studentDAO.getResultsForStudent(stuId);
 
         lblCoursesVal.setText(String.valueOf(courses.size()));
 
@@ -753,7 +753,7 @@ public class UndergraduateDashboard extends JFrame {
 
     private void loadMedicalData() {
         int stuId = student != null ? student.getStudentId() : 1;
-        java.util.List<Medical> list = studentDAO.getMedicalRecords(stuId);
+        List<Medical> list = studentDAO.getMedicalRecords(stuId);
         medModel.setRowCount(0);
 
         for (Medical m : list) {
@@ -768,7 +768,7 @@ public class UndergraduateDashboard extends JFrame {
         }
 
         // Populate course dropdown for submission
-        java.util.List<Course> courses = studentDAO.getEnrolledCourses(stuId);
+        List<Course> courses = studentDAO.getEnrolledCourses(stuId);
         cbMedCourse.removeAllItems();
         for (Course c : courses) {
             cbMedCourse.addItem(c.getCourseCode());
@@ -801,6 +801,67 @@ public class UndergraduateDashboard extends JFrame {
                 selectedMedicalCertificate = file;
                 txtMedPath.setText(file.getName());
             }
+        }
+    }
+
+    // Only the signed-in student's pending requests may be deleted.
+    private void handleDeleteMedical() {
+        if (student == null) return;
+        int row = tblMedical.getSelectedRow();
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Please select a medical record from the table.");
+            return;
+        }
+        int modelRow = tblMedical.convertRowIndexToModel(row);
+        Object idValue = medModel.getValueAt(modelRow, 0);
+        Object statusValue = medModel.getValueAt(modelRow, 5);
+        if (!"PENDING".equalsIgnoreCase(String.valueOf(statusValue))) {
+            JOptionPane.showMessageDialog(this,
+                    "Only PENDING medical requests can be deleted.",
+                    "Cannot Delete", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int medicalId;
+        try {
+            medicalId = Integer.parseInt(String.valueOf(idValue));
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Invalid medical record ID.");
+            return;
+        }
+        int choice = JOptionPane.showConfirmDialog(this,
+                "Delete pending medical request #" + medicalId + "? This cannot be undone.",
+                "Confirm Medical Deletion", JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        if (choice != JOptionPane.YES_OPTION) return;
+
+        // The DAO verifies student ownership and PENDING status in the DELETE query.
+        if (studentDAO.deletePendingMedical(medicalId, student.getStudentId())) {
+            // Delete only a certificate stored by this application, never the original upload.
+            Object savedPath = medModel.getValueAt(modelRow, 4);
+            deleteOwnedMedicalCertificate(savedPath == null ? null : String.valueOf(savedPath));
+            loadMedicalData();
+            JOptionPane.showMessageDialog(this, "Medical request deleted successfully.");
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Could not delete this request. It may have already been reviewed.",
+                    "Deletion Failed", JOptionPane.ERROR_MESSAGE);
+            loadMedicalData();
+        }
+    }
+
+    private void deleteOwnedMedicalCertificate(String path) {
+        if (path == null || path.isBlank()) return;
+        try {
+            java.nio.file.Path folder = java.nio.file.Paths.get("medical_certificates")
+                    .toAbsolutePath().normalize();
+            java.nio.file.Path file = java.nio.file.Paths.get(path)
+                    .toAbsolutePath().normalize();
+            if (folder.equals(file.getParent()) && file.getFileName().toString()
+                    .startsWith("medical_" + student.getStudentId() + "_")) {
+                java.nio.file.Files.deleteIfExists(file);
+            }
+        } catch (java.io.IOException | java.nio.file.InvalidPathException ex) {
+            System.err.println("Medical file cleanup failed: " + ex.getMessage());
         }
     }
 
@@ -868,7 +929,7 @@ public class UndergraduateDashboard extends JFrame {
 
     private void loadCoursesData() {
         int stuId = student != null ? student.getStudentId() : 1;
-        java.util.List<Course> list = studentDAO.getEnrolledCourses(stuId);
+        List<Course> list = studentDAO.getEnrolledCourses(stuId);
         coursesModel.setRowCount(0);
 
         for (Course c : list) {
@@ -882,7 +943,7 @@ public class UndergraduateDashboard extends JFrame {
             });
         }
 
-        java.util.List<CourseMaterial> mats = studentDAO.getCourseMaterialsForStudent(stuId);
+        List<CourseMaterial> mats = studentDAO.getCourseMaterialsForStudent(stuId);
         materialsModel.setRowCount(0);
         for (CourseMaterial m : mats) {
             materialsModel.addRow(new Object[]{
@@ -897,7 +958,7 @@ public class UndergraduateDashboard extends JFrame {
 
     private void loadGradesData() {
         int stuId = student != null ? student.getStudentId() : 1;
-        java.util.List<Result> list = studentDAO.getResultsForStudent(stuId);
+        List<Result> list = studentDAO.getResultsForStudent(stuId);
         gradesModel.setRowCount(0);
 
         for (Result r : list) {
@@ -912,7 +973,7 @@ public class UndergraduateDashboard extends JFrame {
 
     private void loadTimetableData() {
         int stuId = student != null ? student.getStudentId() : 1;
-        java.util.List<Timetable> list = studentDAO.getTimetableForStudent(stuId);
+        List<Timetable> list = studentDAO.getTimetableForStudent(stuId);
         timetableModel.setRowCount(0);
 
         for (Timetable t : list) {
@@ -996,20 +1057,65 @@ public class UndergraduateDashboard extends JFrame {
             java.nio.file.Files.createDirectories(folder);
             String filename = chosen.getName().toLowerCase(java.util.Locale.ROOT);
             String ext = filename.substring(filename.lastIndexOf('.'));
-            java.nio.file.Path target = folder.resolve("student_" + student.getUserId() + ext);
-            java.nio.file.Files.copy(chosen.toPath(), target,
-                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            // A unique filename prevents Java's image cache from displaying the old picture.
+            java.nio.file.Path target = folder.resolve("student_" + student.getUserId()
+                    + "_" + java.util.UUID.randomUUID() + ext).toAbsolutePath();
+            java.nio.file.Files.copy(chosen.toPath(), target);
             String saved = target.toString();
+            String oldPath = student.getProfilePic();
             if (studentDAO.updateProfilePicture(student.getUserId(), saved)) {
                 student.setProfilePic(saved);
                 loadProfileData();
                 lblAvatar.repaint();
+                // Delete only an old file owned by this application, never a user's original.
+                deleteOwnedProfilePicture(oldPath);
                 JOptionPane.showMessageDialog(this, "Profile picture updated successfully!");
             } else {
+                java.nio.file.Files.deleteIfExists(target);
                 JOptionPane.showMessageDialog(this, "Could not save profile picture to database.");
             }
         } catch (java.io.IOException ex) {
             JOptionPane.showMessageDialog(this, "Cannot copy picture: " + ex.getMessage());
+        }
+    }
+
+    private void handleRemoveProfilePicture() {
+        if (student == null) return;
+        String oldPath = student.getProfilePic();
+        if (oldPath == null || oldPath.isBlank()) {
+            JOptionPane.showMessageDialog(this, "No profile picture to remove.");
+            return;
+        }
+        int answer = JOptionPane.showConfirmDialog(this,
+                "Remove your profile picture and show your name's first letter?",
+                "Remove Profile Picture", JOptionPane.YES_NO_OPTION);
+        if (answer != JOptionPane.YES_OPTION) return;
+
+        // The existing DAO accepts null and stores SQL NULL in users.profile_pic.
+        if (studentDAO.updateProfilePicture(student.getUserId(), null)) {
+            student.setProfilePic(null);
+            loadProfileData();
+            lblAvatar.repaint();
+            deleteOwnedProfilePicture(oldPath);
+            JOptionPane.showMessageDialog(this, "Profile picture removed successfully!");
+        } else {
+            JOptionPane.showMessageDialog(this, "Could not remove profile picture from database.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void deleteOwnedProfilePicture(String path) {
+        if (path == null || path.isBlank()) return;
+        try {
+            java.nio.file.Path folder = java.nio.file.Paths.get("profile_pictures")
+                    .toAbsolutePath().normalize();
+            java.nio.file.Path file = java.nio.file.Paths.get(path).toAbsolutePath().normalize();
+            if (file.getParent() != null && file.getParent().equals(folder)
+                    && file.getFileName().toString().startsWith("student_" + student.getUserId())) {
+                java.nio.file.Files.deleteIfExists(file);
+            }
+        } catch (java.io.IOException | java.nio.file.InvalidPathException ex) {
+            System.err.println("Old profile picture could not be deleted: " + ex.getMessage());
         }
     }
 
@@ -1023,20 +1129,3 @@ public class UndergraduateDashboard extends JFrame {
     }
 }
 
-
- * Main - Application Entry Point for FTMS.
- * Initializes desktop UI settings and displays LoginFrame.
- */
-public class Main {
-    public static void main(String[] args) {
-        // Set system UI look and feel and antialiasing
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
-
-        SwingUtilities.invokeLater(() -> {
-            LoginFrame loginFrame = new LoginFrame();
-            loginFrame.setVisible(true);
-        });
-    }
-}
