@@ -81,7 +81,7 @@ public class AdminDashboardUI extends JFrame {
         // Upcasting: Subclass object assigned to base class variable
         this.currentAdminUser = new Admin(1, "TG2086", "", "K.A.M.I. Geethanjana", "ishanminula@gmail.com", "0771234567", 2086, "FACULTY_ADMIN");
 
-        setTitle("Faculty of Technology Management System (FTMS) - Administrator Portal [TG/2024/2086]");
+        setTitle("Faculty of Technology Management System (FTMS) - Administrator Portal");
         setSize(1220, 760);
         setMinimumSize(new Dimension(1000, 650));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -113,7 +113,7 @@ public class AdminDashboardUI extends JFrame {
             roleTitle = currentAdminUser.getRole();
         }
 
-        JLabel lblSub = new JLabel("System Administrator: " + currentAdminUser.getFullName() + " (" + roleTitle + " - TG/2024/2086)");
+        JLabel lblSub = new JLabel("Logged in as: " + currentAdminUser.getFullName() + " | " + roleTitle);
         lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblSub.setForeground(new Color(148, 163, 184));
 
