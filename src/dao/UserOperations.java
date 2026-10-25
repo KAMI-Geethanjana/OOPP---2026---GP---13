@@ -6,17 +6,16 @@ import java.util.Map;
 
 /**
  * Interface contract for User Management Operations in FTMS.
- * Demonstrates:
- * 1. Interfaces as architectural contracts (Lesson 04 Slide 5-7)
- * 2. Interface Constants (public static final - Lesson 04 Slide 23)
- * 3. Default Methods in Interfaces (Java 8+ - Lesson 04 Slide 32)
- * 4. Static Methods in Interfaces (Java 8+ - Lesson 04 Slide 33)
- * 5. Method Overloading within interface contract (Lesson 03 Part 02)
- * 6. Exception declarations via throws (Lesson 05 Slide 40-41)
+ * - Interfaces as architectural contracts
+ * - Interface Constants (public static final)
+ * - Default Methods in Interfaces (Java 8+)
+ * - Static Methods in Interfaces (Java 8+)
+ * - Method Overloading within interface contract
+ * - Exception declarations via throws
  */
 public interface UserOperations {
 
-    // Interface Constants (implicitly public static final - Lesson 04 Slide 23)
+    // Interface Constants (implicitly public static final)
     int MAX_FAILED_ATTEMPTS = 3;
     String DEFAULT_PASSWORD = "Password@123";
 
@@ -35,12 +34,12 @@ public interface UserOperations {
             throws AdminOperationException;
 
     /**
-     * Method Overloading: Delete by user ID (Lesson 03 Part 02)
+     * Method Overloading: Delete by user ID
      */
     boolean deleteUser(int userId) throws AdminOperationException;
 
     /**
-     * Method Overloading: Delete by username (Lesson 03 Part 02)
+     * Method Overloading: Delete by username
      */
     boolean deleteUser(String username) throws AdminOperationException;
 
@@ -50,7 +49,7 @@ public interface UserOperations {
     List<Map<String, Object>> getAllUsers() throws AdminOperationException;
 
     /**
-     * Method Overloading: Retrieves users filtered by role (Lesson 03 Part 02)
+     * Method Overloading: Retrieves users filtered by role
      */
     List<Map<String, Object>> getAllUsers(String roleFilter) throws AdminOperationException;
 
@@ -61,7 +60,6 @@ public interface UserOperations {
 
     /**
      * Default method providing utility logging without forcing subclasses to implement.
-     * Demonstrates Lesson 04 Slide 32 ("Using default methods").
      */
     default void logAudit(String action, String detail) {
         System.out.println("[AUDIT LOG] " + System.currentTimeMillis() + " - " + action + ": " + detail);
@@ -69,7 +67,6 @@ public interface UserOperations {
 
     /**
      * Static utility method in interface.
-     * Demonstrates Lesson 04 Slide 33 ("Using static methods").
      */
     static boolean isValidRole(String role) {
         if (role == null) return false;

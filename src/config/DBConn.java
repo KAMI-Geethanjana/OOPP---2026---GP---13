@@ -6,11 +6,10 @@ import java.sql.SQLException;
 
 /**
  * Database Connection Manager for FTMS Admin Module.
- * Demonstrates:
- * 1. Singleton Design Pattern (Private constructor preventing instantiation - Lesson 02 Part 02)
- * 2. Static Initializer block (Executed once when class is loaded - Lesson 02 Part 02 Slide 28)
- * 3. Static constants (final fields - Lesson 02 Slide 20-21)
- * 4. JDBC Connection Factory (Lesson 07)
+ * - Singleton Design Pattern (Private constructor preventing direct instantiation)
+ * - Static Initializer block (Executed once when class is loaded)
+ * - Static constants (final connection configuration fields)
+ * - JDBC Connection Factory
  */
 public final class DBConn {
 
@@ -19,7 +18,7 @@ public final class DBConn {
     private static final String USER = "root";
     private static final String PASSWORD = "3909";
 
-    // Static Initializer block (Lesson 02 Part 02)
+    // Static Initializer block for JDBC driver registration
     static {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -29,8 +28,7 @@ public final class DBConn {
     }
 
     /**
-     * Private constructor to prevent direct instantiation.
-     * Demonstrates Lesson 02 Part 02 (Slide 31: "Preventing instantiating a class").
+     * Private constructor to prevent direct instantiation (Singleton pattern).
      */
     private DBConn() {
         // Prevent reflection invocation

@@ -12,12 +12,11 @@ import java.util.Map;
 
 /**
  * AdminUserDAO - Data Access Object for complete User Profile Lifecycle.
- * Demonstrates:
- * 1. Interface Implementation (implements UserOperations - Lesson 04)
- * 2. Exception Handling (throws custom AdminOperationException - Lesson 05)
- * 3. Method Overloading (deleteUser by ID vs username, getAllUsers with/without filter - Lesson 03 Part 02)
- * 4. Database Handling (JDBC transactions with rollback, PreparedStatements - Lesson 07)
- * 5. Default and static interface methods invocation (Lesson 04 Slide 32-33)
+ * - Interface Implementation (implements UserOperations)
+ * - Exception Handling (throws custom AdminOperationException)
+ * - Method Overloading (deleteUser by ID vs username, getAllUsers with/without filter)
+ * - Database Handling (JDBC transactions with rollback, PreparedStatements)
+ * - Default and static interface methods invocation
  */
 public class AdminUserDAO implements UserOperations {
 
@@ -29,7 +28,7 @@ public class AdminUserDAO implements UserOperations {
                               String phoneNo, String role, String extraId, int departmentId, String batch)
             throws AdminOperationException {
 
-        // Validate role using static method from UserOperations interface (Lesson 04 Slide 33)
+        // Validate role using static method from UserOperations interface
         if (!UserOperations.isValidRole(role)) {
             throw new AdminOperationException("Invalid user role specified: " + role);
         }
@@ -43,7 +42,7 @@ public class AdminUserDAO implements UserOperations {
 
         try {
             conn = DBConn.getConn();
-            conn.setAutoCommit(false); // Begin JDBC transaction (Lesson 07 Slide 41)
+            conn.setAutoCommit(false); // Begin JDBC transaction
 
             psUser = conn.prepareStatement(insertUserSql, Statement.RETURN_GENERATED_KEYS);
             psUser.setString(1, username.trim());
@@ -108,21 +107,21 @@ public class AdminUserDAO implements UserOperations {
 
             conn.commit(); // Commit transaction
 
-            // Invoke default interface method (Lesson 04 Slide 32)
+            // Invoke default interface method
             logAudit("CREATE_USER", "Created user " + username + " with role " + role);
             return true;
 
         } catch (SQLException e) {
             if (conn != null) {
                 try {
-                    conn.rollback(); // Rollback transaction on failure (Lesson 07 Slide 41)
+                    conn.rollback(); // Rollback transaction on failure
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
             }
             throw new AdminOperationException("Database error creating user: " + e.getMessage(), e);
         } finally {
-            // Clean up resources in finally block (Lesson 05 Slide 33-36)
+            // Clean up resources in finally block
             try {
                 if (psRole != null) psRole.close();
                 if (psUser != null) psUser.close();
@@ -171,7 +170,7 @@ public class AdminUserDAO implements UserOperations {
     }
 
     /**
-     * Method Overloading: Deletes user by ID (Lesson 03 Part 02)
+     * Method Overloading: Deletes user by ID
      */
     @Override
     public boolean deleteUser(int userId) throws AdminOperationException {
@@ -190,7 +189,7 @@ public class AdminUserDAO implements UserOperations {
     }
 
     /**
-     * Method Overloading: Deletes user by Username (Lesson 03 Part 02)
+     * Method Overloading: Deletes user by Username
      */
     @Override
     public boolean deleteUser(String username) throws AdminOperationException {
@@ -244,7 +243,7 @@ public class AdminUserDAO implements UserOperations {
     }
 
     /**
-     * Method Overloading: Retrieves users optionally filtered by role (Lesson 03 Part 02)
+     * Method Overloading: Retrieves users optionally filtered by role
      */
     @Override
     public List<Map<String, Object>> getAllUsers(String roleFilter) throws AdminOperationException {

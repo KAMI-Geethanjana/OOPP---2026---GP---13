@@ -28,11 +28,10 @@ import java.util.Map;
 /**
  * AdminDashboardUI - Complete Graphical Desktop Management Interface.
  * Implements FR-ADM-01 through FR-ADM-06 and FR-AUTH-05.
- * Demonstrates:
- * 1. Multithreading (Lesson 08 - Background Live Clock Thread implementing Runnable)
- * 2. Polymorphism, Casting, and instanceof (Lesson 03 Part 01 & 02)
- * 3. File Handling with Character Streams (Lesson 06 - Report Export)
- * 4. Checked Exception Handling (Lesson 05 - AdminOperationException handling)
+ * - Multithreading (Background Live Clock Thread implementing Runnable)
+ * - Polymorphism, Casting, and instanceof
+ * - File Handling with Character Streams (Report Export)
+ * - Checked Exception Handling (AdminOperationException handling)
  */
 public class AdminDashboardUI extends JFrame {
 
@@ -42,10 +41,10 @@ public class AdminDashboardUI extends JFrame {
     private final AdminNoticeDAO noticeDAO = new AdminNoticeDAO();
     private final AdminTimetableDAO timetableDAO = new AdminTimetableDAO();
 
-    // User session demonstrating Polymorphism & Upcasting (Lesson 03 Part 01 Slide 47)
+    // User session demonstrating Polymorphism & Upcasting
     private final User currentAdminUser;
 
-    // Multithreading Live Clock (Lesson 08 Slide 28-31)
+    // Multithreading Live Clock
     private JLabel lblLiveClock;
     private volatile boolean isClockRunning = true;
 
@@ -79,7 +78,7 @@ public class AdminDashboardUI extends JFrame {
     private JLabel lblNoticesVal;
 
     public AdminDashboardUI() {
-        // Upcasting: Subclass object assigned to base class variable (Lesson 03 Part 01 Slide 23 & 47)
+        // Upcasting: Subclass object assigned to base class variable
         this.currentAdminUser = new Admin(1, "TG2086", "", "K.A.M.I. Geethanjana", "ishanminula@gmail.com", "0771234567", 2086, "FACULTY_ADMIN");
 
         setTitle("Faculty of Technology Management System (FTMS) - Administrator Portal [TG/2024/2086]");
@@ -89,7 +88,7 @@ public class AdminDashboardUI extends JFrame {
         setLocationRelativeTo(null);
 
         initUI();
-        startLiveClockThread(); // Start background clock thread (Lesson 08)
+        startLiveClockThread(); // Start background clock thread
         refreshAllData();
     }
 
@@ -105,11 +104,11 @@ public class AdminDashboardUI extends JFrame {
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblTitle.setForeground(Color.WHITE);
 
-        // Demonstrating instanceof operator and Downcasting (Lesson 03 Part 01 Slide 48-49)
+        // Demonstrating instanceof operator and Downcasting
         String roleTitle;
         if (currentAdminUser instanceof Admin) {
             Admin adminObj = (Admin) currentAdminUser; // Downcasting
-            roleTitle = adminObj.getRoleDisplayName(); // Dynamic Polymorphism (Lesson 03 Part 02)
+            roleTitle = adminObj.getRoleDisplayName(); // Dynamic Polymorphism
         } else {
             roleTitle = currentAdminUser.getRole();
         }
@@ -123,7 +122,7 @@ public class AdminDashboardUI extends JFrame {
         titleBlock.add(lblTitle);
         titleBlock.add(lblSub);
 
-        // Live Clock (Lesson 08)
+        // Live Clock
         lblLiveClock = new JLabel("🕒 Initializing clock...", SwingConstants.RIGHT);
         lblLiveClock.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblLiveClock.setForeground(new Color(56, 189, 248)); // Sky cyan
@@ -251,7 +250,7 @@ public class AdminDashboardUI extends JFrame {
 
     /**
      * Starts a background thread for a live digital clock in the dashboard header.
-     * Demonstrates Lesson 08 (Multithreading in Java, Slide 28-31: Implementing Runnable, start() vs run()).
+     * Multithreading via Runnable interface.
      */
     private void startLiveClockThread() {
         Thread clockThread = new Thread(new Runnable() {
@@ -416,7 +415,7 @@ public class AdminDashboardUI extends JFrame {
 
     /**
      * Exports all user records into a formatted audit report file using Character Streams.
-     * Demonstrates Lesson 06 (File Handling in Java: FileWriter, BufferedWriter, PrintWriter, flush(), close()).
+     * (FileWriter -> BufferedWriter -> PrintWriter, flush(), close()).
      */
     private void exportUserAuditReport() {
         JFileChooser chooser = new JFileChooser();
@@ -1390,10 +1389,10 @@ public class AdminDashboardUI extends JFrame {
     }
 
     // =========================================================================
-    // DATA REFRESH HELPERS (Multithreaded Background Loading - Lesson 08)
+    // DATA REFRESH HELPERS (Multithreaded Background Loading)
     // =========================================================================
     private void refreshAllData() {
-        // Run data fetching in a background thread to keep UI completely responsive (Lesson 08 Slide 7)
+        // Run data fetching in a background thread to keep UI completely responsive
         new Thread(() -> {
             refreshDashboardStats();
             refreshUsersTable();

@@ -4,11 +4,10 @@ import exception.ValidationException;
 
 /**
  * Base abstract class for all users in FTMS.
- * Demonstrates:
- * 1. Abstraction (abstract class with abstract methods - Lesson 03 Part 03)
- * 2. Encapsulation (private fields with validated getters and setters - Lesson 03 Part 04)
- * 3. Constructor Overloading and Constructor Chaining using this() (Lesson 02 Part 01 & 02)
- * 4. Method Overloading (updateProfile variants - Lesson 03 Part 02)
+ * - Abstraction (abstract class with abstract methods)
+ * - Encapsulation (private fields with validated getters and setters)
+ * - Constructor Overloading and Constructor Chaining using this()
+ * - Method Overloading (updateProfile variants)
  */
 public abstract class User {
     private int userId;
@@ -23,15 +22,14 @@ public abstract class User {
     private int failedLogins;
 
     /**
-     * Default constructor demonstrates constructor chaining with this(...)
-     * (Reference: Lesson 02 Part 02 - Constructor Chaining in Same Class)
+     * Default constructor demonstrating constructor chaining with this(...)
      */
     public User() {
         this(0, "", "", "", "", "", "USER", true, 0);
     }
 
     /**
-     * Parameterized Constructor (Lesson 02 Part 01)
+     * Parameterized Constructor
      */
     public User(int userId, String username, String passwordHash, String fullName,
                 String email, String phoneNo, String role, boolean isActive, int failedLogins) {
@@ -48,13 +46,11 @@ public abstract class User {
 
     /**
      * Abstract method - must be implemented by concrete subclasses.
-     * Demonstrates Abstraction (Lesson 03 Part 03 Slide 13-14).
      */
     public abstract String getRoleDisplayName();
 
     /**
-     * Abstract method for role-specific dashboard class name.
-     * Demonstrates Polymorphism & Dynamic Binding (Lesson 03 Part 02).
+     * Abstract method for role-specific dashboard class name (Dynamic Binding).
      */
     public abstract String getDashboardRoute();
 
@@ -68,7 +64,7 @@ public abstract class User {
     }
 
     /**
-     * Method Overloading (Lesson 03 Part 02 Slide 13-14)
+     * Method Overloading:
      * Variant 1: Basic profile update
      */
     public void updateProfile(String fullName, String email, String phoneNo) throws ValidationException {
@@ -78,7 +74,7 @@ public abstract class User {
     }
 
     /**
-     * Method Overloading (Lesson 03 Part 02 Slide 13-14)
+     * Method Overloading:
      * Variant 2: Extended profile update including profile pic
      */
     public void updateProfile(String fullName, String email, String phoneNo, String profilePic) throws ValidationException {
@@ -88,7 +84,7 @@ public abstract class User {
 
     // =========================================================
     // Encapsulation - Accessors (Getters) and Mutators (Setters)
-    // with validation (Lesson 03 Part 04 Slide 11-20)
+    // with validation
     // =========================================================
 
     public int getUserId() { return userId; }

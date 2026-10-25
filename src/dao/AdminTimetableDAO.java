@@ -10,10 +10,9 @@ import java.util.List;
 
 /**
  * AdminTimetableDAO - Data Access Object for Academic and Examination Schedules.
- * Demonstrates:
- * 1. JDBC PreparedStatements & ResultSet parsing (Lesson 07)
- * 2. Method Overloading (getAllTimetables with/without department filter, deleteTimetableEntry by int vs object - Lesson 03 Part 02)
- * 3. Custom Exception Handling (throws AdminOperationException - Lesson 05)
+ * - JDBC PreparedStatements & ResultSet parsing
+ * - Method Overloading (getAllTimetables with/without department filter, deleteTimetableEntry by int vs object)
+ * - Custom Exception Handling (throws AdminOperationException)
  */
 public class AdminTimetableDAO {
 
@@ -26,7 +25,6 @@ public class AdminTimetableDAO {
 
     /**
      * Method Overloading: Retrieves timetable entries filtered by department ID.
-     * Demonstrates Lesson 03 Part 02 (Method Overloading by parameter list).
      */
     public List<Timetable> getAllTimetables(int departmentId) throws AdminOperationException {
         List<Timetable> list = new ArrayList<>();
@@ -148,7 +146,6 @@ public class AdminTimetableDAO {
 
     /**
      * Method Overloading: Deletes a timetable entry by Timetable object.
-     * Demonstrates Lesson 03 Part 02 (Method Overloading by parameter type).
      */
     public boolean deleteTimetableEntry(Timetable t) throws AdminOperationException {
         if (t == null) return false;

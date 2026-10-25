@@ -2,12 +2,11 @@ package model;
 
 /**
  * Admin - Concrete class representing System Administrator in FTMS.
- * Demonstrates:
- * 1. Inheritance (extends abstract User - Lesson 03 Part 01)
- * 2. super() constructor invocation (Lesson 03 Part 01 Slide 35)
- * 3. Constructor Chaining with this() (Lesson 02 Part 02 Slide 9)
- * 4. Polymorphism & Method Overriding (@Override getRoleDisplayName & getDashboardRoute - Lesson 03 Part 02)
- * 5. Encapsulation (Private fields with accessors/mutators - Lesson 03 Part 04)
+ * - Inheritance (extends abstract User)
+ * - super() constructor invocation
+ * - Constructor Chaining with this()
+ * - Polymorphism & Method Overriding (@Override getRoleDisplayName & getDashboardRoute)
+ * - Encapsulation (Private fields with accessors/mutators)
  */
 public class Admin extends User {
     private int adminId;
@@ -21,7 +20,7 @@ public class Admin extends User {
     }
 
     /**
-     * Parameterized constructor calling superclass constructor (Lesson 03 Part 01 Slide 35)
+     * Parameterized constructor calling superclass constructor
      */
     public Admin(int userId, String username, String passwordHash, String fullName,
                  String email, String phoneNo, int adminId) {
@@ -39,7 +38,7 @@ public class Admin extends User {
     }
 
     /**
-     * Method Overriding (Dynamic Polymorphism - Lesson 03 Part 02)
+     * Method Overriding (Dynamic Polymorphism)
      */
     @Override
     public String getRoleDisplayName() {

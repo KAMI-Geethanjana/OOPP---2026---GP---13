@@ -10,10 +10,9 @@ import java.util.List;
 
 /**
  * AdminNoticeDAO - Data Access Object for Notice Publishing and Maintenance.
- * Demonstrates:
- * 1. JDBC PreparedStatements & ResultSet traversal (Lesson 07)
- * 2. Method Overloading (getAllNotices with/without audience, deleteNotice by int vs object - Lesson 03 Part 02)
- * 3. Exception Handling (throws AdminOperationException - Lesson 05)
+ * - JDBC PreparedStatements & ResultSet traversal
+ * - Method Overloading (getAllNotices with/without audience, deleteNotice by int vs object)
+ * - Exception Handling (throws AdminOperationException)
  */
 public class AdminNoticeDAO {
 
@@ -26,7 +25,6 @@ public class AdminNoticeDAO {
 
     /**
      * Method Overloading: Retrieves notices optionally filtered by target audience.
-     * Demonstrates Lesson 03 Part 02 (Method Overloading by changing parameters).
      */
     public List<Notice> getAllNotices(String targetAudience) throws AdminOperationException {
         List<Notice> list = new ArrayList<>();
@@ -132,7 +130,6 @@ public class AdminNoticeDAO {
 
     /**
      * Method Overloading: Deletes a notice by Notice object.
-     * Demonstrates Lesson 03 Part 02 (Method Overloading by different argument types).
      */
     public boolean deleteNotice(Notice notice) throws AdminOperationException {
         if (notice == null) return false;

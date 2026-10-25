@@ -10,11 +10,10 @@ import java.util.List;
 
 /**
  * AdminCourseDAO - Data Access Object for Academic Course Modules.
- * Demonstrates:
- * 1. Database Handling (JDBC Connection, PreparedStatement, ResultSet - Lesson 07)
- * 2. Method Overloading (getAllCourses with/without department filter, searchCourses - Lesson 03 Part 02)
- * 3. Exception Handling (throws AdminOperationException - Lesson 05)
- * 4. Proper resource management with try-with-resources (Lesson 05 & 07)
+ * - Database Handling (JDBC Connection, PreparedStatement, ResultSet)
+ * - Method Overloading (getAllCourses with/without department filter, searchCourses)
+ * - Exception Handling (throws AdminOperationException)
+ * - Proper resource management with try-with-resources
  */
 public class AdminCourseDAO {
 
@@ -27,7 +26,6 @@ public class AdminCourseDAO {
 
     /**
      * Method Overloading: Retrieves courses optionally filtered by department ID.
-     * Demonstrates Lesson 03 Part 02 (Method Overloading by changing parameters).
      */
     public List<Course> getAllCourses(int departmentId) throws AdminOperationException {
         List<Course> list = new ArrayList<>();
@@ -79,7 +77,7 @@ public class AdminCourseDAO {
     }
 
     /**
-     * Inserts a new course into the system using PreparedStatement (Lesson 07 Slide 37-38).
+     * Inserts a new course into the system using PreparedStatement.
      */
     public boolean addCourse(Course course) throws AdminOperationException {
         if (course == null || course.getCourseCode() == null || course.getCourseCode().trim().isEmpty()) {

@@ -2,10 +2,8 @@ package exception;
 
 /**
  * Custom Checked Exception representing failures in Admin operations.
- * Demonstrates:
- * 1. Java Exception Handling (Extends java.lang.Exception - Checked Exception)
- * 2. Constructor overloading and exception chaining (super(message, cause))
- * (Reference: ICT2122 Lesson 05 - Introduction to Java Exceptions)
+ * - Java Exception Handling (Extends java.lang.Exception - Checked Exception)
+ * - Constructor overloading and exception chaining (super(message, cause))
  */
 public class AdminOperationException extends Exception {
 

@@ -7,24 +7,19 @@ import java.util.Map;
 
 /**
  * Utility for Administrative Report Generation and File I/O.
- * Demonstrates:
- * 1. Character Streams Writing (FileWriter -> BufferedWriter -> PrintWriter)
- *    (Reference: ICT2122 Lesson 06 Slides 12-18)
- * 2. Character Streams Reading (FileReader -> BufferedReader -> readLine())
- *    (Reference: ICT2122 Lesson 06 Slides 7-11)
- * 3. Exception Handling (IOException, FileNotFoundException)
- *    (Reference: ICT2122 Lesson 05 & Lesson 06)
- * 4. Proper stream flushing and closing (out.flush(), in.close() in finally)
+ * - Character Streams Writing (FileWriter -> BufferedWriter -> PrintWriter)
+ * - Character Streams Reading (FileReader -> BufferedReader -> readLine())
+ * - Exception Handling (IOException, FileNotFoundException)
+ * - Proper stream flushing and closing (out.flush(), in.close() in finally)
  */
 public final class AdminReportUtil {
 
     private AdminReportUtil() {
-        // Prevent instantiation (Lesson 02 Part 02)
+        // Prevent instantiation
     }
 
     /**
      * Exports user records to a formatted text/CSV report using Character Streams.
-     * Demonstrates Lesson 06 Slides 14-18:
      * - FileWriter
      * - BufferedWriter
      * - PrintWriter
@@ -75,11 +70,11 @@ public final class AdminReportUtil {
             out.println("                         END OF OFFICIAL REPORT");
             out.println("==========================================================================================");
 
-            // Flush stream explicitly (Lesson 06 Slide 18)
+            // Flush stream explicitly
             out.flush();
 
         } finally {
-            // Close stream safely in finally block (Lesson 05 Slide 33, Lesson 06 Slide 18)
+            // Close stream safely in finally block
             if (out != null) {
                 out.close();
             }
@@ -88,7 +83,6 @@ public final class AdminReportUtil {
 
     /**
      * Reads lines from a text file using BufferedReader.
-     * Demonstrates Lesson 06 Slides 8-11:
      * - FileReader
      * - BufferedReader
      * - readLine() loop until null
@@ -106,11 +100,11 @@ public final class AdminReportUtil {
             String line = in.readLine();
             while (line != null) {
                 lines.add(line);
-                line = in.readLine(); // Read next line until EOF (Lesson 06 Slide 10)
+                line = in.readLine(); // Read next line until EOF
             }
         } finally {
             if (in != null) {
-                in.close(); // Clean stream close (Lesson 06 Slide 11)
+                in.close(); // Clean stream close
             }
         }
 
