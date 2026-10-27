@@ -26,4 +26,26 @@ public class Quiz implements Serializable {
         this.isActive = true;
         this.questionCount = 0;
     }
+
+    public Quiz() {
+        this(0, "", 0, "Untitled Quiz", "", 30, 100.0, true, "");
+    }
+
+    public Quiz(int quizId, String courseCode, int lecturerId, String title, 
+                String description, int durationMinutes, double totalMarks, 
+                boolean isActive, String createdAt) {
+        this.quizId = quizId;
+        this.courseCode = courseCode;
+        this.lecturerId = lecturerId;
+        this.title = title;
+        this.description = description;
+        if (durationMinutes > 0) {
+            this.durationMinutes = durationMinutes;
+        }
+        if (totalMarks >= 0) {
+            this.totalMarks = totalMarks;
+        }
+        this.isActive = isActive;
+        this.createdAt = createdAt;
+    }
 }
