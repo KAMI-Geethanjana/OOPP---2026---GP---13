@@ -76,9 +76,56 @@ public class QuizDAO implements IQuizDAO {
         }
     }
 
-    public int createQuiz(Quiz quiz) throws QuizOperationException { return 0; }
-    public boolean updateQuiz(Quiz quiz) throws QuizOperationException { return false; }
-    public boolean deleteQuiz(int quizId) throws QuizOperationException { return false; }
+    public int createQuiz(Quiz quiz) throws QuizOperationException {
+        if (quiz == null || quiz.getTitle() == null || quiz.getTitle().trim().isEmpty()) {
+            throw new QuizOperationException("Quiz title cannot be empty.");
+        }
+        String sql = "INSERT INTO quiz (course_code, lecturer_id, title, description, duration_minutes, total_marks, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, quiz.getCourseCode());
+            ps.setInt(2, quiz.getLecturerId());
+            ps.setString(3, quiz.getTitle());
+            ps.setString(4, quiz.getDescription());
+            ps.setInt(5, quiz.getDurationMinutes());
+            ps.setDouble(6, quiz.getTotalMarks());
+            ps.setBoolean(7, quiz.isActive());
+            ps.executeUpdate();
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) return rs.getInt(1);
+            return 0;
+        } catch (SQLException e) {
+            throw new QuizOperationException("Failed to create quiz: " + e.getMessage(), e);
+        }
+    }
+
+    public boolean updateQuiz(Quiz quiz) throws QuizOperationException {
+        String sql = "UPDATE quiz SET title = ?, description = ?, duration_minutes = ?, total_marks = ?, is_active = ? WHERE quiz_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, quiz.getTitle());
+            ps.setString(2, quiz.getDescription());
+            ps.setInt(3, quiz.getDurationMinutes());
+            ps.setDouble(4, quiz.getTotalMarks());
+            ps.setBoolean(5, quiz.isActive());
+            ps.setInt(6, quiz.getQuizId());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new QuizOperationException("Failed to update quiz: " + e.getMessage(), e);
+        }
+    }
+
+    public boolean deleteQuiz(int quizId) throws QuizOperationException {
+        String sql = "DELETE FROM quiz WHERE quiz_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quizId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new QuizOperationException("Failed to delete quiz ID " + quizId, e);
+        }
+    }
+
     public Quiz getQuizById(int quizId) { return null; }
     public List<Quiz> getQuizzesByCourse(String courseCode) { return new ArrayList<>(); }
     public List<Quiz> getQuizzesByCourse(String courseCode, boolean activeOnly) { return new ArrayList<>(); }
