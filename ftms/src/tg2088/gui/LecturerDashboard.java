@@ -1,4 +1,4 @@
-﻿package tg2088.gui;
+package tg2088.gui;
 
 import common.auth.LoginFrame;
 import common.dao.NoticeDAO;
@@ -10,12 +10,16 @@ import common.util.UITheme;
 import common.util.UserSession;
 import tg2088.dao.ILecturerDAO;
 import tg2088.dao.LecturerDAO;
-import tg2088.exception.LecturerOperationException;
-import tg2088.model.CourseMaterial;
 import tg2088.dao.IQuizDAO;
 import tg2088.dao.QuizDAO;
+import tg2088.exception.LecturerOperationException;
+import tg2088.exception.QuizOperationException;
+import tg2088.model.CourseMaterial;
 import tg2088.model.Lecturer;
+import tg2088.model.Quiz;
+import tg2088.model.QuizQuestion;
 import tg2088.util.LecturerFileHandler;
+import tg2088.util.QuizFileHandler;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -65,6 +69,11 @@ public class LecturerDashboard extends JFrame {
     private JButton btnNavAttendance;
     private JButton btnNavNotices;
     private JButton btnNavProfile;
+
+    // Quiz Management Components
+    private JComboBox<String> cbQuizCourse;
+    private JTable tblQuizzes;
+    private DefaultTableModel quizzesTableModel;
 
     // Marks Management Components
     private JComboBox<String> cbMarksCourse;
@@ -152,6 +161,7 @@ public class LecturerDashboard extends JFrame {
         contentCards.add(createMarksPanel(), "MARKS");
         contentCards.add(createEligibilityPanel(), "ELIGIBILITY");
         contentCards.add(createMaterialsPanel(), "MATERIALS");
+        contentCards.add(createQuizzesPanel(), "QUIZZES");
         contentCards.add(createAttendancePanel(), "ATTENDANCE");
         contentCards.add(createNoticesPanel(), "NOTICES");
         contentCards.add(createProfilePanel(), "PROFILE");
@@ -211,6 +221,10 @@ public class LecturerDashboard extends JFrame {
             switchCard("MATERIALS", btnNavMaterials);
             loadMaterialsData();
         });
+        btnNavQuizzes.addActionListener(e -> {
+            switchCard("QUIZZES", btnNavQuizzes);
+            loadQuizzesData();
+        });
         btnNavAttendance.addActionListener(e -> {
             switchCard("ATTENDANCE", btnNavAttendance);
             loadAttendanceData();
@@ -229,6 +243,8 @@ public class LecturerDashboard extends JFrame {
         sidebar.add(btnNavEligibility);
         sidebar.add(Box.createVerticalStrut(4));
         sidebar.add(btnNavMaterials);
+        sidebar.add(Box.createVerticalStrut(4));
+        sidebar.add(btnNavQuizzes);
         sidebar.add(Box.createVerticalStrut(4));
         sidebar.add(btnNavAttendance);
         sidebar.add(Box.createVerticalStrut(4));
@@ -303,7 +319,7 @@ public class LecturerDashboard extends JFrame {
     private void switchCard(String cardName, JButton activeBtn) {
         cardLayout.show(contentCards, cardName);
 
-        JButton[] buttons = {btnNavMarks, btnNavEligibility, btnNavMaterials, btnNavAttendance, btnNavNotices, btnNavProfile};
+        JButton[] buttons = {btnNavMarks, btnNavEligibility, btnNavMaterials, btnNavQuizzes, btnNavAttendance, btnNavNotices, btnNavProfile};
         for (JButton b : buttons) {
             boolean isActive = (b == activeBtn);
             b.setFont(new Font("Segoe UI", isActive ? Font.BOLD : Font.PLAIN, 14));
@@ -504,6 +520,109 @@ public class LecturerDashboard extends JFrame {
     }
 
     // ========================================================================
+    // 3.5. ONLINE QUIZZES & ASSESSMENTS PANEL
+    // ========================================================================
+    private JPanel createQuizzesPanel() {
+        JPanel card = UITheme.createCardPanel();
+        card.setLayout(new BorderLayout(0, 15));
+
+        // Top Toolbar
+        JPanel topToolbar = new JPanel(new BorderLayout());
+        topToolbar.setOpaque(false);
+
+        JPanel leftFilters = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        leftFilters.setOpaque(false);
+
+        JLabel lblTitle = new JLabel("Online Quiz Assessments & Question Banks");
+        lblTitle.setFont(UITheme.FONT_HEADER);
+        lblTitle.setForeground(UITheme.TEXT_DARK);
+
+        JLabel lblCourse = new JLabel("Select Course:");
+        lblCourse.setFont(UITheme.FONT_BODY_BOLD);
+
+        cbQuizCourse = new JComboBox<>();
+        cbQuizCourse.setFont(UITheme.FONT_BODY);
+        cbQuizCourse.setPreferredSize(new Dimension(160, 34));
+        cbQuizCourse.addActionListener(e -> loadQuizzesData());
+
+        leftFilters.add(lblTitle);
+        leftFilters.add(Box.createHorizontalStrut(15));
+        leftFilters.add(lblCourse);
+        leftFilters.add(cbQuizCourse);
+
+        topToolbar.add(leftFilters, BorderLayout.WEST);
+
+        // Right side: New Quiz button
+        JPanel rightActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        rightActions.setOpaque(false);
+
+        JButton btnNewQuiz = UITheme.createButton("+ Create New Quiz", UITheme.SUCCESS_GREEN, Color.WHITE);
+        btnNewQuiz.addActionListener(e -> handleCreateQuiz());
+
+        JButton btnRefresh = UITheme.createButton("Refresh", UITheme.SIDEBAR_BG, Color.WHITE);
+        btnRefresh.addActionListener(e -> loadQuizzesData());
+
+        rightActions.add(btnNewQuiz);
+        rightActions.add(btnRefresh);
+        topToolbar.add(rightActions, BorderLayout.EAST);
+
+        card.add(topToolbar, BorderLayout.NORTH);
+
+        // Table
+        String[] cols = {"Quiz ID", "Course", "Title", "Duration (Mins)", "Total Marks", "Questions", "Status", "Created At"};
+        quizzesTableModel = new DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int r, int c) { return false; }
+        };
+        tblQuizzes = new JTable(quizzesTableModel);
+        UITheme.styleTable(tblQuizzes);
+        card.add(new JScrollPane(tblQuizzes), BorderLayout.CENTER);
+
+        // Bottom Action Bar
+        JPanel bottomBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
+        bottomBar.setOpaque(false);
+        bottomBar.setBorder(BorderFactory.createTitledBorder("Quiz Actions & Exports"));
+
+        JButton btnManageQ = UITheme.createButton("Manage Questions", UITheme.PRIMARY_BLUE, Color.WHITE);
+        btnManageQ.setToolTipText("Add or edit MCQ questions for the selected quiz");
+        btnManageQ.addActionListener(e -> handleManageQuestions());
+
+        JButton btnPreview = UITheme.createButton("Preview / Take Quiz", new Color(139, 92, 246), Color.WHITE);
+        btnPreview.setToolTipText("Test-drive the quiz and evaluate grading live");
+        btnPreview.addActionListener(e -> handlePreviewQuiz());
+
+        JButton btnSubmissions = UITheme.createButton("View Submissions", new Color(14, 165, 233), Color.WHITE);
+        btnSubmissions.setToolTipText("View student attempts, scores and pass rates");
+        btnSubmissions.addActionListener(e -> handleViewSubmissions());
+
+        JButton btnExportTxt = UITheme.createButton("Export Paper (.txt)", UITheme.SIDEBAR_BG, Color.WHITE);
+        btnExportTxt.setToolTipText("Export formatted question paper with answer key (Lesson 06 Character Stream)");
+        btnExportTxt.addActionListener(e -> handleExportQuizPaper());
+
+        JButton btnBackupDat = UITheme.createButton("Backup (.dat)", new Color(13, 148, 136), Color.WHITE);
+        btnBackupDat.setToolTipText("Backup quiz and question bank to binary file (Lesson 06 Binary Stream)");
+        btnBackupDat.addActionListener(e -> handleBackupQuizBinary());
+
+        JButton btnToggleStatus = UITheme.createButton("Toggle Status", UITheme.WARNING_AMBER, Color.WHITE);
+        btnToggleStatus.setToolTipText("Activate or deactivate quiz for students");
+        btnToggleStatus.addActionListener(e -> handleToggleQuizStatus());
+
+        JButton btnDeleteQuiz = UITheme.createButton("Delete Quiz", UITheme.DANGER_RED, Color.WHITE);
+        btnDeleteQuiz.addActionListener(e -> handleDeleteQuiz());
+
+        bottomBar.add(btnManageQ);
+        bottomBar.add(btnPreview);
+        bottomBar.add(btnSubmissions);
+        bottomBar.add(btnExportTxt);
+        bottomBar.add(btnBackupDat);
+        bottomBar.add(btnToggleStatus);
+        bottomBar.add(btnDeleteQuiz);
+
+        card.add(bottomBar, BorderLayout.SOUTH);
+        return card;
+    }
+
+    // ========================================================================
     // 4. STUDENT ATTENDANCE PANEL
     // ========================================================================
     private JPanel createAttendancePanel() {
@@ -629,12 +748,14 @@ public class LecturerDashboard extends JFrame {
         cbMarksCourse.removeAllItems();
         cbEligCourse.removeAllItems();
         cbMaterialCourse.removeAllItems();
+        if (cbQuizCourse != null) cbQuizCourse.removeAllItems();
         cbAttCourse.removeAllItems();
 
         for (Course c : courses) {
             cbMarksCourse.addItem(c.getCourseCode());
             cbEligCourse.addItem(c.getCourseCode());
             cbMaterialCourse.addItem(c.getCourseCode());
+            if (cbQuizCourse != null) cbQuizCourse.addItem(c.getCourseCode());
             cbAttCourse.addItem(c.getCourseCode());
         }
     }
@@ -987,6 +1108,201 @@ public class LecturerDashboard extends JFrame {
         }
     }
 
+    // ========================================================================
+    // QUIZ DATA LOADERS & ACTIONS
+    // ========================================================================
+    private void loadQuizzesData() {
+        if (cbQuizCourse == null || quizzesTableModel == null) return;
+        String courseCode = (String) cbQuizCourse.getSelectedItem();
+        if (courseCode == null) return;
+
+        List<Quiz> quizzes = quizDAO.getQuizzesByCourse(courseCode);
+        quizzesTableModel.setRowCount(0);
+
+        for (Quiz q : quizzes) {
+            quizzesTableModel.addRow(new Object[]{
+                    q.getQuizId(),
+                    q.getCourseCode(),
+                    q.getTitle(),
+                    q.getDurationMinutes(),
+                    String.format("%.1f", q.getTotalMarks()),
+                    q.getQuestionCount(),
+                    q.isActive() ? "ACTIVE" : "INACTIVE",
+                    q.getCreatedAt() != null ? q.getCreatedAt() : "-"
+            });
+        }
+    }
+
+    private Quiz getSelectedQuiz() {
+        if (tblQuizzes == null) return null;
+        int row = tblQuizzes.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a quiz from the table first.", "Selection Required", JOptionPane.WARNING_MESSAGE);
+            return null;
+        }
+        int quizId = (int) tblQuizzes.getValueAt(row, 0);
+        return quizDAO.getQuizById(quizId);
+    }
+
+    private void handleCreateQuiz() {
+        String courseCode = (String) cbQuizCourse.getSelectedItem();
+        if (courseCode == null || courseCode.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please select an assigned course first.", "Validation", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JTextField txtTitle = new JTextField();
+        JTextArea txtDesc = new JTextArea(3, 20);
+        JTextField txtDuration = new JTextField("30");
+        JTextField txtMarks = new JTextField("100.0");
+
+        JPanel form = new JPanel(new GridLayout(4, 2, 8, 8));
+        form.add(new JLabel("Quiz Title:"));
+        form.add(txtTitle);
+        form.add(new JLabel("Description / Instructions:"));
+        form.add(new JScrollPane(txtDesc));
+        form.add(new JLabel("Duration (Minutes):"));
+        form.add(txtDuration);
+        form.add(new JLabel("Total Marks:"));
+        form.add(txtMarks);
+
+        int opt = JOptionPane.showConfirmDialog(this, form, "Create New Online Quiz (" + courseCode + ")", JOptionPane.OK_CANCEL_OPTION);
+        if (opt == JOptionPane.OK_OPTION) {
+            String title = txtTitle.getText().trim();
+            if (title.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Quiz title cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            try {
+                int duration = Integer.parseInt(txtDuration.getText().trim());
+                double marks = Double.parseDouble(txtMarks.getText().trim());
+                int lecId = (lecturer != null) ? lecturer.getLecturerId() : 1;
+
+                Quiz q = new Quiz(0, courseCode, lecId, title, txtDesc.getText().trim(), duration, marks, true, null);
+                int genId = quizDAO.createQuiz(q);
+                if (genId > 0) {
+                    JOptionPane.showMessageDialog(this, "Quiz created successfully! Now you can add questions.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    loadQuizzesData();
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Duration and Total Marks must be valid numbers.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            } catch (QuizOperationException e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Error Creating Quiz", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void handleManageQuestions() {
+        Quiz q = getSelectedQuiz();
+        if (q != null) {
+            QuizQuestionDialog dlg = new QuizQuestionDialog(this, q, quizDAO);
+            dlg.setVisible(true);
+            loadQuizzesData(); // refresh questions count
+        }
+    }
+
+    private void handlePreviewQuiz() {
+        Quiz q = getSelectedQuiz();
+        if (q != null) {
+            QuizTestRunnerDialog dlg = new QuizTestRunnerDialog(this, q, quizDAO);
+            dlg.setVisible(true);
+        }
+    }
+
+    private void handleViewSubmissions() {
+        Quiz q = getSelectedQuiz();
+        if (q != null) {
+            QuizResultsDialog dlg = new QuizResultsDialog(this, q, quizDAO);
+            dlg.setVisible(true);
+        }
+    }
+
+    private void handleExportQuizPaper() {
+        Quiz q = getSelectedQuiz();
+        if (q == null) return;
+
+        List<QuizQuestion> questions = quizDAO.getQuestionsByQuizId(q.getQuizId());
+        if (questions.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "This quiz has no questions yet. Add questions first!", "Empty Quiz", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int includeKeyOpt = JOptionPane.showConfirmDialog(this,
+                "Do you want to include the Confidential Answer Key at the end of the report?",
+                "Include Answer Key?", JOptionPane.YES_NO_OPTION);
+        boolean includeKey = (includeKeyOpt == JOptionPane.YES_OPTION);
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setSelectedFile(new File("Quiz_" + q.getCourseCode() + "_" + q.getQuizId() + "_Paper.txt"));
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File target = fileChooser.getSelectedFile();
+            boolean ok = QuizFileHandler.exportQuizPaper(q, questions, target, includeKey);
+            if (ok) {
+                JOptionPane.showMessageDialog(this, "Quiz Paper exported to:\n" + target.getAbsolutePath(),
+                        "Export Succeeded (Lesson 06)", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to export quiz paper.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void handleBackupQuizBinary() {
+        Quiz q = getSelectedQuiz();
+        if (q == null) return;
+
+        List<QuizQuestion> questions = quizDAO.getQuestionsByQuizId(q.getQuizId());
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setSelectedFile(new File("Quiz_" + q.getCourseCode() + "_" + q.getQuizId() + "_Backup.dat"));
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File target = fileChooser.getSelectedFile();
+            boolean ok = QuizFileHandler.backupQuizToBinary(q, questions, target);
+            if (ok) {
+                JOptionPane.showMessageDialog(this, "Binary backup created successfully at:\n" + target.getAbsolutePath(),
+                        "Binary Backup (Lesson 06)", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to write binary backup file.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void handleToggleQuizStatus() {
+        Quiz q = getSelectedQuiz();
+        if (q == null) return;
+
+        boolean newStatus = !q.isActive();
+        try {
+            boolean updated = quizDAO.toggleQuizStatus(q.getQuizId(), newStatus);
+            if (updated) {
+                JOptionPane.showMessageDialog(this, "Quiz is now " + (newStatus ? "ACTIVE" : "INACTIVE") + ".", "Status Updated", JOptionPane.INFORMATION_MESSAGE);
+                loadQuizzesData();
+            }
+        } catch (QuizOperationException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void handleDeleteQuiz() {
+        Quiz q = getSelectedQuiz();
+        if (q == null) return;
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to delete Quiz ID " + q.getQuizId() + " (" + q.getTitle() + ")?\nAll questions and student attempts will also be deleted.",
+                "Confirm Quiz Deletion", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                boolean ok = quizDAO.deleteQuiz(q.getQuizId());
+                if (ok) {
+                    JOptionPane.showMessageDialog(this, "Quiz deleted successfully.", "Deleted", JOptionPane.INFORMATION_MESSAGE);
+                    loadQuizzesData();
+                }
+            } catch (QuizOperationException e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Deletion Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     private void handleSignOut() {
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to sign out?", "Confirm Sign Out", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
@@ -996,4 +1312,3 @@ public class LecturerDashboard extends JFrame {
         }
     }
 }
-
