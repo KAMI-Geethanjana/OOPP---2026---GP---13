@@ -351,11 +351,16 @@ public class LoginUI extends JFrame {
             JFrame frame = (JFrame) clazz.getDeclaredConstructor().newInstance();
             frame.setVisible(true);
         } catch (ClassNotFoundException e) {
-            JOptionPane.showMessageDialog(this,
+            int opt = JOptionPane.showConfirmDialog(this,
                     "Login Successful!\nRole: " + role + " (" + username + ")\n\n" +
-                    "Dashboard class '" + dashboardClass + "' will be loaded from the " + role + " module branch.",
-                    "Login Successful",
+                    "Module Dashboard '" + dashboardClass + "' will be loaded from your module branch.\n" +
+                    "Would you like to open the Unified Dashboard Template Demo now?",
+                    "Open Unified Base Template",
+                    JOptionPane.YES_NO_OPTION,
                     JOptionPane.INFORMATION_MESSAGE);
+            if (opt == JOptionPane.YES_OPTION) {
+                SwingUtilities.invokeLater(() -> new DashboardTemplateDemo().setVisible(true));
+            }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                     "Failed to open dashboard: " + e.getMessage(),
