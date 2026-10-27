@@ -1,0 +1,19 @@
+# Compiled Java class files
+*.class
+out/
+bin/
+ftms/out/
+
+# IntelliJ IDEA project files
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# OS generated files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Log files
+*.log
