@@ -108,6 +108,7 @@ public class LecturerDashboard extends JFrame {
         this.lecturer = lecturer;
         // Instantiating interface implementation (Lesson 04, Slide 10 & 29)
         this.lecturerDAO = new LecturerDAO();
+        this.quizDAO = new QuizDAO();
         this.noticeDAO = new NoticeDAO();
 
         // If lecturer model didn't have department populated, refresh from DB
@@ -190,6 +191,7 @@ public class LecturerDashboard extends JFrame {
         btnNavMarks = UITheme.createSidebarButton("Marks & Grading", true);
         btnNavEligibility = UITheme.createSidebarButton("Exam Eligibility", false);
         btnNavMaterials = UITheme.createSidebarButton("Course Materials", false);
+        btnNavQuizzes = UITheme.createSidebarButton("Online Quizzes", false);
         btnNavAttendance = UITheme.createSidebarButton("Student Attendance", false);
         btnNavNotices = UITheme.createSidebarButton("Notices", false);
         btnNavProfile = UITheme.createSidebarButton("My Profile", false);
