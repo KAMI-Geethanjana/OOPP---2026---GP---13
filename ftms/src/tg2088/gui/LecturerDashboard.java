@@ -1,4 +1,4 @@
-package tg2088.gui;
+﻿package tg2088.gui;
 
 import common.auth.LoginFrame;
 import common.dao.NoticeDAO;
@@ -12,6 +12,8 @@ import tg2088.dao.ILecturerDAO;
 import tg2088.dao.LecturerDAO;
 import tg2088.exception.LecturerOperationException;
 import tg2088.model.CourseMaterial;
+import tg2088.dao.IQuizDAO;
+import tg2088.dao.QuizDAO;
 import tg2088.model.Lecturer;
 import tg2088.util.LecturerFileHandler;
 
@@ -48,6 +50,7 @@ public class LecturerDashboard extends JFrame {
     
     // Interface as a Type (Lesson 04, Slide 29: Using an Interface as a Type)
     private ILecturerDAO lecturerDAO;
+    private IQuizDAO quizDAO;
     private NoticeDAO noticeDAO;
 
     // UI Panels
@@ -58,6 +61,7 @@ public class LecturerDashboard extends JFrame {
     private JButton btnNavMarks;
     private JButton btnNavEligibility;
     private JButton btnNavMaterials;
+    private JButton btnNavQuizzes;
     private JButton btnNavAttendance;
     private JButton btnNavNotices;
     private JButton btnNavProfile;
@@ -990,3 +994,4 @@ public class LecturerDashboard extends JFrame {
         }
     }
 }
+
