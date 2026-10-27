@@ -21,6 +21,7 @@ import java.awt.*;
 import java.io.File;
 import java.sql.Time;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,7 @@ import java.util.Map;
 /**
  * AdminDashboardUI - Complete Graphical Desktop Management Interface.
  * Implements FR-ADM-01 through FR-ADM-06 and FR-AUTH-05.
- * - Multithreading (Background Live Clock Thread implementing Runnable)
+ * - Multithreading (Lesson 08: extends Thread and implements Runnable)
  * - Polymorphism, Casting, and instanceof
  * - File Handling with Character Streams (Report Export)
  * - Checked Exception Handling (AdminOperationException handling)
@@ -44,9 +45,15 @@ public class AdminDashboardUI extends JFrame {
     // User session demonstrating Polymorphism & Upcasting
     private final User currentAdminUser;
 
-    // Multithreading Live Clock
+    // Multithreading (ICT2122 Lesson 08)
     private JLabel lblLiveClock;
+    private JLabel lblNoticeTicker;
     private volatile boolean isClockRunning = true;
+    private volatile boolean isTickerRunning = true;
+    private Thread clockThread;
+    private NoticeTickerThread noticeTickerThread;
+    private final Object noticeLock = new Object();
+    private List<String> latestNoticeTitles = new ArrayList<>();
 
     // UI Panels
     private JPanel mainContentPanel;
@@ -88,7 +95,7 @@ public class AdminDashboardUI extends JFrame {
         setLocationRelativeTo(null);
 
         initUI();
-        startLiveClockThread(); // Start background clock thread
+        startBackgroundThreads(); // Spawns both background threads (Lesson 08)
         refreshAllData();
     }
 
@@ -137,7 +144,7 @@ public class AdminDashboardUI extends JFrame {
         btnLogout.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to log out?", "Logout Confirmation", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
-                isClockRunning = false;
+                stopBackgroundThreads();
                 dispose();
                 new LoginUI().setVisible(true);
             }
@@ -152,11 +159,11 @@ public class AdminDashboardUI extends JFrame {
         headerPanel.add(rightHeaderBlock, BorderLayout.EAST);
         add(headerPanel, BorderLayout.NORTH);
 
-        // Stop thread on close
+        // Stop background threads gracefully on window close
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
-                isClockRunning = false;
+                stopBackgroundThreads();
             }
         });
 
@@ -205,6 +212,23 @@ public class AdminDashboardUI extends JFrame {
 
         add(mainContentPanel, BorderLayout.CENTER);
 
+        // 4. Bottom Footer Status Bar (Live Notice Ticker & Multithreading Status)
+        JPanel footerPanel = new JPanel(new BorderLayout(15, 0));
+        footerPanel.setBackground(new Color(15, 23, 42)); // Match deep slate header
+        footerPanel.setBorder(new EmptyBorder(8, 20, 8, 20));
+
+        lblNoticeTicker = new JLabel("📢 Faculty Announcements: Initializing notice ticker...");
+        lblNoticeTicker.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblNoticeTicker.setForeground(new Color(226, 232, 240));
+
+        JLabel lblThreadStatus = new JLabel("⚡ Threads Active: Live Clock (Runnable) | Notice Ticker (extends Thread)");
+        lblThreadStatus.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        lblThreadStatus.setForeground(new Color(52, 211, 153)); // Emerald green
+
+        footerPanel.add(lblNoticeTicker, BorderLayout.WEST);
+        footerPanel.add(lblThreadStatus, BorderLayout.EAST);
+        add(footerPanel, BorderLayout.SOUTH);
+
         // Navigation Actions
         btnNavDashboard.addActionListener(e -> switchCard("CARD_DASHBOARD", btnNavDashboard));
         btnNavUsers.addActionListener(e -> switchCard("CARD_USERS", btnNavUsers));
@@ -248,32 +272,120 @@ public class AdminDashboardUI extends JFrame {
         }
     }
 
+    // =========================================================================
+    // MULTITHREADING IMPLEMENTATION (ICT2122 Lesson 08)
+    // =========================================================================
+
     /**
-     * Starts a background thread for a live digital clock in the dashboard header.
-     * Multithreading via Runnable interface.
+     * Lesson 08 - Method 1: Creating a Thread by Extending java.lang.Thread class (Slide 24-27).
+     *
+     * A dedicated thread class overriding the run() method.
+     * Periodically cycles through recent faculty notices in the footer banner,
+     * maintaining high GUI responsiveness without freezing the EDT (Slide 7).
      */
-    private void startLiveClockThread() {
-        Thread clockThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
-                while (isClockRunning) {
-                    final String timeText = "🕒 " + sdf.format(new Date());
-                    SwingUtilities.invokeLater(() -> {
-                        if (lblLiveClock != null) {
-                            lblLiveClock.setText(timeText);
-                        }
-                    });
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        break;
+    private class NoticeTickerThread extends Thread {
+        private final String[] defaultAnnouncements = {
+            "Faculty of Technology Management System (FTMS) operational.",
+            "ICT2122 Object Oriented Programming: Mini Project Evaluations scheduled.",
+            "Mid-Semester Examination Timetables and Room Allocations published.",
+            "Technical Officers: Department equipment calibrations finalized.",
+            "Faculty Notice: Semester timetables and lecture schedules available."
+        };
+        private int noticeIndex = 0;
+
+        public NoticeTickerThread() {
+            super("Admin-NoticeTicker-Thread"); // Thread(String name) constructor - Lesson 08 Slide 34
+            setDaemon(true); // Daemon thread terminates when main application closes
+        }
+
+        @Override
+        public void run() {
+            // Lesson 08 Slide 24: Overrides the run() method to define thread business logic
+            while (isTickerRunning) {
+                String announcementText;
+                synchronized (noticeLock) {
+                    if (latestNoticeTitles != null && !latestNoticeTitles.isEmpty()) {
+                        announcementText = latestNoticeTitles.get(noticeIndex % latestNoticeTitles.size());
+                        noticeIndex = (noticeIndex + 1) % latestNoticeTitles.size();
+                    } else {
+                        announcementText = defaultAnnouncements[noticeIndex % defaultAnnouncements.length];
+                        noticeIndex = (noticeIndex + 1) % defaultAnnouncements.length;
                     }
                 }
+
+                final String fullMessage = "📢 Notice: " + announcementText;
+                SwingUtilities.invokeLater(() -> {
+                    if (lblNoticeTicker != null) {
+                        lblNoticeTicker.setText(fullMessage);
+                    }
+                });
+
+                try {
+                    // Lesson 08 Slide 21: Causes the currently executing thread to sleep (temporarily cease execution)
+                    Thread.sleep(4000);
+                } catch (InterruptedException e) {
+                    break; // Graceful thread termination on interrupt
+                }
             }
-        }, "Admin-Clock-Thread");
+        }
+    }
+
+    /**
+     * Lesson 08 - Method 2: Creating a Thread by Implementing java.lang.Runnable interface (Slide 28-31).
+     *
+     * Since AdminDashboardUI extends JFrame, it cannot extend Thread class due to Java's single inheritance (Slide 32).
+     * Implementing Runnable provides better OOP design and consistency while avoiding single inheritance limitations.
+     */
+    private class LiveClockRunnable implements Runnable {
+        @Override
+        public void run() {
+            // Lesson 08 Slide 28: Overrides the run() method provided by Runnable interface
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd  HH:mm:ss");
+            while (isClockRunning) {
+                final String timeText = "🕒 " + sdf.format(new Date());
+                SwingUtilities.invokeLater(() -> {
+                    if (lblLiveClock != null) {
+                        lblLiveClock.setText(timeText);
+                    }
+                });
+                try {
+                    // Lesson 08 Slide 21: Sleep for 1000 milliseconds (1 second)
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    break; // Graceful thread termination on interrupt
+                }
+            }
+        }
+    }
+
+    /**
+     * Starts both background threads using Thread.start() (Lesson 08 Slide 35).
+     * Note: Calling start() creates a new thread on which the task is run,
+     * whereas calling run() would execute synchronously on the caller thread.
+     */
+    private void startBackgroundThreads() {
+        // Method 2 (Slide 29): Thread(Runnable target, String name) constructor
+        clockThread = new Thread(new LiveClockRunnable(), "Admin-Clock-Thread");
         clockThread.setDaemon(true);
         clockThread.start();
+
+        // Method 1 (Slide 25): Spawning thread extending Thread class
+        noticeTickerThread = new NoticeTickerThread();
+        noticeTickerThread.start();
+    }
+
+    /**
+     * Gracefully stops and interrupts all active background threads.
+     */
+    private void stopBackgroundThreads() {
+        isClockRunning = false;
+        isTickerRunning = false;
+        if (clockThread != null && clockThread.isAlive()) {
+            clockThread.interrupt();
+        }
+        if (noticeTickerThread != null && noticeTickerThread.isAlive()) {
+            noticeTickerThread.interrupt();
+        }
     }
 
     // =========================================================================
@@ -1468,6 +1580,17 @@ public class AdminDashboardUI extends JFrame {
     private void refreshNoticesTable() {
         try {
             List<Notice> notices = noticeDAO.getAllNotices();
+
+            // Synchronized block (Lesson 08 Slide 17): Safely update notice titles for NoticeTickerThread
+            synchronized (noticeLock) {
+                latestNoticeTitles.clear();
+                for (Notice n : notices) {
+                    if (n.getTitle() != null && !n.getTitle().trim().isEmpty()) {
+                        latestNoticeTitles.add(n.getTitle().trim() + " (" + n.getTargetAudience() + ")");
+                    }
+                }
+            }
+
             SwingUtilities.invokeLater(() -> {
                 noticesTableModel.setRowCount(0);
                 for (Notice n : notices) {

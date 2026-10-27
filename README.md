@@ -69,7 +69,7 @@ This module has been designed to implement all concepts covered in the course le
 | **Lesson 05** | Exception Handling | Custom checked exceptions (`AdminOperationException`, `ValidationException`), `try-catch-finally`, `throws` | [`AdminOperationException.java`](file:///src/exception/AdminOperationException.java), [`ValidationException.java`](file:///src/exception/ValidationException.java), [`AdminDashboardUI.java`](file:///src/gui/AdminDashboardUI.java) |
 | **Lesson 06** | File Handling (Character Streams) | Report export via `FileWriter` -> `BufferedWriter` -> `PrintWriter`, and reading via `FileReader` -> `BufferedReader` | [`AdminReportUtil.java`](file:///src/util/AdminReportUtil.java), [`AdminDashboardUI.java`](file:///src/gui/AdminDashboardUI.java) |
 | **Lesson 07** | Database Connectivity & Transactions | JDBC PreparedStatements, ResultSets, ACID Transactions (`setAutoCommit(false)`, `commit()`, `rollback()`) | [`DBConn.java`](file:///src/config/DBConn.java), [`AdminUserDAO.java`](file:///src/dao/AdminUserDAO.java) |
-| **Lesson 08** | Multithreading | Continuous Live Clock thread via `Runnable`, Asynchronous background data loading | [`AdminDashboardUI.java`](file:///src/gui/AdminDashboardUI.java) |
+| **Lesson 08** | Multithreading | **Method 1:** Notice Ticker thread extending `Thread`<br>**Method 2:** Live Clock thread implementing `Runnable`<br>Asynchronous non-blocking data loading & thread synchronization | [`AdminDashboardUI.java`](file:///src/gui/AdminDashboardUI.java) |
 
 ---
 
