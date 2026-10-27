@@ -133,6 +133,7 @@ public class AdminDashboardUI extends JFrame {
         lblLiveClock = new JLabel("🕒 Initializing clock...", SwingConstants.RIGHT);
         lblLiveClock.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblLiveClock.setForeground(new Color(56, 189, 248)); // Sky cyan
+        lblLiveClock.setToolTipText("Multithreaded Real-Time System Clock (Runnable)");
 
         JButton btnLogout = new JButton("Logout");
         btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -220,8 +221,9 @@ public class AdminDashboardUI extends JFrame {
         lblNoticeTicker = new JLabel("📢 Faculty Announcements: Initializing notice ticker...");
         lblNoticeTicker.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblNoticeTicker.setForeground(new Color(226, 232, 240));
+        lblNoticeTicker.setToolTipText("Multithreaded Notice Marquee Ticker (extends Thread)");
 
-        JLabel lblThreadStatus = new JLabel("⚡ Threads Active: Live Clock (Runnable) | Notice Ticker (extends Thread)");
+        JLabel lblThreadStatus = new JLabel("⚡ System Online | Background Services Active");
         lblThreadStatus.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblThreadStatus.setForeground(new Color(52, 211, 153)); // Emerald green
 
