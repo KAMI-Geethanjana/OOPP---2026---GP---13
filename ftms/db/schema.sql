@@ -171,3 +171,47 @@ CREATE TABLE result (
                         grade_point DECIMAL(3,2) DEFAULT 0.00,
                         FOREIGN KEY (enrollment_id) REFERENCES enrollment(enrollment_id) ON DELETE CASCADE
 );
+
+
+-- ============================================================================
+-- 15. TG2088 Lecturer Online Quiz Assessment Tables
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS quiz (
+    quiz_id INT AUTO_INCREMENT PRIMARY KEY,
+    course_code VARCHAR(20) NOT NULL,
+    lecturer_id INT NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    description TEXT,
+    duration_minutes INT NOT NULL DEFAULT 30,
+    total_marks DECIMAL(5,2) DEFAULT 100.00,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_code) REFERENCES course(course_code) ON DELETE CASCADE,
+    FOREIGN KEY (lecturer_id) REFERENCES lecturer(lecturer_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS quiz_question (
+    question_id INT AUTO_INCREMENT PRIMARY KEY,
+    quiz_id INT NOT NULL,
+    question_text TEXT NOT NULL,
+    option_a VARCHAR(255) NOT NULL,
+    option_b VARCHAR(255) NOT NULL,
+    option_c VARCHAR(255) NOT NULL,
+    option_d VARCHAR(255) NOT NULL,
+    correct_option CHAR(1) NOT NULL,
+    points DECIMAL(5,2) DEFAULT 10.00,
+    FOREIGN KEY (quiz_id) REFERENCES quiz(quiz_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS quiz_attempt (
+    attempt_id INT AUTO_INCREMENT PRIMARY KEY,
+    quiz_id INT NOT NULL,
+    student_reg_no VARCHAR(50) NOT NULL,
+    student_name VARCHAR(150) DEFAULT 'Student',
+    score DECIMAL(5,2) NOT NULL,
+    max_score DECIMAL(5,2) NOT NULL DEFAULT 100.00,
+    percentage DECIMAL(5,2) NOT NULL,
+    status ENUM('PASS', 'FAIL') DEFAULT 'PASS',
+    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (quiz_id) REFERENCES quiz(quiz_id) ON DELETE CASCADE
+);
