@@ -77,9 +77,6 @@ public class QuizDAO implements IQuizDAO {
     }
 
     public int createQuiz(Quiz quiz) throws QuizOperationException {
-        if (quiz == null || quiz.getTitle() == null || quiz.getTitle().trim().isEmpty()) {
-            throw new QuizOperationException("Quiz title cannot be empty.");
-        }
         String sql = "INSERT INTO quiz (course_code, lecturer_id, title, description, duration_minutes, total_marks, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -126,10 +123,57 @@ public class QuizDAO implements IQuizDAO {
         }
     }
 
-    public Quiz getQuizById(int quizId) { return null; }
-    public List<Quiz> getQuizzesByCourse(String courseCode) { return new ArrayList<>(); }
-    public List<Quiz> getQuizzesByCourse(String courseCode, boolean activeOnly) { return new ArrayList<>(); }
-    public List<Quiz> getQuizzesByLecturer(int lecturerId) { return new ArrayList<>(); }
+    public Quiz getQuizById(int quizId) {
+        String sql = "SELECT * FROM quiz WHERE quiz_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quizId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return new Quiz(rs.getInt("quiz_id"), rs.getString("course_code"), rs.getInt("lecturer_id"),
+                        rs.getString("title"), rs.getString("description"), rs.getInt("duration_minutes"),
+                        rs.getDouble("total_marks"), rs.getBoolean("is_active"), rs.getString("created_at"));
+            }
+        } catch (SQLException ignored) {}
+        return null;
+    }
+
+    public List<Quiz> getQuizzesByCourse(String courseCode) {
+        return getQuizzesByCourse(courseCode, false);
+    }
+
+    public List<Quiz> getQuizzesByCourse(String courseCode, boolean activeOnly) {
+        List<Quiz> list = new ArrayList<>();
+        String sql = "SELECT * FROM quiz WHERE course_code = ?" + (activeOnly ? " AND is_active = TRUE" : "");
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, courseCode);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new Quiz(rs.getInt("quiz_id"), rs.getString("course_code"), rs.getInt("lecturer_id"),
+                        rs.getString("title"), rs.getString("description"), rs.getInt("duration_minutes"),
+                        rs.getDouble("total_marks"), rs.getBoolean("is_active"), rs.getString("created_at")));
+            }
+        } catch (SQLException ignored) {}
+        return list;
+    }
+
+    public List<Quiz> getQuizzesByLecturer(int lecturerId) {
+        List<Quiz> list = new ArrayList<>();
+        String sql = "SELECT * FROM quiz WHERE lecturer_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, lecturerId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new Quiz(rs.getInt("quiz_id"), rs.getString("course_code"), rs.getInt("lecturer_id"),
+                        rs.getString("title"), rs.getString("description"), rs.getInt("duration_minutes"),
+                        rs.getDouble("total_marks"), rs.getBoolean("is_active"), rs.getString("created_at")));
+            }
+        } catch (SQLException ignored) {}
+        return list;
+    }
+
     public boolean toggleQuizStatus(int quizId, boolean isActive) throws QuizOperationException { return false; }
     public int addQuestion(QuizQuestion question) throws QuizOperationException { return 0; }
     public boolean updateQuestion(QuizQuestion question) throws QuizOperationException { return false; }
