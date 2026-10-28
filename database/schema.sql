@@ -133,6 +133,7 @@ CREATE TABLE attendance (
                             session_type ENUM('THEORY', 'PRACTICAL') NOT NULL,
                             status ENUM('PRESENT', 'ABSENT') NOT NULL,
                             to_id INT,
+                            UNIQUE KEY uq_attendance_session (student_id, course_code, session_date, session_type),
                             FOREIGN KEY (student_id) REFERENCES undergraduate(student_id) ON DELETE CASCADE,
                             FOREIGN KEY (course_code) REFERENCES course(course_code) ON DELETE CASCADE,
                             FOREIGN KEY (to_id) REFERENCES technical_officer(to_id) ON DELETE SET NULL
