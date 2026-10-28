@@ -3,11 +3,6 @@
 
 import common.auth.LoginFrame;
 import common.dao.NoticeDAO;
-import common.model.Course;
-import common.model.Medical;
-import common.model.Notice;
-import common.model.Result;
-import common.model.Timetable;
 import common.util.UITheme;
 import common.util.UserSession;
 import tg2082.dao.UndergraduateDAO;
@@ -18,9 +13,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.sql.Date;
-import java.util.List;
-import java.util.Map;
 
 
     public class UndergraduateDashboard extends JFrame {
