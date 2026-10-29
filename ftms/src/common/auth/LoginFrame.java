@@ -193,12 +193,10 @@ public class LoginFrame extends JFrame {
         BufferedImage logoImg = null;
 
         String[] paths = {
-                "ftms/src/resources/logo.jpg",
-                "src/resources/logo.jpg",
-                "OOPP---2026---GP---13/src/resources/logo.jpg",
                 "resources/logo.jpg",
-                "ftms/src/resources/logo.png",
-                "src/resources/logo.png"
+                "ftms/src/resources/logo.jpg",
+                "resources/logo.png",
+                "ftms/src/resources/logo.png"
         };
 
         for (String path : paths) {
