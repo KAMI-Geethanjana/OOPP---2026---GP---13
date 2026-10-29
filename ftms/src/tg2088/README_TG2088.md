@@ -96,3 +96,11 @@ tg2088/
 | 40 – 44 | **D+** | 1.30 | Conditional Pass |
 | 35 – 39 | **D** | 1.00 | Conditional Pass |
 | 00 – 34 | **E** | 0.00 | Fail / Ineligible |
+
+---
+
+## 5. Integration Status with FTMS Central Architecture
+- **Central Authentication Portal:** Polymorphic role-based login verified with `common.auth.LoginFrame` and `AuthDAO` (Role: `LECTURER`).
+- **Unified Database Access:** Integrated with shared `DBConnection` connection pool.
+- **UI Design System:** Aligned with `UITheme` and standardized desktop dashboard conventions.
+
