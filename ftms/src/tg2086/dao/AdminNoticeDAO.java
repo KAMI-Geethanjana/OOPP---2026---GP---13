@@ -34,16 +34,16 @@ public class AdminNoticeDAO extends NoticeDAO {
     public List<Notice> getAllAdminNotices(String targetAudience) throws AdminOperationException {
         List<Notice> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT n.notice_id, n.title, n.content, n.target_audience, n.posted_by, n.posted_date, " +
-                "COALESCE(u.full_name, 'System Admin') AS posted_by_name " +
+                "SELECT n.notice_id, n.title, n.content, n.target_audience, n.posted_by, n.created_date, " +
+                "COALESCE(u.full_name, n.posted_by, 'System Admin') AS posted_by_name " +
                 "FROM notice n " +
-                "LEFT JOIN users u ON n.posted_by = u.user_id "
+                "LEFT JOIN users u ON (n.posted_by = CAST(u.user_id AS CHAR) OR n.posted_by = u.username) "
         );
 
         if (targetAudience != null && !targetAudience.trim().isEmpty() && !"ALL".equalsIgnoreCase(targetAudience.trim())) {
             sql.append("WHERE n.target_audience = ? OR n.target_audience = 'ALL' ");
         }
-        sql.append("ORDER BY n.posted_date DESC, n.notice_id DESC");
+        sql.append("ORDER BY n.created_date DESC, n.notice_id DESC");
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -54,14 +54,14 @@ public class AdminNoticeDAO extends NoticeDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
+                    Date createdDate = rs.getDate("created_date");
                     Notice notice = new Notice(
                             rs.getInt("notice_id"),
                             rs.getString("title"),
                             rs.getString("content"),
                             rs.getString("target_audience"),
-                            rs.getInt("posted_by"),
-                            rs.getString("posted_by_name"),
-                            rs.getTimestamp("posted_date")
+                            createdDate,
+                            rs.getString("posted_by_name")
                     );
                     list.add(notice);
                 }
@@ -77,14 +77,14 @@ public class AdminNoticeDAO extends NoticeDAO {
      */
     public boolean publishNotice(String title, String content, String audience, int postedByUserId)
             throws AdminOperationException {
-        String sql = "INSERT INTO notice (title, content, target_audience, posted_by) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO notice (title, content, target_audience, created_date, posted_by) VALUES (?, ?, ?, CURRENT_DATE, ?)";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, title.trim());
             ps.setString(2, content.trim());
             ps.setString(3, (audience != null && !audience.isEmpty()) ? audience.trim().toUpperCase() : "ALL");
-            ps.setInt(4, postedByUserId > 0 ? postedByUserId : 1);
+            ps.setString(4, postedByUserId > 0 ? "Admin" : "System Admin");
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {

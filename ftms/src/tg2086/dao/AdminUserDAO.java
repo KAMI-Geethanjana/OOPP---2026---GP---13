@@ -73,12 +73,21 @@ public class AdminUserDAO implements UserOperations {
             // Polymorphic Profile insertion based on role
             String roleUpper = role.toUpperCase().trim();
             if ("UNDERGRADUATE".equals(roleUpper)) {
-                String ugSql = "INSERT INTO undergraduate (student_id, user_id, department_id, batch) VALUES (?, ?, ?, ?)";
+                String ugSql = "INSERT INTO undergraduate (user_id, reg_no, batch_year, department_id) VALUES (?, ?, ?, ?)";
                 psRole = conn.prepareStatement(ugSql);
-                psRole.setString(1, (extraId != null && !extraId.isEmpty()) ? extraId.trim() : "TG/" + username);
-                psRole.setInt(2, generatedUserId);
-                psRole.setInt(3, departmentId > 0 ? departmentId : 1);
-                psRole.setString(4, (batch != null && !batch.isEmpty()) ? batch.trim() : "2023/2024");
+                psRole.setInt(1, generatedUserId);
+                psRole.setString(2, (extraId != null && !extraId.isEmpty()) ? extraId.trim() : "TG/" + username);
+                int bYear = 2024;
+                if (batch != null && !batch.trim().isEmpty()) {
+                    String num = batch.replaceAll("[^0-9]", "");
+                    if (!num.isEmpty()) {
+                        try {
+                            bYear = Integer.parseInt(num.length() >= 4 ? num.substring(0, 4) : num);
+                        } catch (Exception ignored) {}
+                    }
+                }
+                psRole.setInt(3, bYear);
+                psRole.setInt(4, departmentId > 0 ? departmentId : 1);
                 psRole.executeUpdate();
 
             } else if ("LECTURER".equals(roleUpper)) {
@@ -158,11 +167,20 @@ public class AdminUserDAO implements UserOperations {
 
             String roleUpper = role != null ? role.toUpperCase().trim() : "";
             if ("UNDERGRADUATE".equals(roleUpper)) {
-                String sql = "UPDATE undergraduate SET student_id = ?, department_id = ?, batch = ? WHERE user_id = ?";
+                String sql = "UPDATE undergraduate SET reg_no = ?, department_id = ?, batch_year = ? WHERE user_id = ?";
                 psRole = conn.prepareStatement(sql);
                 psRole.setString(1, extraId != null ? extraId.trim() : "");
                 psRole.setInt(2, departmentId > 0 ? departmentId : 1);
-                psRole.setString(3, batch != null ? batch.trim() : "");
+                int bYear = 2024;
+                if (batch != null && !batch.trim().isEmpty()) {
+                    String num = batch.replaceAll("[^0-9]", "");
+                    if (!num.isEmpty()) {
+                        try {
+                            bYear = Integer.parseInt(num.length() >= 4 ? num.substring(0, 4) : num);
+                        } catch (Exception ignored) {}
+                    }
+                }
+                psRole.setInt(3, bYear);
                 psRole.setInt(4, userId);
                 psRole.executeUpdate();
 
@@ -265,10 +283,10 @@ public class AdminUserDAO implements UserOperations {
         List<Map<String, Object>> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT u.user_id, u.username, u.full_name, u.email, u.phone_no, u.role, u.is_active, u.failed_logins, " +
-                "COALESCE(ug.student_id, l.employee_id, t.employee_id, '') AS extra_id, " +
+                "COALESCE(ug.reg_no, l.employee_id, t.employee_id, '') AS extra_id, " +
                 "COALESCE(ug.department_id, l.department_id, t.department_id, 0) AS department_id, " +
                 "COALESCE(d.department_name, 'N/A') AS department_name, " +
-                "COALESCE(ug.batch, '') AS batch " +
+                "COALESCE(CAST(ug.batch_year AS CHAR), '') AS batch " +
                 "FROM users u " +
                 "LEFT JOIN undergraduate ug ON u.user_id = ug.user_id " +
                 "LEFT JOIN lecturer l ON u.user_id = l.user_id " +
