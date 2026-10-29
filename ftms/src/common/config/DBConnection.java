@@ -6,14 +6,24 @@ import java.sql.SQLException;
 
 /**
  * Creates JDBC connections for DAO operations.
- * Singleton connection factory that supports automatic fallback
- * between configured password ("3909") and default blank ("").
+ * Multi-environment connection factory supporting configured, team-member,
+ * and default database passwords automatically.
  */
 public final class DBConnection {
 
     private static final String URL = "jdbc:mysql://localhost:3306/ftms_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
     private static final String USER = "root";
-    private static final String PASSWORD = "3909";
+
+    // Known candidate passwords across team members and common local dev environments
+    private static final String[] CANDIDATE_PASSWORDS = {
+            "2004", // TG2088 (Wosada)
+            "3909", // TG2086 (Geethanjana)
+            "",     // Default blank (XAMPP / root without password)
+            "root",
+            "1234"
+    };
+
+    private static volatile String cachedWorkingPassword = null;
 
     static {
         try {
@@ -29,15 +39,44 @@ public final class DBConnection {
 
     /**
      * Obtains an active database connection.
-     * Tries configured password first, then falls back to blank password.
+     * Checks cached working password first, then candidate passwords in sequence.
      */
     public static Connection getConnection() throws SQLException {
-        try {
-            return DriverManager.getConnection(URL, USER, PASSWORD);
-        } catch (SQLException ex) {
-            // Fallback for environments with blank root password
-            return DriverManager.getConnection(URL, USER, "");
+        // 1. Try environment variable or system property if specified
+        String envPass = System.getenv("DB_PASSWORD");
+        if (envPass == null) {
+            envPass = System.getProperty("db.password");
         }
+        if (envPass != null) {
+            try {
+                return DriverManager.getConnection(URL, USER, envPass);
+            } catch (SQLException ignored) {}
+        }
+
+        // 2. Try previously cached working password
+        if (cachedWorkingPassword != null) {
+            try {
+                return DriverManager.getConnection(URL, USER, cachedWorkingPassword);
+            } catch (SQLException ignored) {
+                cachedWorkingPassword = null; // Invalidate cache if connection failed
+            }
+        }
+
+        // 3. Try each known password in order
+        SQLException lastException = null;
+        for (String pass : CANDIDATE_PASSWORDS) {
+            try {
+                Connection conn = DriverManager.getConnection(URL, USER, pass);
+                if (conn != null && !conn.isClosed()) {
+                    cachedWorkingPassword = pass;
+                    return conn;
+                }
+            } catch (SQLException ex) {
+                lastException = ex;
+            }
+        }
+
+        throw lastException != null ? lastException : new SQLException("Failed to connect to MySQL database at " + URL);
     }
 
     @Deprecated
