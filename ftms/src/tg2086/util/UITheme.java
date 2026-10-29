@@ -317,4 +317,321 @@ public final class UITheme {
             }
         });
     }
+
+    /**
+     * RoundedCardPanel - Container panel with custom rounded borders and background.
+     */
+    public static class RoundedCardPanel extends JPanel {
+        private final int cornerRadius;
+        private final Color backgroundColor;
+        private final Color borderColor;
+
+        public RoundedCardPanel(int cornerRadius, Color backgroundColor, Color borderColor) {
+            super(new BorderLayout());
+            this.cornerRadius = cornerRadius;
+            this.backgroundColor = backgroundColor;
+            this.borderColor = borderColor;
+            setOpaque(false);
+        }
+
+        public RoundedCardPanel(int cornerRadius) {
+            this(cornerRadius, Color.WHITE, CARD_BORDER);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            g2.setColor(backgroundColor);
+            g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, cornerRadius, cornerRadius);
+
+            if (borderColor != null) {
+                g2.setColor(borderColor);
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, cornerRadius, cornerRadius);
+            }
+
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    /**
+     * StatCard - KPI metric card displaying title, bold number, and accent color.
+     */
+    public static class StatCard extends RoundedCardPanel {
+        private final JLabel lblTitle;
+        private final JLabel lblValue;
+
+        public StatCard(String title, String initialValue, Color accentColor) {
+            super(14, Color.WHITE, CARD_BORDER);
+            setPreferredSize(new Dimension(240, 90));
+            setBorder(new EmptyBorder(16, 20, 16, 20));
+
+            JPanel content = new JPanel();
+            content.setOpaque(false);
+            content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+
+            lblTitle = new JLabel(title);
+            lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            lblTitle.setForeground(TEXT_MUTED);
+
+            lblValue = new JLabel(initialValue);
+            lblValue.setFont(new Font("Segoe UI", Font.BOLD, 26));
+            lblValue.setForeground(accentColor);
+
+            content.add(lblTitle);
+            content.add(Box.createVerticalStrut(4));
+            content.add(lblValue);
+
+            add(content, BorderLayout.CENTER);
+        }
+
+        public void setValue(String value) {
+            lblValue.setText(value);
+        }
+
+        public JLabel getValueLabel() {
+            return lblValue;
+        }
+
+        public JLabel getTitleLabel() {
+            return lblTitle;
+        }
+    }
+
+    /**
+     * ModernTextField - Rounded input field with placeholder support and blue focus outline.
+     */
+    public static class ModernTextField extends JTextField implements FocusListener {
+        private final String placeholder;
+        private boolean isShowingPlaceholder;
+
+        public ModernTextField(String placeholder) {
+            this.placeholder = placeholder;
+            this.isShowingPlaceholder = true;
+            setText(placeholder);
+            setForeground(TEXT_PLACEHOLDER);
+            setFont(FONT_FORM_INPUT);
+            setOpaque(false);
+            setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+            setPreferredSize(new Dimension(200, 38));
+            addFocusListener(this);
+        }
+
+        @Override
+        public void focusGained(FocusEvent e) {
+            if (isShowingPlaceholder) {
+                setText("");
+                setForeground(TEXT_DARK);
+                isShowingPlaceholder = false;
+                repaint();
+            }
+        }
+
+        @Override
+        public void focusLost(FocusEvent e) {
+            if (getText().trim().isEmpty()) {
+                setText(placeholder);
+                setForeground(TEXT_PLACEHOLDER);
+                isShowingPlaceholder = true;
+                repaint();
+            }
+        }
+
+        public String getCleanText() {
+            return isShowingPlaceholder ? "" : getText().trim();
+        }
+
+        public void setCleanText(String text) {
+            if (text == null || text.trim().isEmpty()) {
+                setText(placeholder);
+                setForeground(TEXT_PLACEHOLDER);
+                isShowingPlaceholder = true;
+            } else {
+                setText(text);
+                setForeground(TEXT_DARK);
+                isShowingPlaceholder = false;
+            }
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            g2.setColor(Color.WHITE);
+            g2.fillRoundRect(1, 1, getWidth() - 2, getHeight() - 2, 8, 8);
+
+            if (hasFocus()) {
+                g2.setColor(PRIMARY_BLUE);
+                g2.setStroke(new BasicStroke(1.6f));
+            } else {
+                g2.setColor(CARD_BORDER);
+                g2.setStroke(new BasicStroke(1.0f));
+            }
+            g2.drawRoundRect(1, 1, getWidth() - 3, getHeight() - 3, 8, 8);
+
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    /**
+     * ModernPasswordField - Password field with placeholder support and rounded outline.
+     */
+    public static class ModernPasswordField extends JPasswordField implements FocusListener {
+        private final String placeholder;
+        private boolean isShowingPlaceholder;
+
+        public ModernPasswordField(String placeholder) {
+            this.placeholder = placeholder;
+            this.isShowingPlaceholder = true;
+            setEchoChar((char) 0);
+            setText(placeholder);
+            setForeground(TEXT_PLACEHOLDER);
+            setFont(FONT_FORM_INPUT);
+            setOpaque(false);
+            setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+            setPreferredSize(new Dimension(200, 38));
+            addFocusListener(this);
+        }
+
+        @Override
+        public void focusGained(FocusEvent e) {
+            if (isShowingPlaceholder) {
+                setText("");
+                setEchoChar('•');
+                setForeground(TEXT_DARK);
+                isShowingPlaceholder = false;
+                repaint();
+            }
+        }
+
+        @Override
+        public void focusLost(FocusEvent e) {
+            if (new String(getPassword()).trim().isEmpty()) {
+                setEchoChar((char) 0);
+                setText(placeholder);
+                setForeground(TEXT_PLACEHOLDER);
+                isShowingPlaceholder = true;
+                repaint();
+            }
+        }
+
+        public String getCleanPassword() {
+            return isShowingPlaceholder ? "" : new String(getPassword());
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            g2.setColor(Color.WHITE);
+            g2.fillRoundRect(1, 1, getWidth() - 2, getHeight() - 2, 8, 8);
+
+            if (hasFocus()) {
+                g2.setColor(PRIMARY_BLUE);
+                g2.setStroke(new BasicStroke(1.6f));
+            } else {
+                g2.setColor(CARD_BORDER);
+                g2.setStroke(new BasicStroke(1.0f));
+            }
+            g2.drawRoundRect(1, 1, getWidth() - 3, getHeight() - 3, 8, 8);
+
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    /**
+     * ModernButton - Rounded button with hover animation and custom colors.
+     */
+    public static class ModernButton extends JButton {
+        private final Color baseBg;
+        private final Color hoverBg;
+        private boolean isHover = false;
+        private int cornerRadius = 8;
+
+        public ModernButton(String text, Color baseBg, Color fg) {
+            super(text);
+            this.baseBg = baseBg;
+            this.hoverBg = calculateHover(baseBg);
+            setForeground(fg);
+            setFont(FONT_BUTTON);
+            setFocusPainted(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            setBorder(new EmptyBorder(8, 16, 8, 16));
+
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    isHover = true;
+                    repaint();
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    isHover = false;
+                    repaint();
+                }
+            });
+        }
+
+        public void setCornerRadius(int radius) {
+            this.cornerRadius = radius;
+            repaint();
+        }
+
+        private Color calculateHover(Color c) {
+            int r = Math.max(0, c.getRed() - 20);
+            int g = Math.max(0, c.getGreen() - 20);
+            int b = Math.max(0, c.getBlue() - 20);
+            return new Color(r, g, b);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            if (!isEnabled()) {
+                g2.setColor(new Color(203, 213, 225));
+            } else if (isHover) {
+                g2.setColor(hoverBg);
+            } else {
+                g2.setColor(baseBg);
+            }
+
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), cornerRadius, cornerRadius);
+            g2.dispose();
+
+            super.paintComponent(g);
+        }
+    }
+
+    public static JButton createSuccessButton(String text) {
+        return new ModernButton(text, SUCCESS_GREEN, Color.WHITE);
+    }
+
+    public static JButton createPrimaryButton(String text) {
+        return new ModernButton(text, PRIMARY_BLUE, Color.WHITE);
+    }
+
+    public static JButton createDangerButton(String text) {
+        return new ModernButton(text, DANGER_RED, Color.WHITE);
+    }
+
+    public static JButton createSecondaryButton(String text) {
+        ModernButton btn = new ModernButton(text, Color.WHITE, TEXT_DARK);
+        btn.setBorder(new CompoundBorder(
+                new LineBorder(CARD_BORDER, 1, true),
+                new EmptyBorder(7, 15, 7, 15)
+        ));
+        return btn;
+    }
 }
