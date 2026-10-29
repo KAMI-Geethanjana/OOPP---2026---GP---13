@@ -194,9 +194,7 @@ public class LoginFrame extends JFrame {
 
         String[] paths = {
                 "resources/logo.jpg",
-                "ftms/src/resources/logo.jpg",
-                "resources/logo.png",
-                "ftms/src/resources/logo.png"
+                "resources/logo.png"
         };
 
         for (String path : paths) {
