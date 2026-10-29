@@ -3,11 +3,7 @@ package common.model;
 import common.exception.InvalidMarksException;
 import common.util.GradeCalculator;
 
-/**
- * Result entity representing grades, marks, and eligibility for an enrolled course.
- * Demonstrates:
- * 1. Encapsulation: Strict setter validation throwing custom InvalidMarksException.
- */
+
 public class Result {
     private int resultId;
     private int enrollmentId;

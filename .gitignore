@@ -2,6 +2,7 @@
 *.class
 out/
 bin/
+ftms/out/
 
 # IntelliJ IDEA project files
 .idea/

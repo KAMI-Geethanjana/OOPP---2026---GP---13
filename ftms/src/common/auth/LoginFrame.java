@@ -5,9 +5,12 @@ import common.model.User;
 import common.util.UITheme;
 import common.util.UserSession;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 
 /**
  * LoginFrame - Central Authentication Portal for FTMS.
@@ -81,30 +84,9 @@ public class LoginFrame extends JFrame {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBorder(new EmptyBorder(30, 40, 30, 40));
 
-        // Faculty Crest / Emblem badge
-        JPanel crestPanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // Outer circle
-                g2.setColor(new Color(30, 58, 138));
-                g2.fillOval(10, 0, 60, 60);
-                // Inner ring
-                g2.setColor(new Color(239, 68, 68));
-                g2.drawOval(14, 4, 52, 52);
-                // Icon text
-                g2.setColor(Color.WHITE);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 18));
-                g2.drawString("FoT", 25, 36);
-                g2.dispose();
-            }
-        };
-        crestPanel.setOpaque(false);
-        crestPanel.setPreferredSize(new Dimension(80, 65));
-        crestPanel.setMaximumSize(new Dimension(80, 65));
-        crestPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        card.add(crestPanel);
+        // Faculty Crest / University Logo
+        JLabel lblLogo = createLogoLabel();
+        card.add(lblLogo);
 
         card.add(Box.createVerticalStrut(12));
 
@@ -204,5 +186,66 @@ public class LoginFrame extends JFrame {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Database Connection Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private JLabel createLogoLabel() {
+        int logoSize = 82;
+        BufferedImage logoImg = null;
+
+        String[] paths = {
+                "resources/logo.jpg",
+                "resources/logo.png"
+        };
+
+        for (String path : paths) {
+            File f = new File(path);
+            if (f.exists()) {
+                try {
+                    logoImg = ImageIO.read(f);
+                    if (logoImg != null) break;
+                } catch (Exception ignored) {}
+            }
+        }
+
+        if (logoImg == null) {
+            try {
+                java.net.URL res = getClass().getResource("/resources/logo.jpg");
+                if (res != null) {
+                    logoImg = ImageIO.read(res);
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (logoImg != null) {
+            Image scaled = logoImg.getScaledInstance(logoSize, logoSize, Image.SCALE_SMOOTH);
+            JLabel label = new JLabel(new ImageIcon(scaled));
+            label.setAlignmentX(Component.CENTER_ALIGNMENT);
+            return label;
+        }
+
+        // Elegant Dynamic Vector Emblem Fallback
+        JLabel fallback = new JLabel(new Icon() {
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(30, 58, 138));
+                g2.fillOval(x + 10, y, 60, 60);
+                g2.setColor(new Color(239, 68, 68));
+                g2.drawOval(x + 14, y + 4, 52, 52);
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 18));
+                g2.drawString("FoT", x + 25, y + 36);
+                g2.dispose();
+            }
+
+            @Override
+            public int getIconWidth() { return 80; }
+
+            @Override
+            public int getIconHeight() { return 65; }
+        });
+        fallback.setAlignmentX(Component.CENTER_ALIGNMENT);
+        return fallback;
     }
 }
