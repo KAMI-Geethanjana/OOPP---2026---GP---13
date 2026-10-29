@@ -1,19 +1,21 @@
-import gui.LoginUI;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import common.auth.LoginFrame;
+
+import javax.swing.*;
 
 /**
- * Main application launcher for the Faculty Technical Management System (FTMS).
- * Launches the Login Portal.
+ * Main - Application Entry Point for the Faculty Technical Management System (FTMS).
+ * Initializes desktop UI settings and launches the Central Login Authentication Portal.
  */
 public class Main {
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ignored) {}
+        // Set native system look and feel
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignored) {}
 
-            new LoginUI().setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            LoginFrame loginFrame = new LoginFrame();
+            loginFrame.setVisible(true);
         });
     }
 }
