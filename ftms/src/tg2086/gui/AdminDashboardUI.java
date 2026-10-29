@@ -1274,4 +1274,20 @@ public class AdminDashboardUI extends BaseDashboardUI {
             return name;
         }
     }
+
+    // =========================================================================
+    // MAIN ENTRY POINT FOR STANDALONE MODULE TESTING
+    // =========================================================================
+
+    public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignored) {}
+
+        SwingUtilities.invokeLater(() -> {
+            Admin defaultAdmin = new Admin(1, "admin", "1234", "K.A.M.I. Geethanjana", "admin@fot.ruh.ac.lk", "0771234567", 1, "SUPER_ADMIN");
+            AdminDashboardUI dashboard = new AdminDashboardUI(defaultAdmin);
+            dashboard.setVisible(true);
+        });
+    }
 }
