@@ -24,4 +24,5 @@ public interface TechnicalOfficerRepository {
     boolean updateMedicalStatus(int medicalId, String newStatus, int toId, int departmentId);
     List<Timetable> getTimetableByDepartment(int departmentId);
     boolean updateProfile(int userId, String fullName, String email, String phoneNo);
+    boolean updateProfilePhoto(int userId, String photoPath);
 }
