@@ -245,6 +245,28 @@ public class TechnicalOfficerDAO implements TechnicalOfficerRepository {
         }
     }
 
+    public boolean updateProfilePhoto(int userId, String photoPath) {
+        if (userId <= 0 || photoPath == null || photoPath.trim().isEmpty()) {
+            return false;
+        }
+
+        String sql = "UPDATE users SET profile_pic = ? " +
+                "WHERE user_id = ? AND role = 'TECH_OFFICER'";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, photoPath);
+            ps.setInt(2, userId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException ex) {
+            reportDatabaseError("update profile photo", ex);
+            return false;
+        }
+    }
+
     private boolean isSessionType(String value) {
         return "THEORY".equals(value) || "PRACTICAL".equals(value);
     }
