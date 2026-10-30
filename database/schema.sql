@@ -1,3 +1,9 @@
+
+-- Faculty of Technology Management System (FTMS)
+-- Group 13 - Database
+
+
+
 DROP DATABASE IF EXISTS ftms_db;
 CREATE DATABASE ftms_db;
 USE ftms_db;
@@ -9,7 +15,7 @@ CREATE TABLE department (
                             department_code VARCHAR(20) NOT NULL UNIQUE
 );
 
--- 2. Users Table
+-- 2. Users Table (Base entity for all user roles)
 CREATE TABLE users (
                        user_id INT AUTO_INCREMENT PRIMARY KEY,
                        username VARCHAR(50) UNIQUE NOT NULL,
@@ -75,7 +81,7 @@ CREATE TABLE course (
                         FOREIGN KEY (lecturer_id) REFERENCES lecturer(lecturer_id) ON DELETE SET NULL
 );
 
--- 8. Course Material Table
+-- 8. Course Material Table (Lecturer uploads)
 CREATE TABLE course_material (
                                  material_id INT AUTO_INCREMENT PRIMARY KEY,
                                  course_code VARCHAR(20) NOT NULL,
@@ -124,7 +130,7 @@ CREATE TABLE enrollment (
                             FOREIGN KEY (course_code) REFERENCES course(course_code) ON DELETE CASCADE
 );
 
--- 12. Attendance Table
+-- 12. Attendance Table (Marked by Technical Officer)
 CREATE TABLE attendance (
                             attendance_id INT AUTO_INCREMENT PRIMARY KEY,
                             student_id INT NOT NULL,
@@ -133,13 +139,12 @@ CREATE TABLE attendance (
                             session_type ENUM('THEORY', 'PRACTICAL') NOT NULL,
                             status ENUM('PRESENT', 'ABSENT') NOT NULL,
                             to_id INT,
-                            UNIQUE KEY uq_attendance_session (student_id, course_code, session_date, session_type),
                             FOREIGN KEY (student_id) REFERENCES undergraduate(student_id) ON DELETE CASCADE,
                             FOREIGN KEY (course_code) REFERENCES course(course_code) ON DELETE CASCADE,
                             FOREIGN KEY (to_id) REFERENCES technical_officer(to_id) ON DELETE SET NULL
 );
 
--- 13. Medical Records Table
+-- 13. Medical Records Table (Submitted by student, reviewed by Tech Officer)
 CREATE TABLE medical (
                          medical_id INT AUTO_INCREMENT PRIMARY KEY,
                          student_id INT NOT NULL,
@@ -154,7 +159,7 @@ CREATE TABLE medical (
                          FOREIGN KEY (reviewed_by_to_id) REFERENCES technical_officer(to_id) ON DELETE SET NULL
 );
 
--- 14. Result / Marks Table
+-- 14. Result / Marks Table (Maintained by Lecturer)
 CREATE TABLE result (
                         result_id INT AUTO_INCREMENT PRIMARY KEY,
                         enrollment_id INT UNIQUE NOT NULL,
@@ -165,4 +170,48 @@ CREATE TABLE result (
                         grade VARCHAR(5) DEFAULT '-',
                         grade_point DECIMAL(3,2) DEFAULT 0.00,
                         FOREIGN KEY (enrollment_id) REFERENCES enrollment(enrollment_id) ON DELETE CASCADE
+);
+
+
+-- ============================================================================
+-- 15. TG2088 Lecturer Online Quiz Assessment Tables
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS quiz (
+    quiz_id INT AUTO_INCREMENT PRIMARY KEY,
+    course_code VARCHAR(20) NOT NULL,
+    lecturer_id INT NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    description TEXT,
+    duration_minutes INT NOT NULL DEFAULT 30,
+    total_marks DECIMAL(5,2) DEFAULT 100.00,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_code) REFERENCES course(course_code) ON DELETE CASCADE,
+    FOREIGN KEY (lecturer_id) REFERENCES lecturer(lecturer_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS quiz_question (
+    question_id INT AUTO_INCREMENT PRIMARY KEY,
+    quiz_id INT NOT NULL,
+    question_text TEXT NOT NULL,
+    option_a VARCHAR(255) NOT NULL,
+    option_b VARCHAR(255) NOT NULL,
+    option_c VARCHAR(255) NOT NULL,
+    option_d VARCHAR(255) NOT NULL,
+    correct_option CHAR(1) NOT NULL,
+    points DECIMAL(5,2) DEFAULT 10.00,
+    FOREIGN KEY (quiz_id) REFERENCES quiz(quiz_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS quiz_attempt (
+    attempt_id INT AUTO_INCREMENT PRIMARY KEY,
+    quiz_id INT NOT NULL,
+    student_reg_no VARCHAR(50) NOT NULL,
+    student_name VARCHAR(150) DEFAULT 'Student',
+    score DECIMAL(5,2) NOT NULL,
+    max_score DECIMAL(5,2) NOT NULL DEFAULT 100.00,
+    percentage DECIMAL(5,2) NOT NULL,
+    status ENUM('PASS', 'FAIL') DEFAULT 'PASS',
+    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (quiz_id) REFERENCES quiz(quiz_id) ON DELETE CASCADE
 );

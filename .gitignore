@@ -1,7 +1,14 @@
-### IntelliJ IDEA ###
+### Java compiled files ###
+*.class
 out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+bin/
+ftms/out/
+
+### IntelliJ IDEA ###
+.idea/
+*.iml
+*.iws
+*.ipr
 .kotlin
 
 ### Eclipse ###
@@ -12,9 +19,6 @@ out/
 .settings
 .springBeans
 .sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
 
 ### NetBeans ###
 /nbproject/private/
@@ -26,5 +30,10 @@ bin/
 ### VS Code ###
 .vscode/
 
-### Mac OS ###
+### OS generated files ###
 .DS_Store
+Thumbs.db
+Desktop.ini
+
+### Log files ###
+*.log

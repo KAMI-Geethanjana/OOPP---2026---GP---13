@@ -1,0 +1,106 @@
+# Module TG2088 - Lecturer Module & Academic Grading Rules Engine
+**Developer:** T.H.D. Wosada (Registration No: TG/2024/2088)  
+**Degree:** BICT (Hons), Faculty of Technology, University of Ruhuna  
+**Course Units:** ICT2122 (Object Oriented Programming) & ICT2132 (OOP Practicum)  
+
+---
+
+## 1. Overview of My Module
+As per the SRS, Project Specification, and Course Syllabus, my primary responsibility is the **Lecturer Module** along with the **Academic Grading, Eligibility Rules Engine, and Online Quiz Assessment System**:
+1. **Marks & Grading Management (FR-LEC-02, FR-MRK-03, FR-MRK-04):**
+   - Upload and update Continuous Assessment (CA) and End-of-Semester Exam marks.
+   - Calculate total weighted marks (40% CA + 60% Final Exam).
+   - Compute letter grades according to **UGC Commission Circular No. 12-2024**.
+   - Grade capping: Repeat attempts are automatically capped to maximum Grade 'C'.
+2. **CA & Exam Eligibility Checking (FR-LEC-04, FR-MRK-01, FR-MRK-02):**
+   - Check if CA mark is $\ge 40\%$. If not, student is marked **NOT_ELIGIBLE** and awarded grade **E**.
+   - Check overall exam eligibility by combining the **80% attendance rule** and **CA $\ge 40\%$ rule**.
+3. **Course Materials Repository & File Handling (FR-LEC-01):**
+   - Lecturers can upload lecture slides and notes for their assigned courses.
+   - Character Stream Export: Export grade sheets as formatted `.txt` reports (`PrintWriter`, `BufferedWriter`, `FileWriter`).
+   - Binary Stream Backup: Backup course materials to `.dat` files (`DataOutputStream`, `DataInputStream`).
+4. **Online Quiz Assessments & Question Bank Management (NEW):**
+   - Create, configure, and activate online quizzes for assigned courses with custom duration and marks.
+   - MCQ Question Bank: Add, edit, and delete questions with 4 options (A-D) and designated correct keys.
+   - Live Quiz Preview / Test Runner: Allows the lecturer to test-drive their quizzes and test instant evaluation.
+   - Submissions & Results Tracking: View student quiz submissions, percentage calculations, and pass/fail status.
+   - Character Stream Export: Export formatted quiz papers with optional instructor answer keys to `.txt`.
+   - Binary Stream Backup: Full binary backup and restore of quizzes and question banks to `.dat` files.
+5. **Student Attendance & Medical Records Monitoring (FR-LEC-06):**
+   - Lecturers can view student attendance counts, approved medical records, and excused percentages.
+6. **Lecturer Profile Management (FR-AUTH-03):**
+   - Lecturers can update their full name, email, and contact number.
+
+---
+
+## 2. Complete Mapping to Lecture Notes (Lessons 01 – 07)
+
+| Lesson | Topic in Course Syllabus | Implementation in TG2088 Module |
+|---|---|---|
+| **Lesson 01 & 02** | Classes & Objects, Anatomy of a Class | `Lecturer.java`, `CourseMaterial.java`, `Quiz.java`, `QuizQuestion.java`, `QuizAttempt.java` modeled with private fields, methods, constructors, and access modifiers (`public`, `private`, `protected`). |
+| **Lesson 02 (Part 02)** | `this` Keyword, Constructor Chaining, Initializers | • Differentiating instance variables: `this.lecturerId = lecturerId`<br>• Constructor chaining in same class: `this(...)`<br>• Passing current object reference: `JOptionPane.showMessageDialog(this, ...)`<br>• Instance Initializer Blocks (`{ ... }`) executed before constructors in `Quiz`, `QuizQuestion`, `CourseMaterial`. |
+| **Lesson 03 (Part 01)** | Inheritance (`extends`, `super`, `@Override`, casting) | • Single Inheritance: `public class Lecturer extends User`<br>• Subclass constructor explicitly calls `super(...)` as first statement<br>• Method overriding with `@Override`: `getRoleDisplayName()`, `openDashboard(JFrame)`<br>• Type checking using `instanceof` operator. |
+| **Lesson 03 (Part 02)** | Polymorphism (Static vs Dynamic Binding) | • **Dynamic Binding / Runtime Polymorphism:** `user.openDashboard(this)` resolves at runtime based on the actual object type.<br>• **Static Polymorphism / Method Overloading:** `getResultsByCourse(code)` vs `getResultsByCourse(code, filter)` in `LecturerDAO`; `getQuizzesByCourse(code)` vs `getQuizzesByCourse(code, activeOnly)` in `QuizDAO`. |
+| **Lesson 03 (Part 04)** | Encapsulation & Data Hiding | • All fields are strictly `private`.<br>• Access provided exclusively via `public` Getters (Accessors) and Setters (Mutators).<br>• Setter validation prevents negative IDs, blank names, or negative marks/points. |
+| **Lesson 04** | Interfaces (Contract, Default & Static Methods) | • Created interfaces `ILecturerDAO.java` and `IQuizDAO.java` establishing contracts.<br>• Implicit `public static final` constants: `MIN_ATTENDANCE_REQUIREMENT = 80.0`, `PASSING_PERCENTAGE = 50.0`.<br>• Java 8 `default` methods (`printModuleStatus()`, `printQuizDAOStatus()`) and `static` methods (`isPassGrade()`, `isPassingScore()`).<br>• Using Interface as a Type: `IQuizDAO quizDAO = new QuizDAO();`.<br>• Callbacks: GUI buttons implementing `ActionListener` callbacks. |
+| **Lesson 05** | Exception Handling (`try-catch-finally`, `throw`, `throws`, Custom Exceptions) | • Custom Checked Exceptions: `LecturerOperationException` and `QuizOperationException extends Exception`.<br>• Explicit `throw new QuizOperationException(...)` upon validation errors.<br>• Method signatures declared with `throws`.<br>• Multi-catch blocks and `finally` blocks ensuring resources (ResultSets, Statements, Streams) are always closed without swallowing exceptions. |
+| **Lesson 06** | File Handling (Character & Binary Streams) | • **Character Streams - Writing:** `PrintWriter` wrapped around `BufferedWriter` and `FileWriter` to export student marks reports and formatted quiz papers (`flush()`, `close()`).<br>• **Character Streams - Reading:** `BufferedReader` wrapped around `FileReader` using `readLine()`.<br>• **Binary Streams:** `DataOutputStream` (`writeUTF`, `writeInt`, `writeDouble`, `writeChar`) and `DataInputStream` (`readUTF`, `readInt`, `readDouble`, `readChar`) for course materials and quiz backups. |
+| **Lesson 07** | JDBC (Java Database Connectivity) | Follows the 05 Basic Steps:<br>1. Register Driver: `Class.forName("com.mysql.cj.jdbc.Driver")`<br>2. Establish Connection: `DBConnection.getConnection()`<br>3. Create Statement: `PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)`<br>4. Execute Query/Update: `ps.executeQuery()`, `ps.executeUpdate()`<br>5. Close Connection & Resources in `finally`. |
+
+---
+
+## 3. Key Files in My Package (`tg2088`)
+
+```
+tg2088/
+├── dao/
+│   ├── ILecturerDAO.java               <- (Interface contract - Lesson 04)
+│   ├── LecturerDAO.java                <- (Implements ILecturerDAO, JDBC 5 steps, Overloading)
+│   ├── IQuizDAO.java                   <- (Interface contract for Quiz module - Lesson 04)
+│   └── QuizDAO.java                    <- (Implements IQuizDAO, PreparedStatement, Table Init)
+├── exception/
+│   ├── LecturerOperationException.java <- (Custom checked exception - Lesson 05)
+│   └── QuizOperationException.java     <- (Custom checked exception for Quiz ops - Lesson 05)
+├── gui/
+│   ├── LecturerDashboard.java          <- (Desktop GUI, ActionListeners, File export buttons)
+│   ├── QuizQuestionDialog.java         <- (MCQ Question bank management dialog)
+│   ├── QuizResultsDialog.java          <- (Student submissions & results viewer dialog)
+│   └── QuizTestRunnerDialog.java       <- (Interactive Live Quiz test runner & preview)
+├── model/
+│   ├── CourseMaterial.java             <- (Encapsulated model, Initializer block, this chaining)
+│   ├── Lecturer.java                   <- (Extends User, super constructor, dynamic polymorphism)
+│   ├── Quiz.java                       <- (Encapsulated Quiz entity model)
+│   ├── QuizQuestion.java               <- (Encapsulated MCQ Question entity model)
+│   └── QuizAttempt.java                <- (Encapsulated Student Submission & Score model)
+├── util/
+│   ├── LecturerFileHandler.java        <- (File handling: Character & Binary streams - Lesson 06)
+│   └── QuizFileHandler.java            <- (Quiz paper .txt export & binary .dat backup - Lesson 06)
+└── README_TG2088.md                    <- (This documentation guide)
+```
+
+---
+
+## 4. UGC Circular No. 12-2024 Grading Scheme
+
+| Marks Range | Grade | Grade Point (GPV) | Notes |
+|:---:|:---:|:---:|:---|
+| 85 – 100 | **A+** | 4.00 | Excellent |
+| 80 – 84 | **A** | 4.00 | Excellent |
+| 75 – 79 | **A-** | 3.70 | Very Good |
+| 70 – 74 | **B+** | 3.30 | Good |
+| 65 – 69 | **B** | 3.00 | Good |
+| 60 – 64 | **B-** | 2.70 | Satisfactory |
+| 55 – 59 | **C+** | 2.30 | Satisfactory |
+| 50 – 54 | **C** | 2.00 | Pass (Repeat maximum cap) |
+| 45 – 49 | **C-** | 1.70 | Conditional Pass |
+| 40 – 44 | **D+** | 1.30 | Conditional Pass |
+| 35 – 39 | **D** | 1.00 | Conditional Pass |
+| 00 – 34 | **E** | 0.00 | Fail / Ineligible |
+
+---
+
+## 5. Integration Status with FTMS Central Architecture
+- **Central Authentication Portal:** Polymorphic role-based login verified with `common.auth.LoginFrame` and `AuthDAO` (Role: `LECTURER`).
+- **Unified Database Access:** Integrated with shared `DBConnection` connection pool.
+- **UI Design System:** Aligned with `UITheme` and standardized desktop dashboard conventions.
+
