@@ -1,4 +1,3 @@
-
 package tg2123.testing;
 
 import tg2123.gui.AttendancePanel;
@@ -12,9 +11,12 @@ public class TestAttendancePanel {
 
         SwingUtilities.invokeLater(() -> {
 
-            // Replace these values with a valid Technical Officer
-            // from your database.
             TechnicalOfficer officer = new TechnicalOfficer();
+
+            // Assign an existing Technical Officer ID from the database
+            officer.setToId(1);
+            officer.setDepartmentId(1);
+            officer.setEmployeeId("EMP/TO/2001");
 
             JFrame frame = new JFrame("Test Attendance Panel");
 
