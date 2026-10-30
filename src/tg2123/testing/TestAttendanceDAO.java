@@ -12,8 +12,8 @@ public class TestAttendanceDAO {
 
         AttendanceDAO dao = new AttendanceDAO();
 
-        String courseCode = "ICT1122";
-        Date sessionDate = Date.valueOf("2026-08-10");
+        String courseCode = "ICT2122";
+        Date sessionDate = Date.valueOf("2026-02-02");
         String sessionType = "THEORY";
 
         try {
