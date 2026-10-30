@@ -219,71 +219,145 @@ public class TechnicalOfficerDashboard extends JFrame {
     // 1. ATTENDANCE PANEL
     // ==========================================
     private JPanel createAttendancePanel() {
+
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
 
-        JPanel topToolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-        topToolbar.setOpaque(false);
+        // Top section
+        JPanel topSection = new JPanel();
+        topSection.setLayout(new BoxLayout(topSection, BoxLayout.Y_AXIS));
+        topSection.setOpaque(false);
 
-        JLabel lblTitle = new JLabel("Record Undergraduate Attendance (FR-TO-01)");
+        JLabel lblTitle = new JLabel(
+                "Record Undergraduate Attendance (FR-TO-01)"
+        );
+
         lblTitle.setFont(UITheme.FONT_HEADER);
-        topToolbar.add(lblTitle);
+        lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        topToolbar.add(Box.createHorizontalStrut(10));
-        topToolbar.add(new JLabel("Course:"));
+        topSection.add(lblTitle);
+        topSection.add(Box.createVerticalStrut(15));
+
+        // Attendance input fields
+        JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 5));
+        inputPanel.setOpaque(false);
+
+        inputPanel.add(new JLabel("Course:"));
+
         cbAttCourse = new JComboBox<>();
         cbAttCourse.setPreferredSize(new Dimension(130, 34));
         cbAttCourse.addActionListener(e -> loadAttendanceData());
-        topToolbar.add(cbAttCourse);
 
-        topToolbar.add(new JLabel("Date (YYYY-MM-DD):"));
+        inputPanel.add(cbAttCourse);
+
+        inputPanel.add(new JLabel("Date (YYYY-MM-DD):"));
+
         txtAttDate = UITheme.createTextField(10);
-        txtAttDate.setText(new Date(System.currentTimeMillis()).toString());
-        topToolbar.add(txtAttDate);
+        txtAttDate.setText(
+                new Date(System.currentTimeMillis()).toString()
+        );
 
-        topToolbar.add(new JLabel("Session Type:"));
-        cbAttType = new JComboBox<>(new String[]{"THEORY", "PRACTICAL"});
-        topToolbar.add(cbAttType);
+        inputPanel.add(txtAttDate);
 
-        JButton btnLoad = UITheme.createButton("Load Students", UITheme.PRIMARY_BLUE, Color.WHITE);
+        inputPanel.add(new JLabel("Session Type:"));
+
+        cbAttType = new JComboBox<>(
+                new String[]{"THEORY", "PRACTICAL"}
+        );
+
+        cbAttType.setPreferredSize(new Dimension(120, 34));
+
+        inputPanel.add(cbAttType);
+
+        JButton btnLoad = UITheme.createButton(
+                "Load Students",
+                UITheme.PRIMARY_BLUE,
+                Color.WHITE
+        );
+
         btnLoad.addActionListener(e -> loadAttendanceData());
-        topToolbar.add(btnLoad);
 
-        card.add(topToolbar, BorderLayout.NORTH);
+        inputPanel.add(btnLoad);
 
-        String[] cols = {"Student ID", "Student Reg No", "Full Name", "Status (PRESENT / ABSENT)"};
+        topSection.add(inputPanel);
+
+        card.add(topSection, BorderLayout.NORTH);
+
+        // Attendance table
+        String[] cols = {
+                "Student ID",
+                "Student Reg No",
+                "Full Name",
+                "Status (PRESENT / ABSENT)"
+        };
+
         attTableModel = new DefaultTableModel(cols, 0) {
+
             @Override
             public boolean isCellEditable(int r, int c) {
-                return c == 3; // Allow editing status
+                return c == 3;
             }
         };
+
         tblAttendance = new JTable(attTableModel);
+
         UITheme.styleTable(tblAttendance);
 
-        // ComboBox editor for Status column
-        JComboBox<String> statusEditor = new JComboBox<>(new String[]{"NOT_MARKED", "PRESENT", "ABSENT"});
-        tblAttendance.getColumnModel().getColumn(3).setCellEditor(new DefaultCellEditor(statusEditor));
+        JComboBox<String> statusEditor = new JComboBox<>(
+                new String[]{"NOT_MARKED", "PRESENT", "ABSENT"}
+        );
+
+        tblAttendance.getColumnModel()
+                .getColumn(3)
+                .setCellEditor(new DefaultCellEditor(statusEditor));
 
         card.add(new JScrollPane(tblAttendance), BorderLayout.CENTER);
 
-        // Bottom Action Bar
-        JPanel bottomBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        // Bottom action buttons
+        JPanel bottomBar = new JPanel(
+                new FlowLayout(FlowLayout.RIGHT, 10, 5)
+        );
+
         bottomBar.setOpaque(false);
 
-        JButton btnMarkAllPresent = UITheme.createButton("Set All PRESENT", UITheme.PRIMARY_BLUE, Color.WHITE);
-        btnMarkAllPresent.addActionListener(e -> setAllStatus("PRESENT"));
+        JButton btnMarkAllPresent = UITheme.createButton(
+                "Set All PRESENT",
+                UITheme.PRIMARY_BLUE,
+                Color.WHITE
+        );
+
+        btnMarkAllPresent.addActionListener(
+                e -> setAllStatus("PRESENT")
+        );
+
         bottomBar.add(btnMarkAllPresent);
 
-        JButton btnMarkAllAbsent = UITheme.createButton("Set All ABSENT", UITheme.WARNING_AMBER, Color.WHITE);
-        btnMarkAllAbsent.addActionListener(e -> setAllStatus("ABSENT"));
+        JButton btnMarkAllAbsent = UITheme.createButton(
+                "Set All ABSENT",
+                UITheme.WARNING_AMBER,
+                Color.WHITE
+        );
+
+        btnMarkAllAbsent.addActionListener(
+                e -> setAllStatus("ABSENT")
+        );
+
         bottomBar.add(btnMarkAllAbsent);
 
-        JButton btnSaveAttendance = UITheme.createButton("Save Attendance Records", UITheme.SUCCESS_GREEN, Color.WHITE);
-        btnSaveAttendance.addActionListener(e -> handleSaveAttendance());
+        JButton btnSaveAttendance = UITheme.createButton(
+                "Save Attendance Records",
+                UITheme.SUCCESS_GREEN,
+                Color.WHITE
+        );
+
+        btnSaveAttendance.addActionListener(
+                e -> handleSaveAttendance()
+        );
+
         bottomBar.add(btnSaveAttendance);
 
         card.add(bottomBar, BorderLayout.SOUTH);
+
         return card;
     }
 
