@@ -1,6 +1,6 @@
 package util;
 
-import model.User;
+import common.model.User;
 
 public class UserSession {
     private static User currentUser;

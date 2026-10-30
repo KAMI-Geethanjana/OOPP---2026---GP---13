@@ -80,7 +80,10 @@ final class ProfilePanel {
         gbc.gridx = 1; gbc.gridy = 6;
         card.add(d.txtProfEmail, gbc);
 
-        d.lblProfilePicture = new JLabel("No profile photo selected");
+        d.lblProfilePicture = new JLabel("No profile photo selected", SwingConstants.CENTER);
+        d.lblProfilePicture.setPreferredSize(new Dimension(160, 160));
+        d.lblProfilePicture.setMinimumSize(new Dimension(160, 160));
+        d.lblProfilePicture.setBorder(BorderFactory.createLineBorder(new Color(210, 215, 225)));
         gbc.gridx = 0; gbc.gridy = 7;
         card.add(new JLabel("Profile Picture:"), gbc);
         gbc.gridx = 1; gbc.gridy = 7;
@@ -91,9 +94,14 @@ final class ProfilePanel {
         gbc.gridx = 1; gbc.gridy = 8;
         card.add(btnPicture, gbc);
 
+        JButton btnRemove = UITheme.createButton("Remove Profile Picture", new Color(185, 48, 48), Color.WHITE);
+        btnRemove.addActionListener(e -> removeProfilePicture(d));
+        gbc.gridx = 1; gbc.gridy = 9;
+        card.add(btnRemove, gbc);
+
         JButton btnUpdate = UITheme.createButton("Update Contact Details", UITheme.PRIMARY_BLUE, Color.WHITE);
         btnUpdate.addActionListener(e -> d.handleUpdateProfile());
-        gbc.gridx = 1; gbc.gridy = 9;
+        gbc.gridx = 1; gbc.gridy = 10;
         card.add(btnUpdate, gbc);
 
         return card;
@@ -107,8 +115,34 @@ final class ProfilePanel {
             d.lblProfStatus.setText(d.student.getStatus());
             d.txtProfPhone.setText(d.student.getContactNo() != null ? d.student.getContactNo() : d.student.getPhoneNo());
             d.txtProfEmail.setText(d.student.getEmail());
-            d.lblProfilePicture.setText(d.student.getProfilePic() == null ? "No profile photo selected" : d.student.getProfilePic());
+            showProfilePicture(d);
         }
+    }
+
+    private static void showProfilePicture(UndergraduateDashboard d) {
+        String path = d.student == null ? null : d.student.getProfilePic();
+        if (path == null || path.isBlank()) {
+            d.lblProfilePicture.setIcon(null);
+            d.lblProfilePicture.setText("No profile photo selected");
+            return;
+        }
+        java.nio.file.Path file = java.nio.file.Paths.get(path);
+        if (!java.nio.file.Files.isRegularFile(file)) {
+            d.lblProfilePicture.setIcon(null);
+            d.lblProfilePicture.setText("Photo file not found");
+            d.lblProfilePicture.setToolTipText(path);
+            return;
+        }
+        ImageIcon original = new ImageIcon(file.toAbsolutePath().toString());
+        if (original.getIconWidth() <= 0) {
+            d.lblProfilePicture.setIcon(null);
+            d.lblProfilePicture.setText("Cannot open photo");
+            return;
+        }
+        Image resized = original.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+        d.lblProfilePicture.setIcon(new ImageIcon(resized));
+        d.lblProfilePicture.setText("");
+        d.lblProfilePicture.setToolTipText(file.toString());
     }
 
     static void handleUpdateProfile(UndergraduateDashboard d) {
@@ -144,7 +178,7 @@ final class ProfilePanel {
             String saved = target.toString();
             if (d.studentDAO.updateProfilePicture(d.student.getUserId(), saved)) {
                 d.student.setProfilePic(saved);
-                d.lblProfilePicture.setText(saved);
+                showProfilePicture(d);
                 JOptionPane.showMessageDialog(d, "Profile picture updated successfully!");
             } else {
                 JOptionPane.showMessageDialog(d, "Could not save profile picture to database.");
@@ -153,4 +187,33 @@ final class ProfilePanel {
             JOptionPane.showMessageDialog(d, "Cannot copy picture: " + ex.getMessage());
         }
     }
+    private static void removeProfilePicture(UndergraduateDashboard d) {
+        if (d.student == null) return;
+        String oldPath = d.student.getProfilePic();
+        if (oldPath == null || oldPath.isBlank()) {
+            JOptionPane.showMessageDialog(d, "There is no profile picture to remove.");
+            return;
+        }
+        if (JOptionPane.showConfirmDialog(d, "Remove your profile picture?", "Confirm removal",
+                JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
+        if (!d.studentDAO.updateProfilePicture(d.student.getUserId(), null)) {
+            JOptionPane.showMessageDialog(d, "Could not remove profile picture from database.");
+            return;
+        }
+        d.student.setProfilePic(null);
+        showProfilePicture(d);
+        // Delete only an image managed by this application, not an arbitrary user file.
+        try {
+            java.nio.file.Path managedFolder = java.nio.file.Paths.get("profile_pictures").toAbsolutePath().normalize();
+            java.nio.file.Path oldFile = java.nio.file.Paths.get(oldPath).toAbsolutePath().normalize();
+            if (oldFile.getParent() != null && oldFile.getParent().equals(managedFolder)
+                    && oldFile.getFileName().toString().startsWith("student_" + d.student.getUserId() + ".")) {
+                java.nio.file.Files.deleteIfExists(oldFile);
+            }
+        } catch (java.io.IOException ex) {
+            // Database removal succeeded; stale managed image can be cleaned up later.
+        }
+        JOptionPane.showMessageDialog(d, "Profile picture removed successfully.");
+    }
+
 }

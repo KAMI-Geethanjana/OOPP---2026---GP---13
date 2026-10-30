@@ -1,3 +1,4 @@
+
 package tg2082.gui;
 
 import common.auth.LoginFrame;
@@ -65,32 +66,57 @@ final class MedicalPanel {
         d.txtMedReason.setBorder(BorderFactory.createTitledBorder("Describe medical reason"));
         formPanel.add(new JScrollPane(d.txtMedReason), BorderLayout.CENTER);
 
-        JPanel rowFields = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        rowFields.setOpaque(false);
-        rowFields.add(new JLabel("Course:"));
-        d.cbMedCourse = new JComboBox<>();
-        d.cbMedCourse.setPreferredSize(new Dimension(120, 32));
-        rowFields.add(d.cbMedCourse);
+        // Separate rows keep the Add Medical action visible on narrow windows.
+        JPanel formFields = new JPanel();
+        formFields.setOpaque(false);
+        formFields.setLayout(new BoxLayout(formFields, BoxLayout.Y_AXIS));
 
-        rowFields.add(new JLabel("Medical Date:"));
+        JPanel courseDateRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        courseDateRow.setOpaque(false);
+        courseDateRow.add(new JLabel("Course:"));
+        d.cbMedCourse = new JComboBox<>();
+        d.cbMedCourse.setPreferredSize(new Dimension(160, 32));
+        courseDateRow.add(d.cbMedCourse);
+        courseDateRow.add(new JLabel("Medical Date (YYYY-MM-DD):"));
         d.txtMedDate = UITheme.createTextField(10);
         d.txtMedDate.setText(new Date(System.currentTimeMillis()).toString());
-        rowFields.add(d.txtMedDate);
+        courseDateRow.add(d.txtMedDate);
+        courseDateRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        formFields.add(courseDateRow);
 
-        rowFields.add(new JLabel("Certificate Path:"));
+        JPanel fileRow = new JPanel(new BorderLayout(10, 0));
+        fileRow.setOpaque(false);
+        fileRow.add(new JLabel("Certificate Path:"), BorderLayout.WEST);
         d.txtMedPath = UITheme.createTextField(15);
-        d.txtMedPath.setText("docs/med_cert.pdf");
-        rowFields.add(d.txtMedPath);
+        d.txtMedPath.setEditable(false);
+        fileRow.add(d.txtMedPath, BorderLayout.CENTER);
+        JButton btnChooseFile = UITheme.createButton("Choose File", UITheme.PRIMARY_BLUE, Color.WHITE);
+        btnChooseFile.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Choose medical certificate");
+            chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                    "Medical certificates (PDF, JPG, JPEG, PNG)", "pdf", "jpg", "jpeg", "png"));
+            if (chooser.showOpenDialog(d) == JFileChooser.APPROVE_OPTION) {
+                d.txtMedPath.setText(chooser.getSelectedFile().getAbsolutePath());
+            }
+        });
+        fileRow.add(btnChooseFile, BorderLayout.EAST);
+        fileRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        fileRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        formFields.add(fileRow);
 
-        JButton btnSubmit = UITheme.createButton("Submit Request", UITheme.SUCCESS_GREEN, Color.WHITE);
-        btnSubmit.addActionListener(e -> d.handleSubmitMedical());
-        rowFields.add(btnSubmit);
-
+        JPanel actionsRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
+        actionsRow.setOpaque(false);
+        JButton btnAddMedical = UITheme.createButton("Add Medical", UITheme.SUCCESS_GREEN, Color.WHITE);
+        btnAddMedical.addActionListener(e -> d.handleSubmitMedical());
+        actionsRow.add(btnAddMedical);
         JButton btnRefresh = UITheme.createButton("Refresh List", UITheme.PRIMARY_BLUE, Color.WHITE);
         btnRefresh.addActionListener(e -> d.loadMedicalData());
-        rowFields.add(btnRefresh);
+        actionsRow.add(btnRefresh);
+        actionsRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        formFields.add(actionsRow);
 
-        formPanel.add(rowFields, BorderLayout.SOUTH);
+        formPanel.add(formFields, BorderLayout.SOUTH);
         centerPanel.add(formPanel, BorderLayout.NORTH);
 
         // Table Panel
@@ -108,6 +134,14 @@ final class MedicalPanel {
         d.tblMedical = new JTable(d.medModel);
         UITheme.styleTable(d.tblMedical);
         tableWrapper.add(new JScrollPane(d.tblMedical), BorderLayout.CENTER);
+
+        JButton btnDelete = UITheme.createButton("Delete Selected Pending Request", new Color(185, 48, 48), Color.WHITE);
+        btnDelete.addActionListener(e -> deleteSelectedMedical(d));
+        JPanel tableActions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        tableActions.setOpaque(false);
+        tableActions.add(btnDelete);
+        tableWrapper.add(tableActions, BorderLayout.SOUTH);
+
 
         centerPanel.add(tableWrapper, BorderLayout.CENTER);
         card.add(centerPanel, BorderLayout.CENTER);
@@ -149,18 +183,65 @@ final class MedicalPanel {
             return;
         }
 
+        if (course == null) {
+            JOptionPane.showMessageDialog(d, "No enrolled course selected.");
+            return;
+        }
+        if (path.isBlank() || !java.nio.file.Files.isRegularFile(java.nio.file.Paths.get(path))) {
+            JOptionPane.showMessageDialog(d, "Choose an existing medical certificate first.");
+            return;
+        }
         try {
             Date dt = Date.valueOf(d.txtMedDate.getText().trim());
             int stuId = d.student != null ? d.student.getStudentId() : 1;
 
-            Medical m = new Medical(0, stuId, course, dt, reason, path, "PENDING", null);
+            java.nio.file.Path source = java.nio.file.Paths.get(path);
+            java.nio.file.Path folder = java.nio.file.Paths.get("medical_certificates");
+            java.nio.file.Files.createDirectories(folder);
+            String fileName = source.getFileName().toString();
+            String ext = fileName.substring(fileName.lastIndexOf('.')).toLowerCase(java.util.Locale.ROOT);
+            java.nio.file.Path target = folder.resolve("student_" + stuId + "_" +
+                    java.util.UUID.randomUUID() + ext);
+            java.nio.file.Files.copy(source, target);
+            Medical m = new Medical(0, stuId, course, dt, reason, target.toString(), "PENDING", null);
             if (d.studentDAO.submitMedical(m)) {
                 JOptionPane.showMessageDialog(d, "Medical request submitted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 d.txtMedReason.setText("");
+                d.txtMedPath.setText("");
                 d.loadMedicalData();
+            } else {
+                java.nio.file.Files.deleteIfExists(target);
+                JOptionPane.showMessageDialog(d, "Could not save medical request to database.");
             }
+        } catch (java.io.IOException ex) {
+            JOptionPane.showMessageDialog(d, "Could not save certificate: " + ex.getMessage());
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(d, "Please enter date in format YYYY-MM-DD", "Invalid Date", JOptionPane.WARNING_MESSAGE);
         }
     }
+    private static void deleteSelectedMedical(UndergraduateDashboard d) {
+        int selected = d.tblMedical.getSelectedRow();
+        if (selected < 0) {
+            JOptionPane.showMessageDialog(d, "Select a medical record first.");
+            return;
+        }
+        int row = d.tblMedical.convertRowIndexToModel(selected);
+        String status = String.valueOf(d.medModel.getValueAt(row, 5));
+        if (!"PENDING".equalsIgnoreCase(status)) {
+            JOptionPane.showMessageDialog(d, "Only PENDING requests can be deleted.");
+            return;
+        }
+        int medicalId = ((Number) d.medModel.getValueAt(row, 0)).intValue();
+        int studentId = d.student.getStudentId();
+        if (JOptionPane.showConfirmDialog(d, "Delete selected pending medical request?",
+                "Confirm deletion", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
+        if (d.studentDAO.deletePendingMedical(medicalId, studentId)) {
+            d.loadMedicalData();
+            JOptionPane.showMessageDialog(d, "Medical request deleted.");
+        } else {
+            JOptionPane.showMessageDialog(d, "Deletion failed. The request may no longer be pending.");
+        }
+    }
+
 }
+

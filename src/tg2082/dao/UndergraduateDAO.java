@@ -380,4 +380,18 @@ public class UndergraduateDAO {
             return false;
         }
     }
+    /** Only the owner can delete a pending medical request. */
+    public boolean deletePendingMedical(int medicalId, int studentId) {
+        String sql = "DELETE FROM medical WHERE medical_id = ? AND student_id = ? AND status = 'PENDING'";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, medicalId);
+            ps.setInt(2, studentId);
+            return ps.executeUpdate() == 1;
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
 }
