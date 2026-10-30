@@ -37,3 +37,4 @@ Desktop.ini
 
 ### Log files ###
 *.log
+resources/profile_photos/*
