@@ -17,6 +17,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Date;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
@@ -269,6 +270,16 @@ public class TechnicalOfficerDashboard extends JFrame {
 
         inputPanel.add(cbAttType);
 
+        JButton btnNewSession = UITheme.createButton(
+                "Add New Session",
+                UITheme.SUCCESS_GREEN,
+                Color.WHITE
+        );
+
+        btnNewSession.addActionListener(e -> openNewSessionForm());
+
+        inputPanel.add(btnNewSession);
+
         JButton btnLoad = UITheme.createButton(
                 "Load Students",
                 UITheme.PRIMARY_BLUE,
@@ -364,43 +375,226 @@ public class TechnicalOfficerDashboard extends JFrame {
     // ==========================================
     // 2. MEDICALS PANEL
     // ==========================================
+
     private JPanel createMedicalsPanel() {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
 
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
-        JLabel lblTitle = new JLabel("Undergraduate Medical Certificate Requests (FR-TO-02, FR-TO-03)");
+
+        JLabel lblTitle = new JLabel(
+                "Undergraduate Medical Certificate Requests (FR-TO-02, FR-TO-03)");
         lblTitle.setFont(UITheme.FONT_HEADER);
         top.add(lblTitle, BorderLayout.WEST);
 
-        JButton btnRefresh = UITheme.createButton("Refresh List", UITheme.PRIMARY_BLUE, Color.WHITE);
+        JButton btnRefresh = UITheme.createButton(
+                "Refresh List", UITheme.PRIMARY_BLUE, Color.WHITE);
         btnRefresh.addActionListener(e -> loadMedicalsData());
         top.add(btnRefresh, BorderLayout.EAST);
+
         card.add(top, BorderLayout.NORTH);
 
-        String[] cols = {"ID", "Student Reg No", "Student Name", "Course", "Date", "Reason", "Document Path", "Status"};
-        medicalsTableModel = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+        String[] cols = {
+                "ID", "Student Reg No", "Student Name", "Course",
+                "Date", "Reason", "Document Path", "Status"
         };
+
+        medicalsTableModel = new DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
+        };
+
         tblMedicals = new JTable(medicalsTableModel);
         UITheme.styleTable(tblMedicals);
+
         card.add(new JScrollPane(tblMedicals), BorderLayout.CENTER);
 
-        JPanel bottomBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 5));
+        JPanel bottomBar =
+                new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 5));
         bottomBar.setOpaque(false);
 
-        JButton btnApprove = UITheme.createButton("Approve Medical", UITheme.SUCCESS_GREEN, Color.WHITE);
-        btnApprove.addActionListener(e -> handleUpdateMedicalStatus("APPROVED"));
+        JButton btnAdd = UITheme.createButton(
+                "Add Medical", UITheme.PRIMARY_BLUE, Color.WHITE);
+        btnAdd.addActionListener(e -> openAddMedicalForm());
+        bottomBar.add(btnAdd);
+
+        JButton btnApprove = UITheme.createButton(
+                "Approve Medical", UITheme.SUCCESS_GREEN, Color.WHITE);
+        btnApprove.addActionListener(
+                e -> handleUpdateMedicalStatus("APPROVED"));
         bottomBar.add(btnApprove);
 
-        JButton btnReject = UITheme.createButton("Reject Medical", UITheme.DANGER_RED, Color.WHITE);
-        btnReject.addActionListener(e -> handleUpdateMedicalStatus("REJECTED"));
+        JButton btnReject = UITheme.createButton(
+                "Reject Medical", UITheme.DANGER_RED, Color.WHITE);
+        btnReject.addActionListener(
+                e -> handleUpdateMedicalStatus("REJECTED"));
         bottomBar.add(btnReject);
 
         card.add(bottomBar, BorderLayout.SOUTH);
+
         return card;
     }
+
+
+    private void openAddMedicalForm() {
+
+        tg2123.dao.MedicalDAO medicalDAO =
+                new tg2123.dao.MedicalDAO();
+
+        JComboBox<StudentOption> studentCombo =
+                new JComboBox<>();
+
+        JComboBox<String> courseCombo =
+                new JComboBox<>();
+
+        JTextField dateField =
+                new JTextField(java.time.LocalDate.now().toString(), 15);
+
+        JTextArea reasonArea = new JTextArea(4, 15);
+        reasonArea.setLineWrap(true);
+        reasonArea.setWrapStyleWord(true);
+
+        try {
+            List<String[]> students =
+                    medicalDAO.getStudentsForDepartment(
+                            techOfficer.getDepartmentId());
+
+            for (String[] student : students) {
+                studentCombo.addItem(
+                        new StudentOption(
+                                Integer.parseInt(student[0]),
+                                student[1],
+                                student[2]
+                        )
+                );
+            }
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                    this, "Could not load students: " + ex.getMessage());
+            return;
+        }
+
+        if (studentCombo.getItemCount() == 0) {
+            JOptionPane.showMessageDialog(
+                    this, "No students found in your department.");
+            return;
+        }
+
+        studentCombo.addActionListener(e -> {
+
+            StudentOption selected =
+                    (StudentOption) studentCombo.getSelectedItem();
+
+            courseCombo.removeAllItems();
+
+            if (selected == null) {
+                return;
+            }
+
+            try {
+                List<String> courses =
+                        medicalDAO.getCoursesForStudent(selected.id);
+
+                for (String course : courses) {
+                    courseCombo.addItem(course);
+                }
+
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(
+                        this, "Could not load courses: " + ex.getMessage());
+            }
+        });
+
+        studentCombo.setSelectedIndex(0);
+
+        JPanel form = new JPanel(new GridLayout(0, 2, 8, 8));
+
+        form.add(new JLabel("Student:"));
+        form.add(studentCombo);
+
+        form.add(new JLabel("Course:"));
+        form.add(courseCombo);
+
+        form.add(new JLabel("Medical Date (YYYY-MM-DD):"));
+        form.add(dateField);
+
+        form.add(new JLabel("Reason:"));
+        form.add(new JScrollPane(reasonArea));
+
+        int answer = JOptionPane.showConfirmDialog(
+                this,
+                form,
+                "Add Medical Request",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (answer != JOptionPane.OK_OPTION) {
+            return;
+        }
+
+        StudentOption selectedStudent =
+                (StudentOption) studentCombo.getSelectedItem();
+
+        String selectedCourse =
+                (String) courseCombo.getSelectedItem();
+
+        String dateText = dateField.getText().trim();
+        String reason = reasonArea.getText().trim();
+
+        if (selectedStudent == null) {
+            JOptionPane.showMessageDialog(this, "Please select a student.");
+            return;
+        }
+
+        if (selectedCourse == null) {
+            JOptionPane.showMessageDialog(this, "Please select a course.");
+            return;
+        }
+
+        if (reason.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter the reason.");
+            return;
+        }
+
+        try {
+            java.sql.Date medicalDate =
+                    java.sql.Date.valueOf(dateText);
+
+            boolean added = medicalDAO.addMedicalRequest(
+                    selectedStudent.id,
+                    selectedCourse,
+                    medicalDate,
+                    reason
+            );
+
+            if (added) {
+                JOptionPane.showMessageDialog(
+                        this, "Medical request added successfully.");
+
+                loadMedicalsData();
+
+            } else {
+                JOptionPane.showMessageDialog(
+                        this, "Could not add medical request.");
+            }
+
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(
+                    this, "Invalid date. Use YYYY-MM-DD.");
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(
+                    this, "Could not add medical request: "
+                            + ex.getMessage());
+        }
+    }
+
+
 
     // ==========================================
     // 3. TIMETABLE PANEL (FR-TO-05)
@@ -506,6 +700,94 @@ public class TechnicalOfficerDashboard extends JFrame {
     // ==========================================
     // DATA LOADERS & ACTIONS
     // ==========================================
+
+    private void openNewSessionForm() {
+
+        if (cbAttCourse.getItemCount() == 0) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No courses are available.",
+                    "No Courses",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+
+        JComboBox<String> courseField = new JComboBox<>();
+
+        for (int i = 0; i < cbAttCourse.getItemCount(); i++) {
+            courseField.addItem(cbAttCourse.getItemAt(i));
+        }
+
+        courseField.setSelectedItem(cbAttCourse.getSelectedItem());
+
+        JTextField dateField = new JTextField(
+                new Date(System.currentTimeMillis()).toString()
+        );
+
+        JComboBox<String> typeField = new JComboBox<>(
+                new String[]{"THEORY", "PRACTICAL"}
+        );
+
+        JPanel form = new JPanel(new GridLayout(0, 2, 10, 10));
+
+        form.add(new JLabel("Course:"));
+        form.add(courseField);
+
+        form.add(new JLabel("Session Date (YYYY-MM-DD):"));
+        form.add(dateField);
+
+        form.add(new JLabel("Session Type:"));
+        form.add(typeField);
+
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                form,
+                "Add New Attendance Session",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result == JOptionPane.OK_OPTION) {
+
+            try {
+                String course = (String) courseField.getSelectedItem();
+                Date sessionDate = Date.valueOf(dateField.getText().trim());
+                String sessionType = (String) typeField.getSelectedItem();
+
+                cbAttCourse.setSelectedItem(course);
+                txtAttDate.setText(sessionDate.toString());
+                cbAttType.setSelectedItem(sessionType);
+
+                loadAttendanceData();
+
+                if (attTableModel.getRowCount() == 0) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "No students were found for this course and session.",
+                            "No Students Found",
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                } else {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            attTableModel.getRowCount() + " students loaded successfully. You can now mark attendance.",
+                            "Session Ready",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                }
+
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Please enter a valid date in YYYY-MM-DD format.",
+                        "Invalid Date",
+                        JOptionPane.WARNING_MESSAGE
+                );
+            }
+        }
+    }
+
     private void loadDepartmentCourses() {
         if (techOfficer == null || techOfficer.getDepartmentId() <= 0) {
             JOptionPane.showMessageDialog(this, "The Technical Officer department is not available.", "Profile Error", JOptionPane.ERROR_MESSAGE);
@@ -527,6 +809,13 @@ public class TechnicalOfficerDashboard extends JFrame {
             String type = (String) cbAttType.getSelectedItem();
 
             List<Map<String, Object>> students = toDAO.getStudentsForAttendance(course, dt, type, techOfficer.getDepartmentId());
+
+            System.out.println("Logged-in TO ID: " + techOfficer.getToId());
+            System.out.println("Department ID: " + techOfficer.getDepartmentId());
+            System.out.println("Selected Course: " + course);
+            System.out.println("Session Date: " + dt);
+            System.out.println("Session Type: " + type);
+
             attTableModel.setRowCount(0);
 
             for (Map<String, Object> m : students) {
@@ -711,4 +1000,24 @@ public class TechnicalOfficerDashboard extends JFrame {
             new LoginFrame().setVisible(true);
         }
     }
+
+
+    private static class StudentOption {
+
+        private final int id;
+        private final String regNo;
+        private final String fullName;
+
+        public StudentOption(int id, String regNo, String fullName) {
+            this.id = id;
+            this.regNo = regNo;
+            this.fullName = fullName;
+        }
+
+        @Override
+        public String toString() {
+            return regNo + " - " + fullName;
+        }
+    }
+
 }
