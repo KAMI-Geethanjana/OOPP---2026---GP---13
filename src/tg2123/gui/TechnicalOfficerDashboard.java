@@ -16,10 +16,18 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.File;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
 
 /**
  * TechnicalOfficerDashboard - Portal for Technical Officers.
@@ -69,6 +77,8 @@ public class TechnicalOfficerDashboard extends JFrame {
     // Profile components
     private JTextField txtProfFullName, txtProfEmail, txtProfPhone;
     private JLabel lblProfUsername, lblProfEmpId;
+    private JLabel lblProfilePhoto;
+    private File selectedProfilePhoto;
 
     public TechnicalOfficerDashboard(TechnicalOfficer techOfficer) {
         this.techOfficer = techOfficer;
@@ -644,6 +654,7 @@ public class TechnicalOfficerDashboard extends JFrame {
     // 5. PROFILE PANEL
     // ==========================================
     private JPanel createProfilePanel() {
+
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new GridBagLayout());
 
@@ -651,50 +662,132 @@ public class TechnicalOfficerDashboard extends JFrame {
         gbc.insets = new Insets(8, 12, 8, 12);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JLabel lblTitle = new JLabel("Technical Officer Profile Details");
+        // Title
+        JLabel lblTitle = new JLabel(
+                "Technical Officer Profile Details",
+                SwingConstants.CENTER
+        );
         lblTitle.setFont(UITheme.FONT_HEADER);
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
         card.add(lblTitle, gbc);
 
+        // Profile photo
+        lblProfilePhoto = new JLabel("No Photo", SwingConstants.CENTER);
+        lblProfilePhoto.setPreferredSize(new Dimension(130, 130));
+        lblProfilePhoto.setMinimumSize(new Dimension(130, 130));
+        lblProfilePhoto.setBorder(
+                BorderFactory.createLineBorder(Color.GRAY)
+        );
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.NONE;
+        card.add(lblProfilePhoto, gbc);
+
+        // Update Profile Photo button
+        JButton btnChoosePhoto = UITheme.createButton(
+                "Update Profile Photo",
+                UITheme.PRIMARY_BLUE,
+                Color.WHITE
+        );
+
+        btnChoosePhoto.addActionListener(
+                e -> chooseProfilePhoto()
+        );
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        card.add(btnChoosePhoto, gbc);
+
+        // Reset layout settings for profile details
         gbc.gridwidth = 1;
-        gbc.gridx = 0; gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+
+        // Username
+        gbc.gridx = 0;
+        gbc.gridy = 3;
         card.add(new JLabel("Username (Read-Only):"), gbc);
-        lblProfUsername = new JLabel(techOfficer != null ? techOfficer.getUsername() : "");
+
+        lblProfUsername = new JLabel(
+                techOfficer != null ? techOfficer.getUsername() : ""
+        );
         lblProfUsername.setFont(UITheme.FONT_BODY_BOLD);
-        gbc.gridx = 1; gbc.gridy = 1;
+
+        gbc.gridx = 1;
         card.add(lblProfUsername, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2;
+        // Employee ID
+        gbc.gridx = 0;
+        gbc.gridy = 4;
         card.add(new JLabel("Employee ID:"), gbc);
-        lblProfEmpId = new JLabel(techOfficer != null ? techOfficer.getEmployeeId() : "");
+
+        lblProfEmpId = new JLabel(
+                techOfficer != null ? techOfficer.getEmployeeId() : ""
+        );
         lblProfEmpId.setFont(UITheme.FONT_BODY_BOLD);
-        gbc.gridx = 1; gbc.gridy = 2;
+
+        gbc.gridx = 1;
         card.add(lblProfEmpId, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 3;
+        // Full Name
+        gbc.gridx = 0;
+        gbc.gridy = 5;
         card.add(new JLabel("Full Name:"), gbc);
+
         txtProfFullName = UITheme.createTextField(25);
-        gbc.gridx = 1; gbc.gridy = 3;
+
+        gbc.gridx = 1;
         card.add(txtProfFullName, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 4;
+        // Email
+        gbc.gridx = 0;
+        gbc.gridy = 6;
         card.add(new JLabel("Email Address:"), gbc);
+
         txtProfEmail = UITheme.createTextField(25);
-        gbc.gridx = 1; gbc.gridy = 4;
+
+        gbc.gridx = 1;
         card.add(txtProfEmail, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 5;
+        // Phone
+        gbc.gridx = 0;
+        gbc.gridy = 7;
         card.add(new JLabel("Phone Number:"), gbc);
+
         txtProfPhone = UITheme.createTextField(25);
-        gbc.gridx = 1; gbc.gridy = 5;
+
+        gbc.gridx = 1;
         card.add(txtProfPhone, gbc);
 
-        JButton btnSaveProfile = UITheme.createButton("Update Profile", UITheme.PRIMARY_BLUE, Color.WHITE);
-        btnSaveProfile.addActionListener(e -> handleUpdateProfile());
-        gbc.gridx = 1; gbc.gridy = 6;
+        // Update Profile button
+        JButton btnSaveProfile = UITheme.createButton(
+                "Update Profile",
+                UITheme.SUCCESS_GREEN,
+                Color.WHITE
+        );
+
+        btnSaveProfile.addActionListener(
+                e -> handleUpdateProfile()
+        );
+
+        gbc.gridx = 1;
+        gbc.gridy = 8;
         card.add(btnSaveProfile, gbc);
 
+        loadProfilePhoto();
+
         return card;
+    }
+
+    private void loadProfilePhoto() {
     }
 
     // ==========================================
@@ -1020,4 +1113,44 @@ public class TechnicalOfficerDashboard extends JFrame {
         }
     }
 
+    private void chooseProfilePhoto() {
+
+        JFileChooser chooser = new JFileChooser();
+
+        FileNameExtensionFilter filter =
+                new FileNameExtensionFilter(
+                        "Image Files (JPG, PNG)",
+                        "jpg", "jpeg", "png");
+
+        chooser.setFileFilter(filter);
+
+        int result = chooser.showOpenDialog(this);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+
+            File file = chooser.getSelectedFile();
+
+            try {
+                BufferedImage image = ImageIO.read(file);
+
+                if (image == null) {
+                    JOptionPane.showMessageDialog(
+                            this, "Please select a valid image.");
+                    return;
+                }
+
+                selectedProfilePhoto = file;
+
+                Image scaled = image.getScaledInstance(
+                        120, 120, Image.SCALE_SMOOTH);
+
+                lblProfilePhoto.setText("");
+                lblProfilePhoto.setIcon(new ImageIcon(scaled));
+
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(
+                        this, "Could not read the selected image.");
+            }
+        }
+    }
 }
