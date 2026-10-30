@@ -46,6 +46,8 @@ public class UndergraduateDashboard extends JFrame {
     JLabel lblMedicalsVal;
 
     // Attendance components
+    JComboBox<String> cbAttendanceCourse;
+    JLabel lblAttendanceTotals;
     JTable tblAttendance;
     DefaultTableModel attModel;
 
@@ -80,6 +82,7 @@ public class UndergraduateDashboard extends JFrame {
     JTextField txtProfEmail, txtProfPhone;
     JLabel lblProfRegNo, lblProfBatch, lblProfDept, lblProfStatus;
     JLabel lblProfilePicture;
+    JLabel lblHeaderAvatar;
 
     public UndergraduateDashboard(Undergraduate student) {
         this.student = student;
@@ -116,9 +119,9 @@ public class UndergraduateDashboard extends JFrame {
         contentCards.setBackground(UITheme.CONTENT_BG);
         contentCards.setBorder(new EmptyBorder(15, 25, 20, 25));
 
+        contentCards.add(createProfilePanel(), "PROFILE");
         contentCards.add(createAttendancePanel(), "ATTENDANCE");
         contentCards.add(createDashboardOverviewPanel(), "DASHBOARD");
-        contentCards.add(createProfilePanel(), "PROFILE");
         contentCards.add(createCoursesPanel(), "COURSES");
         contentCards.add(createMedicalPanel(), "MEDICAL");
         contentCards.add(createGradesPanel(), "GRADES");
@@ -130,7 +133,8 @@ public class UndergraduateDashboard extends JFrame {
         add(mainArea, BorderLayout.CENTER);
 
         // Initial load
-        loadAttendanceData();
+        switchCard("PROFILE", btnNavProfile);
+        loadProfileData();
     }
 
     private JPanel createSidebar() {
@@ -147,10 +151,10 @@ public class UndergraduateDashboard extends JFrame {
         lblLogo.setAlignmentX(Component.LEFT_ALIGNMENT);
         sidebar.add(lblLogo);
 
-        btnNavProfile = createStudentSidebarButton("My Profile", false);
+        btnNavProfile = createStudentSidebarButton("My Profile", true);
         btnNavDashboard = createStudentSidebarButton("Dashboard", false);
         btnNavCourses = createStudentSidebarButton("Courses", false);
-        btnNavAttendance = createStudentSidebarButton("Attendance", true); // Matches photo default
+        btnNavAttendance = createStudentSidebarButton("Attendance", false); // Matches photo default
         btnNavMedical = createStudentSidebarButton("Medical", false);
         btnNavGrades = createStudentSidebarButton("Grades & GPA", false);
         btnNavNotices = createStudentSidebarButton("Notices", false);
@@ -228,21 +232,32 @@ public class UndergraduateDashboard extends JFrame {
         // Circular Avatar icon on right
         JPanel avatarPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         avatarPanel.setOpaque(false);
-        JLabel lblAvatar = new JLabel() {
-            @Override
-            protected void paintComponent(Graphics g) {
+        lblHeaderAvatar = new JLabel() {
+            @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int size = 40;
+                java.awt.Shape circle = new java.awt.geom.Ellipse2D.Double(0, 0, size, size);
                 g2.setColor(new Color(203, 213, 225));
-                g2.fillOval(0, 0, 40, 40);
-                g2.setColor(new Color(71, 85, 105));
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 15));
-                g2.drawString("S", 15, 25);
+                g2.fill(circle);
+                Image photo = ProfilePanel.getStudentPhoto(UndergraduateDashboard.this);
+                if (photo != null) {
+                    g2.setClip(circle);
+                    g2.drawImage(photo, 0, 0, size, size, null);
+                    g2.setClip(null);
+                } else {
+                    String name = student != null ? student.getFullName() : "";
+                    String initial = (name == null || name.isBlank()) ? "S" : name.trim().substring(0, 1).toUpperCase(java.util.Locale.ROOT);
+                    g2.setColor(new Color(71, 85, 105));
+                    g2.setFont(new Font("Segoe UI", Font.BOLD, 17));
+                    FontMetrics fm = g2.getFontMetrics();
+                    g2.drawString(initial, (size - fm.stringWidth(initial))/2, (size + fm.getAscent() - fm.getDescent())/2);
+                }
                 g2.dispose();
             }
         };
-        lblAvatar.setPreferredSize(new Dimension(42, 42));
-        avatarPanel.add(lblAvatar);
+        lblHeaderAvatar.setPreferredSize(new Dimension(42, 42));
+        avatarPanel.add(lblHeaderAvatar);
         header.add(avatarPanel, BorderLayout.EAST);
 
         return header;

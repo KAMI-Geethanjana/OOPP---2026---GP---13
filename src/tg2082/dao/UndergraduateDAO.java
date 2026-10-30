@@ -109,6 +109,30 @@ public class UndergraduateDAO {
         return list;
     }
 
+    /** Returns dated attendance for one enrolled course, without altering shared schema. */
+    public List<Map<String, Object>> getAttendanceByCourse(int studentId, String courseCode) {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        String sql = "SELECT a.session_date, a.session_type, a.status " +
+                "FROM attendance a JOIN enrollment e ON e.student_id = a.student_id " +
+                "AND e.course_code = a.course_code WHERE a.student_id = ? AND a.course_code = ? " +
+                "ORDER BY a.session_date, a.session_type, a.attendance_id";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, studentId);
+            ps.setString(2, courseCode);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    row.put("date", rs.getDate("session_date"));
+                    row.put("type", rs.getString("session_type"));
+                    row.put("status", rs.getString("status"));
+                    rows.add(row);
+                }
+            }
+        } catch (SQLException ex) { ex.printStackTrace(); }
+        return rows;
+    }
+
     /**
      * Gets student medical submission records.
      */

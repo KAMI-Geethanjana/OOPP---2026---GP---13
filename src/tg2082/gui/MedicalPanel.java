@@ -1,4 +1,3 @@
-
 package tg2082.gui;
 
 import common.auth.LoginFrame;
@@ -64,7 +63,8 @@ final class MedicalPanel {
         d.txtMedReason = new JTextArea(2, 30);
         d.txtMedReason.setFont(UITheme.FONT_BODY);
         d.txtMedReason.setBorder(BorderFactory.createTitledBorder("Describe medical reason"));
-        formPanel.add(new JScrollPane(d.txtMedReason), BorderLayout.CENTER);
+        // Reason input intentionally hidden; database requires a non-null reason.
+        d.txtMedReason.setText("Medical certificate submitted");
 
         // Separate rows keep the Add Medical action visible on narrow windows.
         JPanel formFields = new JPanel();
@@ -175,7 +175,7 @@ final class MedicalPanel {
 
     static void handleSubmitMedical(UndergraduateDashboard d) {
         String course = (String) d.cbMedCourse.getSelectedItem();
-        String reason = d.txtMedReason.getText().trim();
+        String reason = "Medical certificate submitted";
         String path = d.txtMedPath.getText().trim();
 
         if (reason.isEmpty()) {
@@ -244,4 +244,3 @@ final class MedicalPanel {
     }
 
 }
-

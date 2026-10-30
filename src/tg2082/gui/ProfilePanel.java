@@ -116,7 +116,20 @@ final class ProfilePanel {
             d.txtProfPhone.setText(d.student.getContactNo() != null ? d.student.getContactNo() : d.student.getPhoneNo());
             d.txtProfEmail.setText(d.student.getEmail());
             showProfilePicture(d);
+            if (d.lblHeaderAvatar != null) d.lblHeaderAvatar.repaint();
         }
+    }
+
+    static Image getStudentPhoto(UndergraduateDashboard d) {
+        if (d.student == null) return null;
+        String path = d.student.getProfilePic();
+        if (path == null || path.isBlank()) return null;
+        try {
+            java.nio.file.Path file = java.nio.file.Paths.get(path);
+            if (!java.nio.file.Files.isRegularFile(file)) return null;
+            ImageIcon icon = new ImageIcon(file.toAbsolutePath().toString());
+            return icon.getIconWidth() > 0 ? icon.getImage() : null;
+        } catch (RuntimeException ex) { return null; }
     }
 
     private static void showProfilePicture(UndergraduateDashboard d) {
@@ -179,6 +192,8 @@ final class ProfilePanel {
             if (d.studentDAO.updateProfilePicture(d.student.getUserId(), saved)) {
                 d.student.setProfilePic(saved);
                 showProfilePicture(d);
+                if (d.lblHeaderAvatar != null) d.lblHeaderAvatar.repaint();
+                if (d.lblHeaderAvatar != null) d.lblHeaderAvatar.repaint();
                 JOptionPane.showMessageDialog(d, "Profile picture updated successfully!");
             } else {
                 JOptionPane.showMessageDialog(d, "Could not save profile picture to database.");
@@ -202,6 +217,7 @@ final class ProfilePanel {
         }
         d.student.setProfilePic(null);
         showProfilePicture(d);
+        if (d.lblHeaderAvatar != null) d.lblHeaderAvatar.repaint();
         // Delete only an image managed by this application, not an arbitrary user file.
         try {
             java.nio.file.Path managedFolder = java.nio.file.Paths.get("profile_pictures").toAbsolutePath().normalize();
