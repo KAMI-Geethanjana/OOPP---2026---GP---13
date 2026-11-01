@@ -350,6 +350,24 @@ public class AdminUserDAO implements UserOperations {
     }
 
     /**
+     * Administratively locks an account (sets is_active to 0).
+     */
+    @Override
+    public boolean lockAccount(int userId) throws AdminOperationException {
+        String sql = "UPDATE users SET is_active = 0 WHERE user_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            int rows = ps.executeUpdate();
+            logAudit("LOCK_ACCOUNT", "Account administratively locked for user ID [" + userId + "]");
+            return rows > 0;
+        } catch (SQLException e) {
+            throw new AdminOperationException("Database error locking account: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Retrieves all registered faculty departments.
      */
     public List<Department> getAllDepartments() throws AdminOperationException {

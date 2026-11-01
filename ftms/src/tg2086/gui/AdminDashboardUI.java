@@ -84,6 +84,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private JTextField txtUserUsername, txtUserFullName, txtUserEmail, txtUserPhone, txtUserExtraId, txtUserBatch;
     private JPasswordField txtUserPassword;
     private JComboBox<String> cmbUserRole;
+    private JComboBox<String> cmbFilterRole;
     private JComboBox<DepartmentItem> cmbUserDepartment;
     private JCheckBox chkUserActive;
     private JLabel lblUserAvatar;
@@ -306,13 +307,15 @@ public class AdminDashboardUI extends BaseDashboardUI {
         panel.setOpaque(false);
 
         // Search and Filter Bar
-        JTextField txtSearch = UITheme.createTextField(18);
-        JComboBox<String> cmbFilterRole = UITheme.createComboBox(new String[]{"ALL", "UNDERGRADUATE", "LECTURER", "TECH_OFFICER", "ADMIN"});
+        cmbFilterRole = UITheme.createComboBox(new String[]{"ALL", "UNDERGRADUATE", "LECTURER", "TECH_OFFICER", "ADMIN"});
         JButton btnSearch = UITheme.createButton("Filter", UITheme.PRIMARY_BLUE, Color.WHITE);
+        JButton btnLock = UITheme.createButton("Lock Account", UITheme.DANGER_RED, Color.WHITE);
         JButton btnUnlock = UITheme.createButton("Unlock Account", UITheme.WARNING_AMBER, Color.WHITE);
         JButton btnExport = UITheme.createButton("Export CSV", UITheme.NEUTRAL_GRAY, Color.WHITE);
 
+        cmbFilterRole.addActionListener(e -> loadUsersData((String) cmbFilterRole.getSelectedItem()));
         btnSearch.addActionListener(e -> loadUsersData((String) cmbFilterRole.getSelectedItem()));
+        btnLock.addActionListener(e -> handleLockUser());
         btnUnlock.addActionListener(e -> handleUnlockUser());
         btnExport.addActionListener(e -> handleExportCSV(usersTable, "Users_Report.csv", "System Users Directory"));
 
@@ -321,6 +324,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
         topBar.add(new JLabel("Filter Role:"));
         topBar.add(cmbFilterRole);
         topBar.add(btnSearch);
+        topBar.add(btnLock);
         topBar.add(btnUnlock);
         topBar.add(btnExport);
 
@@ -951,6 +955,35 @@ public class AdminDashboardUI extends BaseDashboardUI {
         }
     }
 
+    private void handleLockUser() {
+        int row = usersTable.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a user from the table to lock.", "Selection Required", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int userId = (int) usersTableModel.getValueAt(row, 0);
+        String username = (String) usersTableModel.getValueAt(row, 1);
+
+        if ("admin".equalsIgnoreCase(username) || (currentAdminUser != null && userId == currentAdminUser.getUserId())) {
+            JOptionPane.showMessageDialog(this, "You cannot lock your own Administrator account!", "Action Prohibited", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to administratively lock account: " + username + "?", "Confirm Lock", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                boolean success = userDAO.lockAccount(userId);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Account locked successfully! User can no longer log in.", "Account Locked", JOptionPane.INFORMATION_MESSAGE);
+                    loadUsersData(cmbFilterRole != null ? (String) cmbFilterRole.getSelectedItem() : "ALL");
+                }
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Operation Failed", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     private void handleUnlockUser() {
         int row = usersTable.getSelectedRow();
         if (row == -1) {
@@ -963,7 +996,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
             boolean success = userDAO.unlockAccount(userId);
             if (success) {
                 JOptionPane.showMessageDialog(this, "Account unlocked successfully! Failed attempts reset to 0.", "Account Unlocked", JOptionPane.INFORMATION_MESSAGE);
-                loadUsersData("ALL");
+                loadUsersData(cmbFilterRole != null ? (String) cmbFilterRole.getSelectedItem() : "ALL");
             }
         } catch (AdminOperationException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Operation Failed", JOptionPane.ERROR_MESSAGE);
