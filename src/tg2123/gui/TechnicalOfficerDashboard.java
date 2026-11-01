@@ -30,16 +30,7 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.util.UUID;
 
-/**
- * TechnicalOfficerDashboard - Portal for Technical Officers.
- * Features:
- * 1. Mark undergraduate session attendance (Theory/Practical)
- * 2. Review and approve/reject medical certificate requests
- * 3. View Departmental Timetable (restricted to own department per FR-TO-05)
- * 4. View notices and update profile
- *
- * Authored under: Module TG2123 (B. G. N. M. Weerawardhana)
- */
+
 public class TechnicalOfficerDashboard extends JFrame {
 
     private TechnicalOfficer techOfficer;
