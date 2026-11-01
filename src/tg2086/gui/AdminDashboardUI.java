@@ -84,8 +84,11 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private JTextField txtUserUsername, txtUserFullName, txtUserEmail, txtUserPhone, txtUserExtraId, txtUserBatch;
     private JPasswordField txtUserPassword;
     private JComboBox<String> cmbUserRole;
+    private JComboBox<String> cmbFilterRole;
     private JComboBox<DepartmentItem> cmbUserDepartment;
     private JCheckBox chkUserActive;
+    private JLabel lblUserAvatar;
+    private List<Map<String, Object>> currentUsersList = new ArrayList<>();
     private int selectedUserId = -1;
 
     private JTextField txtCourseCode, txtCourseTitle, txtTheoryCredits, txtPracticalCredits, txtLecturerId;
@@ -304,13 +307,15 @@ public class AdminDashboardUI extends BaseDashboardUI {
         panel.setOpaque(false);
 
         // Search and Filter Bar
-        JTextField txtSearch = UITheme.createTextField(18);
-        JComboBox<String> cmbFilterRole = UITheme.createComboBox(new String[]{"ALL", "UNDERGRADUATE", "LECTURER", "TECH_OFFICER", "ADMIN"});
+        cmbFilterRole = UITheme.createComboBox(new String[]{"ALL", "UNDERGRADUATE", "LECTURER", "TECH_OFFICER", "ADMIN"});
         JButton btnSearch = UITheme.createButton("Filter", UITheme.PRIMARY_BLUE, Color.WHITE);
+        JButton btnLock = UITheme.createButton("Lock Account", UITheme.DANGER_RED, Color.WHITE);
         JButton btnUnlock = UITheme.createButton("Unlock Account", UITheme.WARNING_AMBER, Color.WHITE);
         JButton btnExport = UITheme.createButton("Export CSV", UITheme.NEUTRAL_GRAY, Color.WHITE);
 
+        cmbFilterRole.addActionListener(e -> loadUsersData((String) cmbFilterRole.getSelectedItem()));
         btnSearch.addActionListener(e -> loadUsersData((String) cmbFilterRole.getSelectedItem()));
+        btnLock.addActionListener(e -> handleLockUser());
         btnUnlock.addActionListener(e -> handleUnlockUser());
         btnExport.addActionListener(e -> handleExportCSV(usersTable, "Users_Report.csv", "System Users Directory"));
 
@@ -319,6 +324,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
         topBar.add(new JLabel("Filter Role:"));
         topBar.add(cmbFilterRole);
         topBar.add(btnSearch);
+        topBar.add(btnLock);
         topBar.add(btnUnlock);
         topBar.add(btnExport);
 
@@ -387,7 +393,34 @@ public class AdminDashboardUI extends BaseDashboardUI {
         btnRow.add(btnDelete);
         btnRow.add(btnClear);
 
-        formCard.add(formGrid, BorderLayout.CENTER);
+        // Photo Preview Panel
+        JPanel avatarCard = new JPanel(new BorderLayout(0, 6));
+        avatarCard.setOpaque(false);
+        avatarCard.setPreferredSize(new Dimension(105, 125));
+        avatarCard.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+
+        lblUserAvatar = new JLabel();
+        lblUserAvatar.setHorizontalAlignment(SwingConstants.CENTER);
+        lblUserAvatar.setVerticalAlignment(SwingConstants.CENTER);
+        lblUserAvatar.setPreferredSize(new Dimension(95, 105));
+        lblUserAvatar.setBorder(BorderFactory.createLineBorder(new Color(210, 215, 225), 1));
+        lblUserAvatar.setBackground(new Color(245, 247, 250));
+        lblUserAvatar.setOpaque(true);
+        renderDefaultAvatar(lblUserAvatar, "USER");
+
+        JLabel lblAvatarTitle = new JLabel("Photo Preview", SwingConstants.CENTER);
+        lblAvatarTitle.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lblAvatarTitle.setForeground(new Color(110, 120, 135));
+
+        avatarCard.add(lblUserAvatar, BorderLayout.CENTER);
+        avatarCard.add(lblAvatarTitle, BorderLayout.SOUTH);
+
+        JPanel formCardCenter = new JPanel(new BorderLayout(12, 0));
+        formCardCenter.setOpaque(false);
+        formCardCenter.add(avatarCard, BorderLayout.WEST);
+        formCardCenter.add(formGrid, BorderLayout.CENTER);
+
+        formCard.add(formCardCenter, BorderLayout.CENTER);
         formCard.add(btnRow, BorderLayout.SOUTH);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollPane, formCard);
@@ -720,8 +753,8 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private void loadUsersData(String roleFilter) {
         usersTableModel.setRowCount(0);
         try {
-            List<Map<String, Object>> users = userDAO.getAllUsers(roleFilter);
-            for (Map<String, Object> u : users) {
+            currentUsersList = userDAO.getAllUsers(roleFilter);
+            for (Map<String, Object> u : currentUsersList) {
                 usersTableModel.addRow(new Object[]{
                         u.get("userId"),
                         u.get("username"),
@@ -835,6 +868,13 @@ public class AdminDashboardUI extends BaseDashboardUI {
         cmbUserRole.setSelectedItem(usersTableModel.getValueAt(row, 5));
         chkUserActive.setSelected("ACTIVE".equals(usersTableModel.getValueAt(row, 6)));
         txtUserExtraId.setText((String) usersTableModel.getValueAt(row, 8));
+
+        if (row >= 0 && row < currentUsersList.size()) {
+            Map<String, Object> u = currentUsersList.get(row);
+            String picPath = (String) u.get("profilePic");
+            String role = (String) u.get("role");
+            updateAvatarPreview(picPath, role);
+        }
     }
 
     private void handleAddUser() {
@@ -915,6 +955,35 @@ public class AdminDashboardUI extends BaseDashboardUI {
         }
     }
 
+    private void handleLockUser() {
+        int row = usersTable.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a user from the table to lock.", "Selection Required", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int userId = (int) usersTableModel.getValueAt(row, 0);
+        String username = (String) usersTableModel.getValueAt(row, 1);
+
+        if ("admin".equalsIgnoreCase(username) || (currentAdminUser != null && userId == currentAdminUser.getUserId())) {
+            JOptionPane.showMessageDialog(this, "You cannot lock your own Administrator account!", "Action Prohibited", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to administratively lock account: " + username + "?", "Confirm Lock", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                boolean success = userDAO.lockAccount(userId);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Account locked successfully! User can no longer log in.", "Account Locked", JOptionPane.INFORMATION_MESSAGE);
+                    loadUsersData(cmbFilterRole != null ? (String) cmbFilterRole.getSelectedItem() : "ALL");
+                }
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Operation Failed", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     private void handleUnlockUser() {
         int row = usersTable.getSelectedRow();
         if (row == -1) {
@@ -927,7 +996,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
             boolean success = userDAO.unlockAccount(userId);
             if (success) {
                 JOptionPane.showMessageDialog(this, "Account unlocked successfully! Failed attempts reset to 0.", "Account Unlocked", JOptionPane.INFORMATION_MESSAGE);
-                loadUsersData("ALL");
+                loadUsersData(cmbFilterRole != null ? (String) cmbFilterRole.getSelectedItem() : "ALL");
             }
         } catch (AdminOperationException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Operation Failed", JOptionPane.ERROR_MESSAGE);
@@ -945,6 +1014,31 @@ public class AdminDashboardUI extends BaseDashboardUI {
         txtUserBatch.setText("");
         chkUserActive.setSelected(true);
         usersTable.clearSelection();
+        renderDefaultAvatar(lblUserAvatar, "USER");
+    }
+
+    private void updateAvatarPreview(String picPath, String role) {
+        if (lblUserAvatar == null) return;
+        if (picPath != null && !picPath.trim().isEmpty()) {
+            File file = new File(picPath);
+            if (file.exists() && file.isFile()) {
+                try {
+                    ImageIcon original = new ImageIcon(file.getAbsolutePath());
+                    Image img = original.getImage().getScaledInstance(95, 105, Image.SCALE_SMOOTH);
+                    lblUserAvatar.setIcon(new ImageIcon(img));
+                    lblUserAvatar.setText("");
+                    return;
+                } catch (Exception ignored) {}
+            }
+        }
+        renderDefaultAvatar(lblUserAvatar, role);
+    }
+
+    private void renderDefaultAvatar(JLabel label, String role) {
+        if (label == null) return;
+        label.setIcon(null);
+        String displayRole = role != null ? role.replace('_', ' ') : "USER";
+        label.setText("<html><center><font color='#778899' size='2'><b>[ PHOTO ]</b><br>" + displayRole + "</font></center></html>");
     }
 
     // =========================================================================
