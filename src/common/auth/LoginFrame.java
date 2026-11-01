@@ -5,9 +5,15 @@ import common.model.User;
 import common.util.UITheme;
 import common.util.UserSession;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * LoginFrame - Central Authentication Portal for FTMS.
@@ -81,30 +87,7 @@ public class LoginFrame extends JFrame {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBorder(new EmptyBorder(30, 40, 30, 40));
 
-        // Faculty Crest / Emblem badge
-        JPanel crestPanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // Outer circle
-                g2.setColor(new Color(30, 58, 138));
-                g2.fillOval(10, 0, 60, 60);
-                // Inner ring
-                g2.setColor(new Color(239, 68, 68));
-                g2.drawOval(14, 4, 52, 52);
-                // Icon text
-                g2.setColor(Color.WHITE);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 18));
-                g2.drawString("FoT", 25, 36);
-                g2.dispose();
-            }
-        };
-        crestPanel.setOpaque(false);
-        crestPanel.setPreferredSize(new Dimension(80, 65));
-        crestPanel.setMaximumSize(new Dimension(80, 65));
-        crestPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        card.add(crestPanel);
+        card.add(createLogoLabel());
 
         card.add(Box.createVerticalStrut(12));
 
@@ -174,6 +157,51 @@ public class LoginFrame extends JFrame {
 
         // Bind Enter key to login
         getRootPane().setDefaultButton(btnLogin);
+    }
+
+    private JLabel createLogoLabel() {
+        BufferedImage logo = null;
+        URL logoResource = getClass().getResource("/logo.jpg");
+        if (logoResource == null) {
+            logoResource = getClass().getResource("/resources/logo.jpg");
+        }
+
+        if (logoResource != null) {
+            try {
+                logo = ImageIO.read(logoResource);
+            } catch (IOException ex) {
+                System.err.println("Could not read login logo from " + logoResource + ": " + ex.getMessage());
+            }
+        }
+
+        Path logoPath = Path.of("resources", "logo.jpg");
+        if (logo == null && Files.isRegularFile(logoPath)) {
+            try {
+                logo = ImageIO.read(logoPath.toFile());
+            } catch (IOException ex) {
+                System.err.println("Could not read login logo from " + logoPath.toAbsolutePath() + ": " + ex.getMessage());
+            }
+        }
+
+        JLabel label = new JLabel();
+        label.setPreferredSize(new Dimension(80, 80));
+        label.setMaximumSize(new Dimension(80, 80));
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        if (logo != null) {
+            Image scaledLogo = logo.getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+            label.setIcon(new ImageIcon(scaledLogo));
+        } else {
+            System.err.println("Login logo not found. Expected /logo.jpg or " + logoPath.toAbsolutePath());
+            label.setText("FoT");
+            label.setFont(new Font("Segoe UI", Font.BOLD, 18));
+            label.setForeground(Color.WHITE);
+            label.setOpaque(true);
+            label.setBackground(new Color(30, 58, 138));
+            label.setHorizontalAlignment(SwingConstants.CENTER);
+        }
+
+        return label;
     }
 
     private void handleLogin() {

@@ -24,10 +24,11 @@ import java.util.Map;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.Path;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
+import java.util.UUID;
 
 /**
  * TechnicalOfficerDashboard - Portal for Technical Officers.
@@ -78,7 +79,6 @@ public class TechnicalOfficerDashboard extends JFrame {
     private JTextField txtProfFullName, txtProfEmail, txtProfPhone;
     private JLabel lblProfUsername, lblProfEmpId;
     private JLabel lblProfilePhoto;
-    private File selectedProfilePhoto;
 
     public TechnicalOfficerDashboard(TechnicalOfficer techOfficer) {
         this.techOfficer = techOfficer;
@@ -220,6 +220,7 @@ public class TechnicalOfficerDashboard extends JFrame {
         JButton[] buttons = {btnNavAttendance, btnNavMedicals, btnNavTimetable, btnNavNotices, btnNavProfile};
         for (JButton b : buttons) {
             boolean isActive = (b == activeBtn);
+            b.setSelected(isActive);
             b.setFont(new Font("Segoe UI", isActive ? Font.BOLD : Font.PLAIN, 14));
             b.setForeground(isActive ? UITheme.SIDEBAR_TEXT_ACTIVE : UITheme.SIDEBAR_TEXT);
             b.repaint();
@@ -788,6 +789,36 @@ public class TechnicalOfficerDashboard extends JFrame {
     }
 
     private void loadProfilePhoto() {
+        if (techOfficer == null) {
+            return;
+        }
+
+        String photoPath = techOfficer.getProfilePic();
+        if (photoPath == null || photoPath.isBlank()
+                || "default_avatar.png".equalsIgnoreCase(photoPath)) {
+            return;
+        }
+
+        Path path = Path.of(photoPath);
+        if (!path.isAbsolute()) {
+            path = Path.of("").toAbsolutePath().resolve(path).normalize();
+        }
+
+        if (!Files.isRegularFile(path)) {
+            System.err.println("Saved profile photo does not exist: " + path);
+            return;
+        }
+
+        try {
+            BufferedImage image = ImageIO.read(path.toFile());
+            if (image == null) {
+                System.err.println("Saved profile photo is not a supported image: " + path);
+                return;
+            }
+            displayProfilePhoto(image);
+        } catch (IOException ex) {
+            System.err.println("Could not load saved profile photo " + path + ": " + ex.getMessage());
+        }
     }
 
     // ==========================================
@@ -1114,6 +1145,12 @@ public class TechnicalOfficerDashboard extends JFrame {
     }
 
     private void chooseProfilePhoto() {
+        if (techOfficer == null || techOfficer.getUserId() <= 0) {
+            JOptionPane.showMessageDialog(
+                    this, "No Technical Officer account is available.",
+                    "Profile Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         JFileChooser chooser = new JFileChooser();
 
@@ -1139,18 +1176,54 @@ public class TechnicalOfficerDashboard extends JFrame {
                     return;
                 }
 
-                selectedProfilePhoto = file;
+                String extension = getImageExtension(file);
+                if (!extension.equals("jpg") && !extension.equals("jpeg")
+                        && !extension.equals("png")) {
+                    JOptionPane.showMessageDialog(
+                            this, "Choose a JPG or PNG image.", "Invalid Image",
+                            JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
 
-                Image scaled = image.getScaledInstance(
-                        120, 120, Image.SCALE_SMOOTH);
+                Path photoDirectory = Path.of("resources", "profile_photos");
+                Files.createDirectories(photoDirectory);
+                String fileName = "to_" + techOfficer.getUserId() + "_"
+                        + UUID.randomUUID() + "." + extension;
+                Path savedPhoto = photoDirectory.resolve(fileName);
+                Files.copy(file.toPath(), savedPhoto);
 
-                lblProfilePhoto.setText("");
-                lblProfilePhoto.setIcon(new ImageIcon(scaled));
+                String storedPath = Path.of("resources", "profile_photos", fileName)
+                        .toString().replace('\\', '/');
+                if (!toDAO.updateProfilePhoto(techOfficer.getUserId(), storedPath)) {
+                    Files.deleteIfExists(savedPhoto);
+                    JOptionPane.showMessageDialog(
+                            this, "The photo could not be saved to your profile. Please check the database connection.",
+                            "Photo Update Failed", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
 
-            } catch (IOException ex) {
+                techOfficer.setProfilePic(storedPath);
+                displayProfilePhoto(image);
                 JOptionPane.showMessageDialog(
-                        this, "Could not read the selected image.");
+                        this, "Profile photo saved successfully.", "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } catch (IOException | RuntimeException ex) {
+                JOptionPane.showMessageDialog(
+                        this, "Could not save the selected photo: " + ex.getMessage(),
+                        "Photo Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private String getImageExtension(File file) {
+        String name = file.getName();
+        int dot = name.lastIndexOf('.');
+        return dot >= 0 ? name.substring(dot + 1).toLowerCase() : "";
+    }
+
+    private void displayProfilePhoto(BufferedImage image) {
+        Image scaled = image.getScaledInstance(120, 120, Image.SCALE_SMOOTH);
+        lblProfilePhoto.setText("");
+        lblProfilePhoto.setIcon(new ImageIcon(scaled));
     }
 }
