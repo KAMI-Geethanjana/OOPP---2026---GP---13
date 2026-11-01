@@ -86,6 +86,8 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private JComboBox<String> cmbUserRole;
     private JComboBox<DepartmentItem> cmbUserDepartment;
     private JCheckBox chkUserActive;
+    private JLabel lblUserAvatar;
+    private List<Map<String, Object>> currentUsersList = new ArrayList<>();
     private int selectedUserId = -1;
 
     private JTextField txtCourseCode, txtCourseTitle, txtTheoryCredits, txtPracticalCredits, txtLecturerId;
@@ -387,7 +389,34 @@ public class AdminDashboardUI extends BaseDashboardUI {
         btnRow.add(btnDelete);
         btnRow.add(btnClear);
 
-        formCard.add(formGrid, BorderLayout.CENTER);
+        // Photo Preview Panel
+        JPanel avatarCard = new JPanel(new BorderLayout(0, 6));
+        avatarCard.setOpaque(false);
+        avatarCard.setPreferredSize(new Dimension(105, 125));
+        avatarCard.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+
+        lblUserAvatar = new JLabel();
+        lblUserAvatar.setHorizontalAlignment(SwingConstants.CENTER);
+        lblUserAvatar.setVerticalAlignment(SwingConstants.CENTER);
+        lblUserAvatar.setPreferredSize(new Dimension(95, 105));
+        lblUserAvatar.setBorder(BorderFactory.createLineBorder(new Color(210, 215, 225), 1));
+        lblUserAvatar.setBackground(new Color(245, 247, 250));
+        lblUserAvatar.setOpaque(true);
+        renderDefaultAvatar(lblUserAvatar, "USER");
+
+        JLabel lblAvatarTitle = new JLabel("Photo Preview", SwingConstants.CENTER);
+        lblAvatarTitle.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lblAvatarTitle.setForeground(new Color(110, 120, 135));
+
+        avatarCard.add(lblUserAvatar, BorderLayout.CENTER);
+        avatarCard.add(lblAvatarTitle, BorderLayout.SOUTH);
+
+        JPanel formCardCenter = new JPanel(new BorderLayout(12, 0));
+        formCardCenter.setOpaque(false);
+        formCardCenter.add(avatarCard, BorderLayout.WEST);
+        formCardCenter.add(formGrid, BorderLayout.CENTER);
+
+        formCard.add(formCardCenter, BorderLayout.CENTER);
         formCard.add(btnRow, BorderLayout.SOUTH);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollPane, formCard);
@@ -720,8 +749,8 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private void loadUsersData(String roleFilter) {
         usersTableModel.setRowCount(0);
         try {
-            List<Map<String, Object>> users = userDAO.getAllUsers(roleFilter);
-            for (Map<String, Object> u : users) {
+            currentUsersList = userDAO.getAllUsers(roleFilter);
+            for (Map<String, Object> u : currentUsersList) {
                 usersTableModel.addRow(new Object[]{
                         u.get("userId"),
                         u.get("username"),
@@ -835,6 +864,13 @@ public class AdminDashboardUI extends BaseDashboardUI {
         cmbUserRole.setSelectedItem(usersTableModel.getValueAt(row, 5));
         chkUserActive.setSelected("ACTIVE".equals(usersTableModel.getValueAt(row, 6)));
         txtUserExtraId.setText((String) usersTableModel.getValueAt(row, 8));
+
+        if (row >= 0 && row < currentUsersList.size()) {
+            Map<String, Object> u = currentUsersList.get(row);
+            String picPath = (String) u.get("profilePic");
+            String role = (String) u.get("role");
+            updateAvatarPreview(picPath, role);
+        }
     }
 
     private void handleAddUser() {
@@ -945,6 +981,31 @@ public class AdminDashboardUI extends BaseDashboardUI {
         txtUserBatch.setText("");
         chkUserActive.setSelected(true);
         usersTable.clearSelection();
+        renderDefaultAvatar(lblUserAvatar, "USER");
+    }
+
+    private void updateAvatarPreview(String picPath, String role) {
+        if (lblUserAvatar == null) return;
+        if (picPath != null && !picPath.trim().isEmpty()) {
+            File file = new File(picPath);
+            if (file.exists() && file.isFile()) {
+                try {
+                    ImageIcon original = new ImageIcon(file.getAbsolutePath());
+                    Image img = original.getImage().getScaledInstance(95, 105, Image.SCALE_SMOOTH);
+                    lblUserAvatar.setIcon(new ImageIcon(img));
+                    lblUserAvatar.setText("");
+                    return;
+                } catch (Exception ignored) {}
+            }
+        }
+        renderDefaultAvatar(lblUserAvatar, role);
+    }
+
+    private void renderDefaultAvatar(JLabel label, String role) {
+        if (label == null) return;
+        label.setIcon(null);
+        String displayRole = role != null ? role.replace('_', ' ') : "USER";
+        label.setText("<html><center><font color='#778899' size='2'><b>[ PHOTO ]</b><br>" + displayRole + "</font></center></html>");
     }
 
     // =========================================================================

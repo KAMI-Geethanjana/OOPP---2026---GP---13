@@ -282,7 +282,7 @@ public class AdminUserDAO implements UserOperations {
     public List<Map<String, Object>> getAllUsers(String roleFilter) throws AdminOperationException {
         List<Map<String, Object>> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT u.user_id, u.username, u.full_name, u.email, u.phone_no, u.role, u.is_active, u.failed_logins, " +
+                "SELECT u.user_id, u.username, u.full_name, u.email, u.phone_no, u.role, u.is_active, u.failed_logins, u.profile_pic, " +
                 "COALESCE(ug.reg_no, l.employee_id, t.employee_id, '') AS extra_id, " +
                 "COALESCE(ug.department_id, l.department_id, t.department_id, 0) AS department_id, " +
                 "COALESCE(d.department_name, 'N/A') AS department_name, " +
@@ -321,6 +321,7 @@ public class AdminUserDAO implements UserOperations {
                     map.put("departmentId", rs.getInt("department_id"));
                     map.put("departmentName", rs.getString("department_name"));
                     map.put("batch", rs.getString("batch"));
+                    map.put("profilePic", rs.getString("profile_pic"));
                     list.add(map);
                 }
             }
