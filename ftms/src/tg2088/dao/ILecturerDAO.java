@@ -9,18 +9,7 @@ import tg2088.model.Lecturer;
 import java.util.List;
 import java.util.Map;
 
-/**
- * ============================================================================
- * Lesson 04: Interfaces
- * ============================================================================
- * Reference: Lesson 04, Slide 5-7 ("Interface - Introduction")
- * - Acts as an agreed contract spelling out how software components interact.
- * - Variables are implicitly 'public static final' (Constants, Slide 23 & 25).
- * - Methods are implicitly 'public abstract' (Slide 21).
- * - Contains Java 8+ 'default' method (Slide 32) and 'static' method (Slide 33).
- * - Demonstrates loose coupling and full abstraction (Slide 8, 35).
- * ============================================================================
- */
+
 public interface ILecturerDAO {
 
     // ========================================================================
