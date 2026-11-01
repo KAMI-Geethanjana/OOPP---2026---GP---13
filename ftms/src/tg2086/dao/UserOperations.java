@@ -58,6 +58,8 @@ public interface UserOperations {
      */
     boolean unlockAccount(int userId) throws AdminOperationException;
 
+    boolean lockAccount(int userId) throws AdminOperationException;
+
     /**
      * Default method providing utility logging without forcing subclasses to implement.
      */

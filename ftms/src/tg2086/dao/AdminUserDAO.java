@@ -282,7 +282,7 @@ public class AdminUserDAO implements UserOperations {
     public List<Map<String, Object>> getAllUsers(String roleFilter) throws AdminOperationException {
         List<Map<String, Object>> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT u.user_id, u.username, u.full_name, u.email, u.phone_no, u.role, u.is_active, u.failed_logins, " +
+                "SELECT u.user_id, u.username, u.full_name, u.email, u.phone_no, u.role, u.is_active, u.failed_logins, u.profile_pic, " +
                 "COALESCE(ug.reg_no, l.employee_id, t.employee_id, '') AS extra_id, " +
                 "COALESCE(ug.department_id, l.department_id, t.department_id, 0) AS department_id, " +
                 "COALESCE(d.department_name, 'N/A') AS department_name, " +
@@ -321,6 +321,7 @@ public class AdminUserDAO implements UserOperations {
                     map.put("departmentId", rs.getInt("department_id"));
                     map.put("departmentName", rs.getString("department_name"));
                     map.put("batch", rs.getString("batch"));
+                    map.put("profilePic", rs.getString("profile_pic"));
                     list.add(map);
                 }
             }
@@ -345,6 +346,24 @@ public class AdminUserDAO implements UserOperations {
             return rows > 0;
         } catch (SQLException e) {
             throw new AdminOperationException("Database error unlocking account: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Administratively locks an account (sets is_active to 0).
+     */
+    @Override
+    public boolean lockAccount(int userId) throws AdminOperationException {
+        String sql = "UPDATE users SET is_active = 0 WHERE user_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            int rows = ps.executeUpdate();
+            logAudit("LOCK_ACCOUNT", "Account administratively locked for user ID [" + userId + "]");
+            return rows > 0;
+        } catch (SQLException e) {
+            throw new AdminOperationException("Database error locking account: " + e.getMessage(), e);
         }
     }
 
