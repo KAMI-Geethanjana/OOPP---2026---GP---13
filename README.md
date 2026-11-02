@@ -53,25 +53,6 @@ The **Admin Module** serves as the central administrative hub, empowering system
 
 ---
 
-## 🎓 Academic OOP Concepts Mapping (ICT2122 Syllabus)
-
-This module has been designed to implement all concepts covered in the course lecture slides:
-
-| Lesson | OOP & Java Concept | Implementation Details | Relevant Files / Classes |
-| :--- | :--- | :--- | :--- |
-| **Lesson 01 & 02** | Classes, Objects & Constructors | Parameterized constructors, Constructor Chaining via `this(...)` | [`User.java`](file:///src/model/User.java), [`Admin.java`](file:///src/model/Admin.java) |
-| **Lesson 02 (Part 02)** | Singleton Pattern & Static Members | Private constructor, static initializer block, static constants | [`DBConn.java`](file:///src/config/DBConn.java) |
-| **Lesson 03 (Part 01)** | Inheritance & Type Relationships | `Admin extends User`, `super(...)` constructor calls, Upcasting & Downcasting with `instanceof` | [`Admin.java`](file:///src/model/Admin.java), [`AdminDashboardUI.java`](file:///src/gui/AdminDashboardUI.java) |
-| **Lesson 03 (Part 02)** | Polymorphism | **Runtime:** Overriding `getRoleDisplayName()`, `getDashboardRoute()`<br>**Compile-time:** Overloaded methods in DAOs and models | [`User.java`](file:///src/model/User.java), [`Admin.java`](file:///src/model/Admin.java), [`AdminUserDAO.java`](file:///src/dao/AdminUserDAO.java) |
-| **Lesson 03 (Part 03)** | Abstraction | Abstract class `User` with abstract methods | [`User.java`](file:///src/model/User.java) |
-| **Lesson 03 (Part 04)** | Encapsulation & Data Validation | Private fields, validated accessors/mutators throwing `ValidationException` | [`User.java`](file:///src/model/User.java), [`Admin.java`](file:///src/model/Admin.java) |
-| **Lesson 04** | Interfaces | `interface UserOperations` with constants, abstract methods, Java 8 `default` & `static` methods | [`UserOperations.java`](file:///src/dao/UserOperations.java), [`AdminUserDAO.java`](file:///src/dao/AdminUserDAO.java) |
-| **Lesson 05** | Exception Handling | Custom checked exceptions (`AdminOperationException`, `ValidationException`), `try-catch-finally`, `throws` | [`AdminOperationException.java`](file:///src/exception/AdminOperationException.java), [`ValidationException.java`](file:///src/exception/ValidationException.java), [`AdminDashboardUI.java`](file:///src/gui/AdminDashboardUI.java) |
-| **Lesson 06** | File Handling (Character Streams) | Report export via `FileWriter` -> `BufferedWriter` -> `PrintWriter`, and reading via `FileReader` -> `BufferedReader` | [`AdminReportUtil.java`](file:///src/util/AdminReportUtil.java), [`AdminDashboardUI.java`](file:///src/gui/AdminDashboardUI.java) |
-| **Lesson 07** | Database Connectivity & Transactions | JDBC PreparedStatements, ResultSets, ACID Transactions (`setAutoCommit(false)`, `commit()`, `rollback()`) | [`DBConn.java`](file:///src/config/DBConn.java), [`AdminUserDAO.java`](file:///src/dao/AdminUserDAO.java) |
-| **Lesson 08** | Multithreading | **Method 1:** Notice Ticker thread extending `Thread`<br>**Method 2:** Live Clock thread implementing `Runnable`<br>Asynchronous non-blocking data loading & thread synchronization | [`AdminDashboardUI.java`](file:///src/gui/AdminDashboardUI.java) |
-
----
 
 ## 📂 Project Directory Structure
 ```
