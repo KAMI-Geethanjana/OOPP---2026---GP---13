@@ -1,160 +1,352 @@
+
 package tg2082.gui;
 
-import common.auth.LoginFrame;
-import common.dao.NoticeDAO;
 import common.model.Course;
 import common.model.Medical;
-import common.model.Notice;
-import common.model.Result;
-import common.model.Timetable;
 import common.util.UITheme;
-import common.util.UserSession;
-import tg2082.dao.UndergraduateDAO;
-import tg2082.model.Undergraduate;
-import tg2088.model.CourseMaterial;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
-/** MedicalPanel owns the UI and actions for this student portal section. */
 final class MedicalPanel {
+
+    private static int editingMedicalId = -1;
+    private static String editingOriginalPath = null;
+
+    // Store checkbox status separately
+    private static final Map<String, Boolean> courseChecks =
+            new HashMap<>();
+
     private MedicalPanel() {}
 
     static JPanel createMedicalPanel(UndergraduateDashboard d) {
+
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
 
-        JPanel topHeader = new JPanel();
-        topHeader.setLayout(new BoxLayout(topHeader, BoxLayout.Y_AXIS));
-        topHeader.setOpaque(false);
+        // Header
+        JPanel header = new JPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+        header.setOpaque(false);
 
-        JLabel lblTitle = new JLabel("Medical Requests");
-        lblTitle.setFont(UITheme.FONT_HEADER);
-        JLabel lblSub = new JLabel("Submit a new medical request and track its current status.");
-        lblSub.setFont(UITheme.FONT_SUBTITLE);
-        lblSub.setForeground(UITheme.TEXT_MUTED);
+        JLabel title = new JLabel("Medical Requests");
+        title.setFont(UITheme.FONT_HEADER);
 
-        topHeader.add(lblTitle);
-        topHeader.add(Box.createVerticalStrut(2));
-        topHeader.add(lblSub);
-        card.add(topHeader, BorderLayout.NORTH);
+        JLabel subtitle = new JLabel(
+                "Submit medical certificates and track their status."
+        );
+        subtitle.setFont(UITheme.FONT_SUBTITLE);
+        subtitle.setForeground(UITheme.TEXT_MUTED);
 
-        // Center split: Form on top, Table on bottom
-        JPanel centerPanel = new JPanel(new BorderLayout(0, 15));
-        centerPanel.setOpaque(false);
+        header.add(title);
+        header.add(Box.createVerticalStrut(3));
+        header.add(subtitle);
 
-        // Form Panel
-        JPanel formPanel = new JPanel(new BorderLayout(10, 8));
-        formPanel.setBackground(new Color(248, 250, 252));
-        formPanel.setBorder(BorderFactory.createCompoundBorder(
+        card.add(header, BorderLayout.NORTH);
+
+        // Center
+        JPanel center = new JPanel(new BorderLayout(0, 12));
+        center.setOpaque(false);
+
+        // Form
+        JPanel form = new JPanel(new BorderLayout(10, 8));
+        form.setBackground(new Color(248, 250, 252));
+        form.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(UITheme.CARD_BORDER),
                 new EmptyBorder(12, 15, 12, 15)
         ));
 
-        JLabel lblFormTitle = new JLabel("New Medical Submission");
-        lblFormTitle.setFont(UITheme.FONT_BODY_BOLD);
-        formPanel.add(lblFormTitle, BorderLayout.NORTH);
+        JLabel formTitle = new JLabel("Medical Submission");
+        formTitle.setFont(UITheme.FONT_BODY_BOLD);
+        form.add(formTitle, BorderLayout.NORTH);
 
-        d.txtMedReason = new JTextArea(2, 30);
+        JPanel fields = new JPanel();
+        fields.setOpaque(false);
+        fields.setLayout(new BoxLayout(fields, BoxLayout.Y_AXIS));
+
+        // Course checkbox list
+        JPanel courseRow = new JPanel(new BorderLayout(10, 5));
+        courseRow.setOpaque(false);
+
+        courseRow.add(
+                new JLabel("Select enrolled courses:"),
+                BorderLayout.NORTH
+        );
+
+        d.medCourseListModel = new DefaultListModel<>();
+        d.listMedCourses = new JList<>(d.medCourseListModel);
+
+        d.listMedCourses.setSelectionMode(
+                ListSelectionModel.SINGLE_SELECTION
+        );
+
+        d.listMedCourses.setCellRenderer(new CheckBoxRenderer());
+
+        d.listMedCourses.addMouseListener(
+                new java.awt.event.MouseAdapter() {
+                    @Override
+                    public void mousePressed(java.awt.event.MouseEvent e) {
+
+                        int index =
+                                d.listMedCourses.locationToIndex(e.getPoint());
+
+                        if (index >= 0) {
+
+                            Rectangle bounds =
+                                    d.listMedCourses.getCellBounds(index, index);
+
+                            if (bounds != null && bounds.contains(e.getPoint())) {
+
+                                String course =
+                                        d.medCourseListModel.getElementAt(index);
+
+                                toggleCourse(course);
+
+                                d.listMedCourses.repaint();
+                            }
+                        }
+                    }
+                });
+
+        JScrollPane courseScroll = new JScrollPane(d.listMedCourses);
+        courseScroll.setPreferredSize(new Dimension(300, 120));
+
+        courseRow.add(courseScroll, BorderLayout.CENTER);
+        courseRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+        courseRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        fields.add(courseRow);
+
+        // Date
+        JPanel dateRow = new JPanel(
+                new FlowLayout(FlowLayout.LEFT, 10, 5)
+        );
+        dateRow.setOpaque(false);
+
+        dateRow.add(new JLabel("Medical Date (YYYY-MM-DD):"));
+
+        d.txtMedDate = UITheme.createTextField(12);
+        d.txtMedDate.setText(
+                new Date(System.currentTimeMillis()).toString()
+        );
+
+        dateRow.add(d.txtMedDate);
+        dateRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        fields.add(dateRow);
+
+        // Reason
+        d.txtMedReason = new JTextArea(3, 30);
         d.txtMedReason.setFont(UITheme.FONT_BODY);
-        d.txtMedReason.setBorder(BorderFactory.createTitledBorder("Describe medical reason"));
-        // Reason input intentionally hidden; database requires a non-null reason.
-        d.txtMedReason.setText("Medical certificate submitted");
+        d.txtMedReason.setLineWrap(true);
+        d.txtMedReason.setWrapStyleWord(true);
+        d.txtMedReason.setBorder(
+                BorderFactory.createTitledBorder("Medical Reason")
+        );
 
-        // Separate rows keep the Add Medical action visible on narrow windows.
-        JPanel formFields = new JPanel();
-        formFields.setOpaque(false);
-        formFields.setLayout(new BoxLayout(formFields, BoxLayout.Y_AXIS));
+        JScrollPane reasonScroll = new JScrollPane(d.txtMedReason);
+        reasonScroll.setMaximumSize(
+                new Dimension(Integer.MAX_VALUE, 85)
+        );
+        reasonScroll.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel courseDateRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        courseDateRow.setOpaque(false);
-        courseDateRow.add(new JLabel("Course:"));
-        d.cbMedCourse = new JComboBox<>();
-        d.cbMedCourse.setPreferredSize(new Dimension(160, 32));
-        courseDateRow.add(d.cbMedCourse);
-        courseDateRow.add(new JLabel("Medical Date (YYYY-MM-DD):"));
-        d.txtMedDate = UITheme.createTextField(10);
-        d.txtMedDate.setText(new Date(System.currentTimeMillis()).toString());
-        courseDateRow.add(d.txtMedDate);
-        courseDateRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        formFields.add(courseDateRow);
+        fields.add(reasonScroll);
 
-        JPanel fileRow = new JPanel(new BorderLayout(10, 0));
+        // Certificate
+        JPanel fileRow = new JPanel(new BorderLayout(8, 0));
         fileRow.setOpaque(false);
-        fileRow.add(new JLabel("Certificate Path:"), BorderLayout.WEST);
-        d.txtMedPath = UITheme.createTextField(15);
+
+        d.txtMedPath = UITheme.createTextField(20);
         d.txtMedPath.setEditable(false);
+
+        JButton chooseFile = UITheme.createButton(
+                "Choose File", UITheme.PRIMARY_BLUE, Color.WHITE
+        );
+
+        chooseFile.addActionListener(e -> chooseCertificate(d));
+
+        fileRow.add(new JLabel("Certificate:"), BorderLayout.WEST);
         fileRow.add(d.txtMedPath, BorderLayout.CENTER);
-        JButton btnChooseFile = UITheme.createButton("Choose File", UITheme.PRIMARY_BLUE, Color.WHITE);
-        btnChooseFile.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Choose medical certificate");
-            chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
-                    "Medical certificates (PDF, JPG, JPEG, PNG)", "pdf", "jpg", "jpeg", "png"));
-            if (chooser.showOpenDialog(d) == JFileChooser.APPROVE_OPTION) {
-                d.txtMedPath.setText(chooser.getSelectedFile().getAbsolutePath());
-            }
-        });
-        fileRow.add(btnChooseFile, BorderLayout.EAST);
+        fileRow.add(chooseFile, BorderLayout.EAST);
+
         fileRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         fileRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        formFields.add(fileRow);
 
-        JPanel actionsRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
-        actionsRow.setOpaque(false);
-        JButton btnAddMedical = UITheme.createButton("Add Medical", UITheme.SUCCESS_GREEN, Color.WHITE);
-        btnAddMedical.addActionListener(e -> d.handleSubmitMedical());
-        actionsRow.add(btnAddMedical);
-        JButton btnRefresh = UITheme.createButton("Refresh List", UITheme.PRIMARY_BLUE, Color.WHITE);
-        btnRefresh.addActionListener(e -> d.loadMedicalData());
-        actionsRow.add(btnRefresh);
-        actionsRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-        formFields.add(actionsRow);
+        fields.add(fileRow);
 
-        formPanel.add(formFields, BorderLayout.SOUTH);
-        centerPanel.add(formPanel, BorderLayout.NORTH);
+        // Form buttons
+        JPanel actions = new JPanel(
+                new FlowLayout(FlowLayout.LEFT, 8, 8)
+        );
+        actions.setOpaque(false);
 
-        // Table Panel
-        JPanel tableWrapper = new JPanel(new BorderLayout());
-        tableWrapper.setOpaque(false);
-        JLabel lblTblTitle = new JLabel("My Medical Records");
-        lblTblTitle.setFont(UITheme.FONT_BODY_BOLD);
-        lblTblTitle.setBorder(new EmptyBorder(5, 0, 5, 0));
-        tableWrapper.add(lblTblTitle, BorderLayout.NORTH);
+        JButton submitButton = UITheme.createButton(
+                "Submit Medical", UITheme.SUCCESS_GREEN, Color.WHITE
+        );
+        submitButton.addActionListener(e -> handleSubmitMedical(d));
 
-        String[] cols = {"Record ID", "Course", "Date", "Description / Reason", "Document", "Status"};
-        d.medModel = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+        JButton clearButton = UITheme.createButton(
+                "Clear / Cancel Edit", UITheme.PRIMARY_BLUE, Color.WHITE
+        );
+        clearButton.addActionListener(e -> clearForm(d));
+
+        JButton refreshButton = UITheme.createButton(
+                "Refresh List", UITheme.PRIMARY_BLUE, Color.WHITE
+        );
+        refreshButton.addActionListener(e -> {
+            clearForm(d);
+            loadMedicalData(d);
+        });
+
+        actions.add(submitButton);
+        actions.add(clearButton);
+        actions.add(refreshButton);
+
+        actions.setAlignmentX(Component.LEFT_ALIGNMENT);
+        fields.add(actions);
+
+        form.add(fields, BorderLayout.CENTER);
+        center.add(form, BorderLayout.NORTH);
+
+        // Table
+        JPanel tablePanel = new JPanel(new BorderLayout(0, 5));
+        tablePanel.setOpaque(false);
+
+        JLabel tableTitle = new JLabel("My Medical Records");
+        tableTitle.setFont(UITheme.FONT_BODY_BOLD);
+        tableTitle.setBorder(new EmptyBorder(5, 0, 5, 0));
+
+        tablePanel.add(tableTitle, BorderLayout.NORTH);
+
+        String[] columns = {
+                "Record ID", "Course", "Date",
+                "Description / Reason", "Document", "Status"
         };
+
+        d.medModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
         d.tblMedical = new JTable(d.medModel);
+        d.tblMedical.setSelectionMode(
+                ListSelectionModel.SINGLE_SELECTION
+        );
+
         UITheme.styleTable(d.tblMedical);
-        tableWrapper.add(new JScrollPane(d.tblMedical), BorderLayout.CENTER);
 
-        JButton btnDelete = UITheme.createButton("Delete Selected Pending Request", new Color(185, 48, 48), Color.WHITE);
-        btnDelete.addActionListener(e -> deleteSelectedMedical(d));
-        JPanel tableActions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        tablePanel.add(
+                new JScrollPane(d.tblMedical),
+                BorderLayout.CENTER
+        );
+
+        // Table buttons
+        JPanel tableActions = new JPanel(
+                new FlowLayout(FlowLayout.RIGHT, 8, 5)
+        );
         tableActions.setOpaque(false);
-        tableActions.add(btnDelete);
-        tableWrapper.add(tableActions, BorderLayout.SOUTH);
 
+        JButton viewButton = UITheme.createButton(
+                "View Certificate", UITheme.PRIMARY_BLUE, Color.WHITE
+        );
+        viewButton.addActionListener(e -> viewSelectedMedical(d));
 
-        centerPanel.add(tableWrapper, BorderLayout.CENTER);
-        card.add(centerPanel, BorderLayout.CENTER);
+        JButton editButton = UITheme.createButton(
+                "Edit Pending", UITheme.PRIMARY_BLUE, Color.WHITE
+        );
+        editButton.addActionListener(e -> editSelectedMedical(d));
+
+        JButton deleteButton = UITheme.createButton(
+                "Delete Pending", new Color(185, 48, 48), Color.WHITE
+        );
+        deleteButton.addActionListener(e -> deleteSelectedMedical(d));
+
+        tableActions.add(viewButton);
+        tableActions.add(editButton);
+        tableActions.add(deleteButton);
+
+        tablePanel.add(tableActions, BorderLayout.SOUTH);
+
+        center.add(tablePanel, BorderLayout.CENTER);
+        card.add(center, BorderLayout.CENTER);
 
         return card;
     }
 
+    // Checkbox renderer
+    private static class CheckBoxRenderer extends JCheckBox
+            implements ListCellRenderer<String> {
+
+        @Override
+        public Component getListCellRendererComponent(
+                JList<? extends String> list,
+                String value,
+                int index,
+                boolean selected,
+                boolean focus) {
+
+            setText(value);
+            setSelected(Boolean.TRUE.equals(courseChecks.get(value)));
+            setBackground(Color.WHITE);
+            setForeground(Color.BLACK);
+            setOpaque(true);
+
+            return this;
+        }
+    }
+
+    // Toggle checkbox state
+    private static void toggleCourse(String course) {
+
+        boolean current =
+                Boolean.TRUE.equals(courseChecks.get(course));
+
+        courseChecks.put(course, !current);
+    }
+
+    // Get all checked courses
+    private static List<String> getCheckedCourses() {
+
+        List<String> selected = new ArrayList<>();
+
+        for (Map.Entry<String, Boolean> entry : courseChecks.entrySet()) {
+
+            if (Boolean.TRUE.equals(entry.getValue())) {
+                selected.add(entry.getKey());
+            }
+        }
+
+        return selected;
+    }
+
+    // Load records and enrolled courses
     static void loadMedicalData(UndergraduateDashboard d) {
-        int stuId = d.student != null ? d.student.getStudentId() : 1;
-        List<Medical> list = d.studentDAO.getMedicalRecords(stuId);
+
+        int studentId = d.student.getStudentId();
+
         d.medModel.setRowCount(0);
 
-        for (Medical m : list) {
+        List<Medical> records =
+                d.studentDAO.getMedicalRecords(studentId);
+
+        for (Medical m : records) {
             d.medModel.addRow(new Object[]{
                     m.getMedicalId(),
                     m.getCourseCode(),
@@ -165,82 +357,412 @@ final class MedicalPanel {
             });
         }
 
-        // Populate course dropdown for submission
-        List<Course> courses = d.studentDAO.getEnrolledCourses(stuId);
-        d.cbMedCourse.removeAllItems();
+        d.medCourseListModel.clear();
+        courseChecks.clear();
+
+        List<Course> courses =
+                d.studentDAO.getEnrolledCourses(studentId);
+
         for (Course c : courses) {
-            d.cbMedCourse.addItem(c.getCourseCode());
+
+            String code = c.getCourseCode();
+
+            d.medCourseListModel.addElement(code);
+            courseChecks.put(code, false);
+        }
+
+        d.listMedCourses.repaint();
+    }
+
+    // Choose certificate
+    private static void chooseCertificate(UndergraduateDashboard d) {
+
+        JFileChooser chooser = new JFileChooser();
+
+        chooser.setDialogTitle("Choose Medical Certificate");
+
+        chooser.setFileFilter(new FileNameExtensionFilter(
+                "Medical Certificates (PDF, JPG, JPEG, PNG)",
+                "pdf", "jpg", "jpeg", "png"
+        ));
+
+        if (chooser.showOpenDialog(d) == JFileChooser.APPROVE_OPTION) {
+            d.txtMedPath.setText(
+                    chooser.getSelectedFile().getAbsolutePath()
+            );
         }
     }
 
+    // Submit or update
     static void handleSubmitMedical(UndergraduateDashboard d) {
-        String course = (String) d.cbMedCourse.getSelectedItem();
-        String reason = "Medical certificate submitted";
-        String path = d.txtMedPath.getText().trim();
+
+        List<String> selectedCourses = getCheckedCourses();
+
+        String reason = d.txtMedReason.getText().trim();
+        String selectedPath = d.txtMedPath.getText().trim();
+
+        if (selectedCourses.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                    d, "Please select at least one course."
+            );
+            return;
+        }
 
         if (reason.isEmpty()) {
-            JOptionPane.showMessageDialog(d, "Please describe the medical reason!", "Warning", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(
+                    d, "Please enter the medical reason."
+            );
             return;
         }
 
-        if (course == null) {
-            JOptionPane.showMessageDialog(d, "No enrolled course selected.");
+        if (selectedPath.isEmpty()
+                || !Files.isRegularFile(Paths.get(selectedPath))) {
+
+            JOptionPane.showMessageDialog(
+                    d, "Please choose an existing medical certificate."
+            );
             return;
         }
-        if (path.isBlank() || !java.nio.file.Files.isRegularFile(java.nio.file.Paths.get(path))) {
-            JOptionPane.showMessageDialog(d, "Choose an existing medical certificate first.");
-            return;
-        }
+
         try {
-            Date dt = Date.valueOf(d.txtMedDate.getText().trim());
-            int stuId = d.student != null ? d.student.getStudentId() : 1;
 
-            java.nio.file.Path source = java.nio.file.Paths.get(path);
-            java.nio.file.Path folder = java.nio.file.Paths.get("medical_certificates");
-            java.nio.file.Files.createDirectories(folder);
-            String fileName = source.getFileName().toString();
-            String ext = fileName.substring(fileName.lastIndexOf('.')).toLowerCase(java.util.Locale.ROOT);
-            java.nio.file.Path target = folder.resolve("student_" + stuId + "_" +
-                    java.util.UUID.randomUUID() + ext);
-            java.nio.file.Files.copy(source, target);
-            Medical m = new Medical(0, stuId, course, dt, reason, target.toString(), "PENDING", null);
-            if (d.studentDAO.submitMedical(m)) {
-                JOptionPane.showMessageDialog(d, "Medical request submitted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                d.txtMedReason.setText("");
-                d.txtMedPath.setText("");
-                d.loadMedicalData();
+            Date medicalDate = Date.valueOf(
+                    d.txtMedDate.getText().trim()
+            );
+
+            int studentId = d.student.getStudentId();
+
+            // Update existing pending record
+            if (editingMedicalId != -1) {
+
+                if (selectedCourses.size() != 1) {
+                    JOptionPane.showMessageDialog(
+                            d, "Please select exactly one course when editing."
+                    );
+                    return;
+                }
+
+                String documentPath = editingOriginalPath;
+                Path newCopiedFile = null;
+
+                if (!selectedPath.equals(editingOriginalPath)) {
+
+                    newCopiedFile = copyCertificate(
+                            selectedPath, studentId
+                    );
+
+                    documentPath = newCopiedFile.toString();
+                }
+
+                Medical medical = new Medical(
+                        editingMedicalId,
+                        studentId,
+                        selectedCourses.get(0),
+                        medicalDate,
+                        reason,
+                        documentPath,
+                        "PENDING",
+                        null
+                );
+
+                boolean updated =
+                        d.studentDAO.updatePendingMedical(medical);
+
+                if (updated) {
+
+                    JOptionPane.showMessageDialog(
+                            d, "Medical request updated successfully!"
+                    );
+
+                    clearForm(d);
+                    loadMedicalData(d);
+
+                } else {
+
+                    if (newCopiedFile != null) {
+                        Files.deleteIfExists(newCopiedFile);
+                    }
+
+                    JOptionPane.showMessageDialog(
+                            d, "Update failed. The request may no longer be pending."
+                    );
+                }
+
             } else {
-                java.nio.file.Files.deleteIfExists(target);
-                JOptionPane.showMessageDialog(d, "Could not save medical request to database.");
+
+                // New submission
+                Path copiedFile = copyCertificate(
+                        selectedPath, studentId
+                );
+
+                boolean submitted =
+                        d.studentDAO.submitMedicalForCourses(
+                                studentId,
+                                selectedCourses,
+                                medicalDate,
+                                reason,
+                                copiedFile.toString()
+                        );
+
+                if (submitted) {
+
+                    JOptionPane.showMessageDialog(
+                            d,
+                            "Medical request submitted for "
+                                    + selectedCourses.size() + " course(s)."
+                    );
+
+                    clearForm(d);
+                    loadMedicalData(d);
+
+                } else {
+
+                    Files.deleteIfExists(copiedFile);
+
+                    JOptionPane.showMessageDialog(
+                            d, "Could not submit medical request."
+                    );
+                }
             }
-        } catch (java.io.IOException ex) {
-            JOptionPane.showMessageDialog(d, "Could not save certificate: " + ex.getMessage());
+
         } catch (IllegalArgumentException ex) {
-            JOptionPane.showMessageDialog(d, "Please enter date in format YYYY-MM-DD", "Invalid Date", JOptionPane.WARNING_MESSAGE);
-        }
-    }
-    private static void deleteSelectedMedical(UndergraduateDashboard d) {
-        int selected = d.tblMedical.getSelectedRow();
-        if (selected < 0) {
-            JOptionPane.showMessageDialog(d, "Select a medical record first.");
-            return;
-        }
-        int row = d.tblMedical.convertRowIndexToModel(selected);
-        String status = String.valueOf(d.medModel.getValueAt(row, 5));
-        if (!"PENDING".equalsIgnoreCase(status)) {
-            JOptionPane.showMessageDialog(d, "Only PENDING requests can be deleted.");
-            return;
-        }
-        int medicalId = ((Number) d.medModel.getValueAt(row, 0)).intValue();
-        int studentId = d.student.getStudentId();
-        if (JOptionPane.showConfirmDialog(d, "Delete selected pending medical request?",
-                "Confirm deletion", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
-        if (d.studentDAO.deletePendingMedical(medicalId, studentId)) {
-            d.loadMedicalData();
-            JOptionPane.showMessageDialog(d, "Medical request deleted.");
-        } else {
-            JOptionPane.showMessageDialog(d, "Deletion failed. The request may no longer be pending.");
+
+            JOptionPane.showMessageDialog(
+                    d,
+                    "Please enter date in YYYY-MM-DD format.",
+                    "Invalid Date",
+                    JOptionPane.WARNING_MESSAGE
+            );
+
+        } catch (IOException ex) {
+
+            JOptionPane.showMessageDialog(
+                    d, "Certificate error: " + ex.getMessage()
+            );
+
+        } catch (Exception ex) {
+
+            JOptionPane.showMessageDialog(
+                    d, "Error: " + ex.getMessage()
+            );
         }
     }
 
+    // Copy certificate into folder
+    private static Path copyCertificate(
+            String sourcePath, int studentId
+    ) throws IOException {
+
+        Path source = Paths.get(sourcePath);
+
+        String fileName = source.getFileName().toString();
+        int dot = fileName.lastIndexOf('.');
+
+        if (dot < 0) {
+            throw new IOException("Invalid certificate file.");
+        }
+
+        String extension =
+                fileName.substring(dot).toLowerCase(Locale.ROOT);
+
+        Path folder = Paths.get("medical_certificates");
+
+        Files.createDirectories(folder);
+
+        Path target = folder.resolve(
+                "student_" + studentId + "_" + UUID.randomUUID() + extension
+        );
+
+        Files.copy(source, target);
+
+        return target;
+    }
+
+    // View certificate
+    private static void viewSelectedMedical(UndergraduateDashboard d) {
+
+        int selected = d.tblMedical.getSelectedRow();
+
+        if (selected < 0) {
+            JOptionPane.showMessageDialog(
+                    d, "Please select a medical record first."
+            );
+            return;
+        }
+
+        int row = d.tblMedical.convertRowIndexToModel(selected);
+
+        String path = String.valueOf(
+                d.medModel.getValueAt(row, 4)
+        );
+
+        File file = new File(path);
+
+        if (!file.isFile()) {
+            JOptionPane.showMessageDialog(
+                    d, "Certificate file not found:\n" + path
+            );
+            return;
+        }
+
+        try {
+
+            if (!Desktop.isDesktopSupported()) {
+                JOptionPane.showMessageDialog(
+                        d, "Desktop file opening is not supported."
+                );
+                return;
+            }
+
+            Desktop.getDesktop().open(file);
+
+        } catch (IOException | UnsupportedOperationException ex) {
+
+            JOptionPane.showMessageDialog(
+                    d, "Could not open certificate: " + ex.getMessage()
+            );
+        }
+    }
+
+    // Edit pending record
+    private static void editSelectedMedical(UndergraduateDashboard d) {
+
+        int selected = d.tblMedical.getSelectedRow();
+
+        if (selected < 0) {
+            JOptionPane.showMessageDialog(
+                    d, "Please select a medical record first."
+            );
+            return;
+        }
+
+        int row = d.tblMedical.convertRowIndexToModel(selected);
+
+        String status = String.valueOf(
+                d.medModel.getValueAt(row, 5)
+        );
+
+        if (!"PENDING".equalsIgnoreCase(status)) {
+            JOptionPane.showMessageDialog(
+                    d, "Only PENDING records can be edited."
+            );
+            return;
+        }
+
+        editingMedicalId = ((Number)
+                d.medModel.getValueAt(row, 0)).intValue();
+
+        String course = String.valueOf(
+                d.medModel.getValueAt(row, 1)
+        );
+
+        String date = String.valueOf(
+                d.medModel.getValueAt(row, 2)
+        );
+
+        String reason = String.valueOf(
+                d.medModel.getValueAt(row, 3)
+        );
+
+        editingOriginalPath = String.valueOf(
+                d.medModel.getValueAt(row, 4)
+        );
+
+        // Clear previous checks
+        for (String key : courseChecks.keySet()) {
+            courseChecks.put(key, false);
+        }
+
+        // Tick selected course
+        courseChecks.put(course, true);
+
+        d.listMedCourses.repaint();
+
+        d.txtMedDate.setText(date);
+        d.txtMedReason.setText(reason);
+        d.txtMedPath.setText(editingOriginalPath);
+
+        JOptionPane.showMessageDialog(
+                d,
+                "Record loaded. Make changes and click Submit Medical."
+        );
+    }
+
+    // Delete pending record
+    private static void deleteSelectedMedical(UndergraduateDashboard d) {
+
+        int selected = d.tblMedical.getSelectedRow();
+
+        if (selected < 0) {
+            JOptionPane.showMessageDialog(
+                    d, "Please select a medical record first."
+            );
+            return;
+        }
+
+        int row = d.tblMedical.convertRowIndexToModel(selected);
+
+        String status = String.valueOf(
+                d.medModel.getValueAt(row, 5)
+        );
+
+        if (!"PENDING".equalsIgnoreCase(status)) {
+            JOptionPane.showMessageDialog(
+                    d, "Only PENDING records can be deleted."
+            );
+            return;
+        }
+
+        int medicalId = ((Number)
+                d.medModel.getValueAt(row, 0)).intValue();
+
+        int studentId = d.student.getStudentId();
+
+        int confirm = JOptionPane.showConfirmDialog(
+                d,
+                "Delete this pending medical request?",
+                "Confirm Deletion",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        if (d.studentDAO.deletePendingMedical(medicalId, studentId)) {
+
+            clearForm(d);
+            loadMedicalData(d);
+
+            JOptionPane.showMessageDialog(
+                    d, "Medical request deleted successfully."
+            );
+
+        } else {
+
+            JOptionPane.showMessageDialog(
+                    d, "Deletion failed. The record may no longer be pending."
+            );
+        }
+    }
+
+    // Clear form
+    private static void clearForm(UndergraduateDashboard d) {
+
+        editingMedicalId = -1;
+        editingOriginalPath = null;
+
+        for (String course : courseChecks.keySet()) {
+            courseChecks.put(course, false);
+        }
+
+        d.listMedCourses.repaint();
+
+        d.txtMedDate.setText(
+                new Date(System.currentTimeMillis()).toString()
+        );
+
+        d.txtMedReason.setText("");
+        d.txtMedPath.setText("");
+    }
 }

@@ -64,6 +64,10 @@ public class UndergraduateDashboard extends JFrame {
     JTextArea txtMedReason;
     JTextField txtMedPath;
 
+    // Multiple course selection
+    JList<String> listMedCourses;
+    DefaultListModel<String> medCourseListModel;
+
     // Courses and materials
     JTable tblCourses;
     DefaultTableModel coursesModel;
