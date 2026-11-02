@@ -16,10 +16,12 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
 import java.io.File;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import java.io.IOException;
@@ -30,16 +32,7 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.util.UUID;
 
-/**
- * TechnicalOfficerDashboard - Portal for Technical Officers.
- * Features:
- * 1. Mark undergraduate session attendance (Theory/Practical)
- * 2. Review and approve/reject medical certificate requests
- * 3. View Departmental Timetable (restricted to own department per FR-TO-05)
- * 4. View notices and update profile
- *
- * Authored under: Module TG2123 (B. G. N. M. Weerawardhana)
- */
+
 public class TechnicalOfficerDashboard extends JFrame {
 
     private TechnicalOfficer techOfficer;
@@ -66,6 +59,20 @@ public class TechnicalOfficerDashboard extends JFrame {
     // Medicals components
     private JTable tblMedicals;
     private DefaultTableModel medicalsTableModel;
+    private List<Medical> medicalRequests = List.of();
+    private JLabel lblMedicalStudent;
+    private JLabel lblMedicalRequestId;
+    private JLabel lblMedicalRegNo;
+    private JLabel lblMedicalCourse;
+    private JLabel lblMedicalDate;
+    private JLabel lblMedicalStatus;
+    private JLabel lblMedicalCertificate;
+    private JLabel lblMedicalPreview;
+    private JTextArea txtMedicalReasonPreview;
+    private JButton btnOpenMedicalDocument;
+    private JButton btnApproveMedical;
+    private JButton btnRejectMedical;
+    private Path selectedMedicalDocument;
 
     // Timetable components
     private JTable tblTimetable;
@@ -79,6 +86,7 @@ public class TechnicalOfficerDashboard extends JFrame {
     private JTextField txtProfFullName, txtProfEmail, txtProfPhone;
     private JLabel lblProfUsername, lblProfEmpId;
     private JLabel lblProfilePhoto;
+    private JLabel lblHeaderAvatar;
 
     public TechnicalOfficerDashboard(TechnicalOfficer techOfficer) {
         this.techOfficer = techOfficer;
@@ -212,7 +220,78 @@ public class TechnicalOfficerDashboard extends JFrame {
         textPanel.add(lblSub);
 
         header.add(textPanel, BorderLayout.WEST);
+
+        JPanel avatarPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        avatarPanel.setOpaque(false);
+
+        lblHeaderAvatar = new JLabel();
+        lblHeaderAvatar.setPreferredSize(new Dimension(42, 42));
+        lblHeaderAvatar.setHorizontalAlignment(SwingConstants.CENTER);
+        avatarPanel.add(lblHeaderAvatar);
+        header.add(avatarPanel, BorderLayout.EAST);
+
+        refreshHeaderAvatar();
         return header;
+    }
+
+    private void refreshHeaderAvatar() {
+        String name = techOfficer == null ? "T" : techOfficer.getFullName();
+        String initial = name == null || name.isBlank()
+                ? "T"
+                : name.trim().substring(0, 1).toUpperCase(Locale.ROOT);
+
+        BufferedImage picture = null;
+        String photoPath = techOfficer == null ? null : techOfficer.getProfilePic();
+        if (photoPath != null && !photoPath.isBlank()
+                && !"default_avatar.png".equalsIgnoreCase(photoPath)) {
+            try {
+                Path path = Path.of(photoPath);
+                if (!path.isAbsolute()) {
+                    path = Path.of("").toAbsolutePath().resolve(path).normalize();
+                }
+                if (Files.isRegularFile(path)) {
+                    picture = ImageIO.read(path.toFile());
+                    if (picture == null) {
+                        System.err.println("Saved profile photo is not a supported image: " + path);
+                    }
+                }
+            } catch (IOException | RuntimeException ex) {
+                System.err.println("Could not load saved profile photo " + photoPath + ": " + ex.getMessage());
+            }
+        }
+
+        BufferedImage avatar = new BufferedImage(42, 42, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = avatar.createGraphics();
+        try {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setColor(new Color(203, 213, 225));
+            g.fillOval(1, 1, 40, 40);
+
+            if (picture != null) {
+                g.setClip(new Ellipse2D.Double(1, 1, 40, 40));
+                double scale = Math.max(
+                        40.0 / picture.getWidth(),
+                        40.0 / picture.getHeight()
+                );
+                int width = (int) Math.ceil(picture.getWidth() * scale);
+                int height = (int) Math.ceil(picture.getHeight() * scale);
+                g.drawImage(picture, (42 - width) / 2, (42 - height) / 2, width, height, null);
+            } else {
+                g.setColor(new Color(71, 85, 105));
+                g.setFont(new Font("Segoe UI", Font.BOLD, 17));
+                FontMetrics metrics = g.getFontMetrics();
+                g.drawString(
+                        initial,
+                        (42 - metrics.stringWidth(initial)) / 2,
+                        (42 - metrics.getHeight()) / 2 + metrics.getAscent()
+                );
+            }
+        } finally {
+            g.dispose();
+        }
+
+        lblHeaderAvatar.setIcon(new ImageIcon(avatar));
+        lblHeaderAvatar.setText("");
     }
 
     private void switchCard(String name, JButton activeBtn) {
@@ -420,8 +499,38 @@ public class TechnicalOfficerDashboard extends JFrame {
 
         tblMedicals = new JTable(medicalsTableModel);
         UITheme.styleTable(tblMedicals);
+        tblMedicals.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tblMedicals.setToolTipText("Select a medical record to view its details below.");
+        tblMedicals.getSelectionModel().addListSelectionListener(event -> {
+            if (event.getValueIsAdjusting()) {
+                return;
+            }
+            int row = tblMedicals.getSelectedRow();
+            if (row < 0) {
+                clearMedicalDetails();
+                return;
+            }
 
-        card.add(new JScrollPane(tblMedicals), BorderLayout.CENTER);
+            int modelRow = tblMedicals.convertRowIndexToModel(row);
+            int medicalId = ((Number) medicalsTableModel.getValueAt(modelRow, 0)).intValue();
+            medicalRequests.stream()
+                    .filter(medical -> medical.getMedicalId() == medicalId)
+                    .findFirst()
+                    .ifPresent(this::displayMedicalDetails);
+        });
+
+        JScrollPane tableScrollPane = new JScrollPane(tblMedicals);
+        JPanel detailsPanel = createMedicalDetailsPanel();
+        JSplitPane splitPane = new JSplitPane(
+                JSplitPane.VERTICAL_SPLIT,
+                tableScrollPane,
+                detailsPanel
+        );
+        splitPane.setResizeWeight(0.5);
+        splitPane.setOneTouchExpandable(true);
+        splitPane.setBorder(null);
+        splitPane.setContinuousLayout(true);
+        card.add(splitPane, BorderLayout.CENTER);
 
         JPanel bottomBar =
                 new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 5));
@@ -432,23 +541,126 @@ public class TechnicalOfficerDashboard extends JFrame {
         btnAdd.addActionListener(e -> openAddMedicalForm());
         bottomBar.add(btnAdd);
 
-        JButton btnApprove = UITheme.createButton(
-                "Approve Medical", UITheme.SUCCESS_GREEN, Color.WHITE);
-        btnApprove.addActionListener(
-                e -> handleUpdateMedicalStatus("APPROVED"));
-        bottomBar.add(btnApprove);
+        btnOpenMedicalDocument = UITheme.createButton(
+                "Open Certificate", UITheme.PRIMARY_BLUE, Color.WHITE);
+        btnOpenMedicalDocument.setEnabled(false);
+        btnOpenMedicalDocument.addActionListener(
+                e -> openMedicalDocument(selectedMedicalDocument));
+        bottomBar.add(btnOpenMedicalDocument);
 
-        JButton btnReject = UITheme.createButton(
+        btnApproveMedical = UITheme.createButton(
+                "Approve Medical", UITheme.SUCCESS_GREEN, Color.WHITE);
+        btnApproveMedical.setEnabled(false);
+        btnApproveMedical.addActionListener(
+                e -> handleUpdateMedicalStatus("APPROVED"));
+        bottomBar.add(btnApproveMedical);
+
+        btnRejectMedical = UITheme.createButton(
                 "Reject Medical", UITheme.DANGER_RED, Color.WHITE);
-        btnReject.addActionListener(
+        btnRejectMedical.setEnabled(false);
+        btnRejectMedical.addActionListener(
                 e -> handleUpdateMedicalStatus("REJECTED"));
-        bottomBar.add(btnReject);
+        bottomBar.add(btnRejectMedical);
 
         card.add(bottomBar, BorderLayout.SOUTH);
 
         return card;
     }
 
+    private JPanel createMedicalDetailsPanel() {
+        JPanel detailsPanel = new JPanel(new BorderLayout(14, 8));
+        detailsPanel.setOpaque(false);
+        detailsPanel.setBorder(new EmptyBorder(10, 8, 4, 8));
+
+        JPanel previewPanel = new JPanel(new BorderLayout(0, 5));
+        previewPanel.setOpaque(false);
+        previewPanel.setPreferredSize(new Dimension(190, 160));
+
+        lblMedicalPreview = new JLabel("Select a request", SwingConstants.CENTER);
+        lblMedicalPreview.setPreferredSize(new Dimension(180, 135));
+        lblMedicalPreview.setBorder(BorderFactory.createLineBorder(UITheme.CARD_BORDER));
+        lblMedicalPreview.setBackground(UITheme.CONTENT_BG);
+        lblMedicalPreview.setOpaque(true);
+        JLabel previewTitle = new JLabel("Certificate Preview", SwingConstants.CENTER);
+        previewTitle.setFont(UITheme.FONT_SMALL);
+        previewTitle.setForeground(UITheme.TEXT_MUTED);
+        previewPanel.add(lblMedicalPreview, BorderLayout.CENTER);
+        previewPanel.add(previewTitle, BorderLayout.SOUTH);
+        detailsPanel.add(previewPanel, BorderLayout.WEST);
+
+        JPanel infoPanel = new JPanel(new BorderLayout(0, 8));
+        infoPanel.setOpaque(false);
+
+        JLabel detailsTitle = new JLabel("Selected Medical Request");
+        detailsTitle.setFont(UITheme.FONT_HEADER);
+        infoPanel.add(detailsTitle, BorderLayout.NORTH);
+
+        JPanel fields = new JPanel(new GridLayout(2, 4, 12, 10));
+        fields.setOpaque(false);
+        lblMedicalRequestId = createMedicalDetailValue();
+        lblMedicalStudent = createMedicalDetailValue();
+        lblMedicalRegNo = createMedicalDetailValue();
+        lblMedicalCourse = createMedicalDetailValue();
+        lblMedicalDate = createMedicalDetailValue();
+        lblMedicalStatus = createMedicalDetailValue();
+        lblMedicalCertificate = createMedicalDetailValue();
+        fields.add(createMedicalDetailField("Request ID", lblMedicalRequestId));
+        fields.add(createMedicalDetailField("Student", lblMedicalStudent));
+        fields.add(createMedicalDetailField("Registration No.", lblMedicalRegNo));
+        fields.add(createMedicalDetailField("Course", lblMedicalCourse));
+        fields.add(createMedicalDetailField("Medical Date", lblMedicalDate));
+        fields.add(createMedicalDetailField("Status", lblMedicalStatus));
+        fields.add(createMedicalDetailField("Certificate", lblMedicalCertificate));
+
+        txtMedicalReasonPreview = new JTextArea(2, 30);
+        txtMedicalReasonPreview.setFont(UITheme.FONT_BODY);
+        txtMedicalReasonPreview.setForeground(UITheme.TEXT_DARK);
+        txtMedicalReasonPreview.setLineWrap(true);
+        txtMedicalReasonPreview.setWrapStyleWord(true);
+        txtMedicalReasonPreview.setEditable(false);
+        txtMedicalReasonPreview.setOpaque(false);
+        JPanel reasonPanel = new JPanel(new BorderLayout(0, 3));
+        reasonPanel.setOpaque(false);
+        JLabel reasonTitle = new JLabel("Reason");
+        reasonTitle.setFont(UITheme.FONT_SMALL);
+        reasonTitle.setForeground(UITheme.TEXT_MUTED);
+        reasonPanel.add(reasonTitle, BorderLayout.NORTH);
+        reasonPanel.add(txtMedicalReasonPreview, BorderLayout.CENTER);
+
+        JPanel information = new JPanel(new BorderLayout(0, 8));
+        information.setOpaque(false);
+        information.add(fields, BorderLayout.CENTER);
+        information.add(reasonPanel, BorderLayout.SOUTH);
+        infoPanel.add(information, BorderLayout.CENTER);
+        detailsPanel.add(infoPanel, BorderLayout.CENTER);
+
+        clearMedicalDetails();
+        return detailsPanel;
+    }
+
+    private JLabel createMedicalDetailValue() {
+        JLabel value = new JLabel("-");
+        value.setFont(UITheme.FONT_BODY_BOLD);
+        value.setForeground(UITheme.TEXT_DARK);
+        value.setToolTipText("");
+        return value;
+    }
+
+    private JPanel createMedicalDetailField(String title, JLabel value) {
+        JPanel field = new JPanel();
+        field.setLayout(new BoxLayout(field, BoxLayout.Y_AXIS));
+        field.setOpaque(false);
+
+        JLabel label = new JLabel(title);
+        label.setFont(UITheme.FONT_SMALL);
+        label.setForeground(UITheme.TEXT_MUTED);
+        value.setAlignmentX(Component.LEFT_ALIGNMENT);
+        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+        field.add(label);
+        field.add(Box.createVerticalStrut(3));
+        field.add(value);
+        return field;
+    }
 
     private void openAddMedicalForm() {
 
@@ -1008,10 +1220,14 @@ public class TechnicalOfficerDashboard extends JFrame {
 
     private void loadMedicalsData() {
         if (techOfficer == null || techOfficer.getDepartmentId() <= 0) return;
-        List<Medical> list = toDAO.getMedicalRequestsByDepartment(techOfficer.getDepartmentId());
+        if (tblMedicals != null) {
+            tblMedicals.clearSelection();
+        }
+        clearMedicalDetails();
+        medicalRequests = toDAO.getMedicalRequestsByDepartment(techOfficer.getDepartmentId());
         medicalsTableModel.setRowCount(0);
 
-        for (Medical m : list) {
+        for (Medical m : medicalRequests) {
             medicalsTableModel.addRow(new Object[]{
                     m.getMedicalId(),
                     m.getStudentRegNo(),
@@ -1022,6 +1238,163 @@ public class TechnicalOfficerDashboard extends JFrame {
                     m.getDocumentPath(),
                     m.getStatus()
             });
+        }
+    }
+
+    private void displayMedicalDetails(Medical medical) {
+        Path documentPath = resolveMedicalDocumentPath(medical.getDocumentPath());
+        lblMedicalRequestId.setText(String.valueOf(medical.getMedicalId()));
+        lblMedicalStudent.setText(nullToUnavailable(medical.getStudentName()));
+        lblMedicalRegNo.setText(nullToUnavailable(medical.getStudentRegNo()));
+        lblMedicalCourse.setText(nullToUnavailable(medical.getCourseCode()));
+        lblMedicalDate.setText(medical.getMedicalDate() == null
+                ? "Not available"
+                : medical.getMedicalDate().toString());
+        lblMedicalStatus.setText(nullToUnavailable(medical.getStatus()));
+        lblMedicalStatus.setForeground(medicalStatusColor(medical.getStatus()));
+        lblMedicalCertificate.setText(documentPath == null
+                ? "Not uploaded"
+                : documentPath.getFileName().toString());
+        lblMedicalCertificate.setToolTipText(medical.getDocumentPath());
+        lblMedicalRequestId.setToolTipText(lblMedicalRequestId.getText());
+        lblMedicalStudent.setToolTipText(lblMedicalStudent.getText());
+        lblMedicalRegNo.setToolTipText(lblMedicalRegNo.getText());
+        lblMedicalCourse.setToolTipText(lblMedicalCourse.getText());
+        lblMedicalDate.setToolTipText(lblMedicalDate.getText());
+        lblMedicalStatus.setToolTipText(lblMedicalStatus.getText());
+        txtMedicalReasonPreview.setText(nullToUnavailable(medical.getReason()));
+        txtMedicalReasonPreview.setCaretPosition(0);
+        selectedMedicalDocument = documentPath;
+
+        lblMedicalPreview.setIcon(null);
+        if (documentPath == null || !Files.isRegularFile(documentPath)) {
+            lblMedicalPreview.setText("Certificate not found");
+        } else if (!isPreviewableMedicalImage(documentPath)) {
+            lblMedicalPreview.setText("Document - open to view");
+        } else {
+            try {
+                BufferedImage image = ImageIO.read(documentPath.toFile());
+                if (image == null) {
+                    lblMedicalPreview.setText("Document - open to view");
+                } else {
+                    int maxWidth = 180;
+                    int maxHeight = 135;
+                    double scale = Math.min(
+                            (double) maxWidth / image.getWidth(),
+                            (double) maxHeight / image.getHeight()
+                    );
+                    int width = Math.max(1, (int) Math.round(image.getWidth() * scale));
+                    int height = Math.max(1, (int) Math.round(image.getHeight() * scale));
+                    lblMedicalPreview.setText("");
+                    lblMedicalPreview.setIcon(new ImageIcon(
+                            image.getScaledInstance(width, height, Image.SCALE_SMOOTH)
+                    ));
+                }
+            } catch (IOException ex) {
+                lblMedicalPreview.setText("Could not load preview");
+                System.err.println("Could not load medical certificate preview " + documentPath + ": " + ex.getMessage());
+            }
+        }
+
+        boolean documentAvailable = documentPath != null && Files.isRegularFile(documentPath);
+        boolean pending = "PENDING".equalsIgnoreCase(medical.getStatus());
+        btnOpenMedicalDocument.setEnabled(documentAvailable);
+        btnApproveMedical.setEnabled(pending);
+        btnRejectMedical.setEnabled(pending);
+    }
+
+    private boolean isPreviewableMedicalImage(Path path) {
+        String fileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
+        return fileName.endsWith(".jpg")
+                || fileName.endsWith(".jpeg")
+                || fileName.endsWith(".png");
+    }
+
+    private Color medicalStatusColor(String status) {
+        if ("APPROVED".equalsIgnoreCase(status)) {
+            return UITheme.SUCCESS_GREEN;
+        }
+        if ("REJECTED".equalsIgnoreCase(status)) {
+            return UITheme.DANGER_RED;
+        }
+        return UITheme.WARNING_AMBER;
+    }
+
+    private void clearMedicalDetails() {
+        if (lblMedicalRequestId != null) lblMedicalRequestId.setText("-");
+        if (lblMedicalStudent != null) lblMedicalStudent.setText("Select a record");
+        if (lblMedicalRegNo != null) lblMedicalRegNo.setText("-");
+        if (lblMedicalCourse != null) lblMedicalCourse.setText("-");
+        if (lblMedicalDate != null) lblMedicalDate.setText("-");
+        if (lblMedicalStatus != null) {
+            lblMedicalStatus.setText("-");
+            lblMedicalStatus.setForeground(UITheme.TEXT_DARK);
+        }
+        if (lblMedicalCertificate != null) {
+            lblMedicalCertificate.setText("-");
+            lblMedicalCertificate.setToolTipText(null);
+        }
+        if (lblMedicalPreview != null) {
+            lblMedicalPreview.setIcon(null);
+            lblMedicalPreview.setText("Select a request");
+        }
+        if (txtMedicalReasonPreview != null) txtMedicalReasonPreview.setText("");
+        selectedMedicalDocument = null;
+        if (btnOpenMedicalDocument != null) btnOpenMedicalDocument.setEnabled(false);
+        if (btnApproveMedical != null) btnApproveMedical.setEnabled(false);
+        if (btnRejectMedical != null) btnRejectMedical.setEnabled(false);
+    }
+
+    private String nullToUnavailable(String value) {
+        return value == null || value.isBlank() ? "Not available" : value;
+    }
+
+    private Path resolveMedicalDocumentPath(String documentPath) {
+        if (documentPath == null || documentPath.isBlank()) {
+            return null;
+        }
+
+        try {
+            Path path = Path.of(documentPath);
+            return path.isAbsolute()
+                    ? path.normalize()
+                    : Path.of("").toAbsolutePath().resolve(path).normalize();
+        } catch (RuntimeException ex) {
+            System.err.println("Invalid medical certificate path " + documentPath + ": " + ex.getMessage());
+            return null;
+        }
+    }
+
+    private void openMedicalDocument(Path path) {
+        if (path == null || !Files.isRegularFile(path)) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "The medical certificate file could not be found.",
+                    "Certificate Unavailable",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Opening the original certificate is not supported on this computer.",
+                    "Cannot Open Certificate",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+
+        try {
+            Desktop.getDesktop().open(path.toFile());
+        } catch (IOException | UnsupportedOperationException | SecurityException ex) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Could not open the medical certificate: " + ex.getMessage(),
+                    "Cannot Open Certificate",
+                    JOptionPane.ERROR_MESSAGE
+            );
         }
     }
 
@@ -1225,5 +1598,6 @@ public class TechnicalOfficerDashboard extends JFrame {
         Image scaled = image.getScaledInstance(120, 120, Image.SCALE_SMOOTH);
         lblProfilePhoto.setText("");
         lblProfilePhoto.setIcon(new ImageIcon(scaled));
+        refreshHeaderAvatar();
     }
 }

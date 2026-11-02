@@ -9,10 +9,9 @@ import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Contract for operations available to the Technical Officer module.
- * The dashboard can depend on this interface rather than SQL implementation details.
- */
+//Contract for operations available to the Technical Officer module.
+ //The dashboard can depend on this interface rather than SQL implementation details.
+
 public interface TechnicalOfficerRepository {
     TechnicalOfficer getTechnicalOfficerByUserId(int userId);
     List<Course> getCoursesByDepartment(int departmentId);

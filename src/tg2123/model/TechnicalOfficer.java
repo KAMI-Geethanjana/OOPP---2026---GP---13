@@ -5,14 +5,7 @@ import tg2123.gui.TechnicalOfficerDashboard;
 
 import javax.swing.JFrame;
 
-/**
- * TechnicalOfficer - Represents technical officers in the FTMS system.
- * Demonstrates:
- * 1. Inheritance (extends abstract User)
- * 2. Polymorphism (overrides getRoleDisplayName and openDashboard)
- *
- * Authored under: Module TG2123 (B. G. N. M. Weerawardhana)
- */
+
 public class TechnicalOfficer extends User {
 
     private int toId;
