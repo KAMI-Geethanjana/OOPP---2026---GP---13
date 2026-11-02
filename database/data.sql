@@ -90,20 +90,36 @@ INSERT INTO undergraduate (student_id, user_id, reg_no, batch_year, status, depa
                                                                                                            (20, 30, 'TG/2023/1955', 2023, 'BATCH_MISSED', 1, '0781112220');
 
 -- 7. Courses
-INSERT INTO course
-    (course_code, course_title, credit_theory, credit_practical,
-     department_id, lecturer_id)
-VALUES
+INSERT INTO course (course_code, course_title, credit_theory, credit_practical, department_id, lecturer_id) VALUES
     ('ICT2113', 'Data Structures and Algorithms', 3, 0, 1, 2),
     ('ICT2122', 'Object Oriented Programming', 2, 0, 1, 1),
     ('ICT2132', 'Object Oriented Programming Practicum', 0, 2, 1, 1),
     ('ICT2142', 'E-Business Systems', 2, 0, 1, 5),
     ('ICT2152', 'Object Oriented Analysis and Design', 2, 0, 1, 3),
+    ('ICT2162', 'Management Information Systems', 2, 0, 1, 4),
     ('ENG2112', 'English III', 2, 0, 2, 4),
+    ('ENG2122', 'English for Technology IV', 2, 0, 2, 4),
     ('TCS2112', 'Business Economics', 2, 0, 2, 4),
     ('TCS2121', 'Soft Skills', 2, 0, 2, 4),
-    ('ICT2162', 'Management Information Systems', 2, 0, 2, 4);
-    
+    ('TCS21112', 'Applied Mathematics for Technology', 2, 0, 2, 4),
+    ('TCS2212', 'Statistics for Technology', 2, 0, 2, 4),
+    ('TCS2222', 'Principles of Management', 2, 0, 2, 4),
+    ('TCS4232', 'Research Methodology', 2, 0, 2, 4),
+    ('TCS1112', 'Basic Engineering Principles', 1, 1, 2, 4),
+    ('TCS22112', 'Agricultural Biotechnology', 2, 0, 2, 4),
+    ('BST2112', 'Soil and Water Engineering', 2, 0, 4, 4),
+    ('BST2123', 'Farm Power and Machinery', 2, 1, 4, 4),
+    ('BST2132', 'Food Science and Postharvest Technology', 0, 2, 4, 4),
+    ('BST2142', 'Environmental Pollution Control', 2, 0, 4, 4),
+    ('BST2152', 'Bioprocess Engineering', 2, 0, 4, 4),
+    ('ENT2112', 'Engineering Drawing and CAD', 1, 1, 3, 4),
+    ('ENT2122', 'Thermodynamics and Heat Transfer', 2, 0, 3, 4),
+    ('ENT2132', 'Mechanics of Machines', 2, 0, 3, 4),
+    ('ENT2143', 'Electronics and Microcontrollers', 2, 1, 3, 4),
+    ('ENT2152', 'Manufacturing Technology', 1, 1, 3, 4),
+    ('ENT2162', 'Computer Aided Engineering Practicum', 0, 2, 3, 4),
+    ('TMS2112', 'Applied Mathematics for Engineers', 2, 0, 3, 4);
+
 -- 8. Course Materials
 INSERT INTO course_material
     (material_id, course_code, lecturer_id, title, file_path, uploaded_date)
@@ -128,21 +144,97 @@ VALUES
 
 
 -- 9. Timetable
-INSERT INTO timetable
-(timetable_id, department_id, course_code, day_of_week, start_time, end_time, venue, session_type)
-VALUES
-(1, 1, 'ICT2113', 'Monday', '09:00:00', '11:00:00', 'ICT Lab 11', 'THEORY'),
-(2, 1, 'ICT2113', 'Monday', '11:00:00', '13:00:00', 'ICT Lab 11', 'PRACTICAL'),
-(3, 1, 'ICT2142', 'Tuesday', '09:00:00', '12:00:00', 'ICT New Lab', 'THEORY'),
-(4, 1, 'ICT2152', 'Tuesday', '13:00:00', '15:00:00', 'ICT Lab 12', 'THEORY'),
-(5, 2, 'TCS2112', 'Wednesday', '08:00:00', '09:00:00', 'ICT ILT', 'THEORY'),
-(6, 2, 'TCS2121', 'Wednesday', '10:00:00', '12:00:00', 'ICT Hardware Lab', 'PRACTICAL'),
-(7, 1, 'ICT2122', 'Thursday', '09:00:00', '11:00:00', 'ICT Lab 11', 'THEORY'),
-(8, 1, 'ICT2132', 'Thursday', '11:00:00', '13:00:00', 'ICT Lab 11', 'PRACTICAL'),
-(9, 1, 'ICT2132', 'Thursday', '14:00:00', '16:00:00', 'ICT Lab 11', 'PRACTICAL'),
-(10, 2, 'TCS2112', 'Friday', '08:00:00', '10:00:00', 'ICT Hardware Lab', 'THEORY'),
-(11, 2, 'ICT2162', 'Friday', '10:00:00', '12:00:00', 'ICT New Lab', 'THEORY'),
-(12, 2, 'ENG2112', 'Friday', '13:00:00', '15:00:00', 'ICT Hardware Lab', 'THEORY');
+INSERT INTO timetable (department_id, course_code, day_of_week, start_time, end_time, venue, session_type) VALUES
+-- ==========================================================
+-- 1. ICT (L2-S1) TIMETABLE
+-- ==========================================================
+-- Monday
+(1, 'ICT2113', 'Monday', '09:00:00', '11:00:00', 'ICT Lab 11', 'THEORY'),
+(1, 'ICT2113', 'Monday', '11:00:00', '13:00:00', 'ICT Lab 11', 'PRACTICAL'),
+
+-- Tuesday
+(1, 'ICT2142', 'Tuesday', '09:00:00', '12:00:00', 'ICT New Lab', 'THEORY'),
+(1, 'ICT2152', 'Tuesday', '13:00:00', '15:00:00', 'ICT Lab 12', 'THEORY'),
+
+-- Wednesday
+(4, 'TCS2112', 'Wednesday', '08:00:00', '10:00:00', 'ICT ILT', 'THEORY'),
+(4, 'TCS2121', 'Wednesday', '10:00:00', '12:00:00', 'ICT Hardware Lab', 'PRACTICAL'),
+
+-- Thursday
+(1, 'ICT2122', 'Thursday', '09:00:00', '11:00:00', 'ICT Lab 11', 'THEORY'),
+(1, 'ICT2132', 'Thursday', '11:00:00', '13:00:00', 'ICT Lab 11', 'PRACTICAL'),
+(1, 'ICT2132', 'Thursday', '14:00:00', '16:00:00', 'ICT Lab 11', 'PRACTICAL'),
+
+-- Friday
+(4, 'TCS2112', 'Friday', '08:00:00', '10:00:00', 'ICT Hardware Lab', 'THEORY'),
+(1, 'ICT2162', 'Friday', '10:00:00', '12:00:00', 'ICT New Lab', 'THEORY'),
+(4, 'ENG2122', 'Friday', '13:00:00', '15:00:00', 'ICT Hardware Lab', 'THEORY'),
+
+-- ==========================================================
+-- 2. BST (Level II Semester I) TIMETABLE
+-- ==========================================================
+-- Monday
+(4, 'TCS21112', 'Monday', '08:00:00', '10:00:00', 'LH125', 'THEORY'),
+(4, 'TCS2112', 'Monday', '10:00:00', '12:00:00', 'LH125', 'THEORY'),
+(2, 'BST2132', 'Monday', '13:00:00', '15:00:00', 'Phase 02 Lab', 'PRACTICAL'),
+
+-- Tuesday
+(2, 'BST2112', 'Tuesday', '08:00:00', '10:00:00', 'P1 lab', 'PRACTICAL'),
+(2, 'BST2112', 'Tuesday', '10:00:00', '12:00:00', 'LLH', 'THEORY'),
+(4, 'TCS2121', 'Tuesday', '13:00:00', '14:00:00', 'LH125', 'THEORY'),
+(2, 'BST2112', 'Tuesday', '14:00:00', '16:00:00', 'P2 lab', 'PRACTICAL'),
+(4, 'TCS2212', 'Tuesday', '16:00:00', '17:00:00', 'LH125', 'THEORY'),
+
+-- Wednesday
+(4, 'TCS2222', 'Wednesday', '08:00:00', '10:00:00', 'LH125', 'THEORY'),
+(2, 'BST2112', 'Wednesday', '10:00:00', '12:00:00', 'LH125', 'THEORY'),
+(4, 'TCS4232', 'Wednesday', '14:00:00', '16:00:00', 'LLH', 'THEORY'),
+
+-- Thursday
+(2, 'BST2123', 'Thursday', '08:00:00', '10:00:00', 'LH125', 'THEORY'),
+(2, 'BST2132', 'Thursday', '10:00:00', '11:00:00', 'LH125', 'THEORY'),
+(2, 'BST2152', 'Thursday', '12:00:00', '13:00:00', 'LH125', 'THEORY'),
+(4, 'TCS2112', 'Thursday', '13:00:00', '14:00:00', 'LH125', 'THEORY'),
+(4, 'TCS1112', 'Thursday', '14:00:00', '16:00:00', 'LH125', 'PRACTICAL'),
+
+-- Friday
+(2, 'BST2142', 'Friday', '08:00:00', '10:00:00', 'LH125', 'THEORY'),
+(2, 'BST2123', 'Friday', '10:00:00', '12:00:00', 'Phase 1 lab', 'PRACTICAL'),
+(4, 'TCS22112', 'Friday', '13:00:00', '14:00:00', 'LH125', 'THEORY'),
+(2, 'BST2123', 'Friday', '14:00:00', '16:00:00', 'Phase 1 lab', 'PRACTICAL'),
+(4, 'TCS2212', 'Friday', '16:00:00', '17:00:00', 'LH125', 'THEORY'),
+
+-- ==========================================================
+-- 3. ENT (Level 2 Semester I) TIMETABLE
+-- ==========================================================
+-- Monday
+(3, 'ENT2143', 'Monday', '08:00:00', '11:00:00', 'Engineering Lab', 'PRACTICAL'),
+(4, 'TMS2112', 'Monday', '12:00:00', '14:00:00', '3301', 'THEORY'),
+(3, 'ENT2112', 'Monday', '14:00:00', '15:00:00', '3301', 'THEORY'),
+(3, 'ENT2162', 'Monday', '15:00:00', '18:00:00', 'Computer Lab', 'PRACTICAL'),
+
+-- Tuesday
+(3, 'ENT2143', 'Tuesday', '08:00:00', '11:00:00', 'Engineering Lab', 'PRACTICAL'),
+(3, 'ENT2152', 'Tuesday', '13:00:00', '15:00:00', 'Engineering Lab', 'PRACTICAL'),
+(3, 'ENT2162', 'Tuesday', '15:00:00', '17:00:00', '3301', 'THEORY'),
+(3, 'ENT2162', 'Tuesday', '17:00:00', '18:00:00', 'Computer Lab', 'PRACTICAL'),
+
+-- Wednesday
+(3, 'ENT2143', 'Wednesday', '08:00:00', '10:00:00', '3501', 'THEORY'),
+(3, 'ENT2143', 'Wednesday', '10:00:00', '11:00:00', 'Engineering Lab', 'PRACTICAL'),
+(3, 'ENT2112', 'Wednesday', '15:00:00', '17:00:00', 'Drawing Office', 'PRACTICAL'),
+
+-- Thursday
+(3, 'ENT2132', 'Thursday', '08:00:00', '10:00:00', '6001', 'THEORY'),
+(3, 'ENT2122', 'Thursday', '10:00:00', '11:00:00', '6001', 'THEORY'),
+(3, 'ENT2162', 'Thursday', '13:00:00', '15:00:00', 'Computer Lab', 'PRACTICAL'),
+(3, 'ENT2132', 'Thursday', '15:00:00', '18:00:00', 'Engineering Lab', 'PRACTICAL'),
+
+-- Friday
+(3, 'ENT2152', 'Friday', '08:00:00', '10:00:00', '3301', 'THEORY'),
+(4, 'TCS2112', 'Friday', '10:00:00', '11:00:00', '3301', 'THEORY'),
+(3, 'ENT2143', 'Friday', '13:00:00', '14:00:00', '6001', 'THEORY'),
+(4, 'TCS2112', 'Friday', '14:00:00', '15:00:00', '6001', 'THEORY');
 
 -- 10. Notices
 INSERT INTO notice (notice_id, title, content, target_audience, created_date, posted_by) VALUES
