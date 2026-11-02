@@ -88,6 +88,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private JComboBox<DepartmentItem> cmbUserDepartment;
     private JCheckBox chkUserActive;
     private JLabel lblUserAvatar;
+    private JPanel avatarCard;
     private List<Map<String, Object>> currentUsersList = new ArrayList<>();
     private int selectedUserId = -1;
 
@@ -369,6 +370,20 @@ public class AdminDashboardUI extends BaseDashboardUI {
         txtUserExtraId = UITheme.createTextField(10);
         txtUserBatch = UITheme.createTextField(10);
         cmbUserRole = UITheme.createComboBox(new String[]{"UNDERGRADUATE", "LECTURER", "TECH_OFFICER", "ADMIN"});
+        cmbUserRole.addActionListener(e -> {
+            String selectedRole = (String) cmbUserRole.getSelectedItem();
+            boolean isAdmin = "ADMIN".equalsIgnoreCase(selectedRole);
+            if (avatarCard != null) {
+                avatarCard.setVisible(!isAdmin);
+                if (avatarCard.getParent() != null) {
+                    avatarCard.getParent().revalidate();
+                    avatarCard.getParent().repaint();
+                }
+            }
+            if (!isAdmin && (lblUserAvatar.getIcon() == null || lblUserAvatar.getText().isEmpty())) {
+                renderDefaultAvatar(lblUserAvatar, selectedRole);
+            }
+        });
         cmbUserDepartment = new JComboBox<>();
         chkUserActive = new JCheckBox("Active Account", true);
         chkUserActive.setOpaque(false);
@@ -404,7 +419,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
         btnRow.add(btnClear);
 
         // Photo Preview Panel
-        JPanel avatarCard = new JPanel(new BorderLayout(0, 6));
+        avatarCard = new JPanel(new BorderLayout(0, 6));
         avatarCard.setOpaque(false);
         avatarCard.setPreferredSize(new Dimension(105, 125));
         avatarCard.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
@@ -1024,11 +1039,35 @@ public class AdminDashboardUI extends BaseDashboardUI {
         txtUserBatch.setText("");
         chkUserActive.setSelected(true);
         usersTable.clearSelection();
-        renderDefaultAvatar(lblUserAvatar, "USER");
+        cmbUserRole.setSelectedIndex(0);
+        if (avatarCard != null) {
+            avatarCard.setVisible(true);
+            if (avatarCard.getParent() != null) {
+                avatarCard.getParent().revalidate();
+                avatarCard.getParent().repaint();
+            }
+        }
+        renderDefaultAvatar(lblUserAvatar, "UNDERGRADUATE");
     }
 
     private void updateAvatarPreview(String picPath, String role) {
         if (lblUserAvatar == null) return;
+
+        // Admin does not have or need a profile picture
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(role);
+        if (avatarCard != null) {
+            avatarCard.setVisible(!isAdmin);
+            if (avatarCard.getParent() != null) {
+                avatarCard.getParent().revalidate();
+                avatarCard.getParent().repaint();
+            }
+        }
+        if (isAdmin) {
+            lblUserAvatar.setIcon(null);
+            lblUserAvatar.setText("");
+            return;
+        }
+
         if (picPath != null && !picPath.trim().isEmpty()) {
             File file = new File(picPath);
             if (file.exists() && file.isFile()) {
