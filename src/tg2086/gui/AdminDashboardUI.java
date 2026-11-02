@@ -88,6 +88,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private JComboBox<DepartmentItem> cmbUserDepartment;
     private JCheckBox chkUserActive;
     private JLabel lblUserAvatar;
+    private JPanel avatarCard;
     private List<Map<String, Object>> currentUsersList = new ArrayList<>();
     private int selectedUserId = -1;
 
@@ -288,18 +289,28 @@ public class AdminDashboardUI extends BaseDashboardUI {
         panel.add(metricsGrid, BorderLayout.NORTH);
 
         // System Overview Info Card
-        JPanel infoContent = new JPanel(new GridLayout(5, 1, 0, 8));
+        JPanel infoContent = new JPanel(new GridLayout(5, 1, 0, 10));
         infoContent.setOpaque(false);
-        infoContent.add(new JLabel("• System Architecture: MVC with Singleton Connection & Shared common base"));
-        infoContent.add(new JLabel("• Active Session: " + currentAdminUser.getFullName() + " (" + currentAdminUser.getRoleDisplayName() + ")"));
-        infoContent.add(new JLabel("• Multithreading Services: Notice Ticker (Thread) and Live Clock (Runnable) running smoothly"));
-        infoContent.add(new JLabel("• Security Policy: Automatic lock after 5 consecutive failed login attempts"));
-        infoContent.add(new JLabel("• Database: ftms_db running on MySQL localhost"));
+        infoContent.add(createSystemInfoLabel("System Architecture", "MVC with Singleton Connection & Shared common base"));
+        infoContent.add(createSystemInfoLabel("Active Session", currentAdminUser.getFullName() + " (" + currentAdminUser.getRoleDisplayName() + ")"));
+        infoContent.add(createSystemInfoLabel("Multithreading Services", "Notice Ticker (Thread) and Live Clock (Runnable) running smoothly"));
+        infoContent.add(createSystemInfoLabel("Security Policy", "Automatic lock after 5 consecutive failed login attempts"));
+        infoContent.add(createSystemInfoLabel("Database", "ftms_db running on MySQL localhost"));
 
         JPanel card = createSectionCard("System Status & Architecture Summary", infoContent);
         panel.add(card, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    private JLabel createSystemInfoLabel(String title, String description) {
+        String safeDesc = description != null ? description.replace("&", "&amp;") : "";
+        JLabel label = new JLabel(String.format(
+                "<html><span style='font-family:Segoe UI, sans-serif; font-size:14px; color:#1E293B;'>&bull;&nbsp;&nbsp;<b>%s:</b> <span style='color:#334155;'>%s</span></span></html>",
+                title, safeDesc
+        ));
+        label.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        return label;
     }
 
     private JPanel buildUsersPanel() {
@@ -359,6 +370,22 @@ public class AdminDashboardUI extends BaseDashboardUI {
         txtUserExtraId = UITheme.createTextField(10);
         txtUserBatch = UITheme.createTextField(10);
         cmbUserRole = UITheme.createComboBox(new String[]{"UNDERGRADUATE", "LECTURER", "TECH_OFFICER", "ADMIN"});
+        cmbUserRole.addActionListener(e -> {
+            String selectedRole = (String) cmbUserRole.getSelectedItem();
+            boolean isPhotoRole = "UNDERGRADUATE".equalsIgnoreCase(selectedRole)
+                    || "TECH_OFFICER".equalsIgnoreCase(selectedRole)
+                    || "TECHNICAL_OFFICER".equalsIgnoreCase(selectedRole);
+            if (avatarCard != null) {
+                avatarCard.setVisible(isPhotoRole);
+                if (avatarCard.getParent() != null) {
+                    avatarCard.getParent().revalidate();
+                    avatarCard.getParent().repaint();
+                }
+            }
+            if (isPhotoRole && (lblUserAvatar.getIcon() == null || lblUserAvatar.getText().isEmpty())) {
+                renderDefaultAvatar(lblUserAvatar, selectedRole);
+            }
+        });
         cmbUserDepartment = new JComboBox<>();
         chkUserActive = new JCheckBox("Active Account", true);
         chkUserActive.setOpaque(false);
@@ -394,7 +421,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
         btnRow.add(btnClear);
 
         // Photo Preview Panel
-        JPanel avatarCard = new JPanel(new BorderLayout(0, 6));
+        avatarCard = new JPanel(new BorderLayout(0, 6));
         avatarCard.setOpaque(false);
         avatarCard.setPreferredSize(new Dimension(105, 125));
         avatarCard.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
@@ -1014,11 +1041,39 @@ public class AdminDashboardUI extends BaseDashboardUI {
         txtUserBatch.setText("");
         chkUserActive.setSelected(true);
         usersTable.clearSelection();
-        renderDefaultAvatar(lblUserAvatar, "USER");
+        cmbUserRole.setSelectedIndex(0);
+        if (avatarCard != null) {
+            avatarCard.setVisible(true);
+            if (avatarCard.getParent() != null) {
+                avatarCard.getParent().revalidate();
+                avatarCard.getParent().repaint();
+            }
+        }
+        renderDefaultAvatar(lblUserAvatar, "UNDERGRADUATE");
     }
 
     private void updateAvatarPreview(String picPath, String role) {
         if (lblUserAvatar == null) return;
+
+        // Profile photos are only applicable for Undergraduates and Technical Officers in FTMS
+        boolean isPhotoRole = "UNDERGRADUATE".equalsIgnoreCase(role)
+                || "TECH_OFFICER".equalsIgnoreCase(role)
+                || "TECHNICAL_OFFICER".equalsIgnoreCase(role);
+
+        if (avatarCard != null) {
+            avatarCard.setVisible(isPhotoRole);
+            if (avatarCard.getParent() != null) {
+                avatarCard.getParent().revalidate();
+                avatarCard.getParent().repaint();
+            }
+        }
+
+        if (!isPhotoRole) {
+            lblUserAvatar.setIcon(null);
+            lblUserAvatar.setText("");
+            return;
+        }
+
         if (picPath != null && !picPath.trim().isEmpty()) {
             File file = new File(picPath);
             if (file.exists() && file.isFile()) {
@@ -1037,8 +1092,9 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private void renderDefaultAvatar(JLabel label, String role) {
         if (label == null) return;
         label.setIcon(null);
-        String displayRole = role != null ? role.replace('_', ' ') : "USER";
-        label.setText("<html><center><font color='#778899' size='2'><b>[ PHOTO ]</b><br>" + displayRole + "</font></center></html>");
+        String displayRole = "TECH_OFFICER".equalsIgnoreCase(role) || "TECHNICAL_OFFICER".equalsIgnoreCase(role)
+                ? "TECH OFFICER" : "STUDENT";
+        label.setText("<html><center><font color='#778899' size='2'><b>[ NO PHOTO ]</b><br>" + displayRole + "</font></center></html>");
     }
 
     // =========================================================================
