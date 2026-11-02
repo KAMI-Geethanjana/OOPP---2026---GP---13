@@ -107,6 +107,9 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private JComboBox<String> cmbTtSessionType;
     private JComboBox<String> cmbTtDayOfWeek;
     private int selectedTimetableId = -1;
+    private JComboBox<DepartmentItem> cmbFilterDept;
+    private JComboBox<DepartmentItem> cmbFilterCourseDept;
+    private boolean isUpdatingDeptFilter = false;
     private List<Timetable> currentTimetableList = new ArrayList<>();
 
     // Course Enrollment Components (TG2086)
@@ -494,21 +497,36 @@ public class AdminDashboardUI extends BaseDashboardUI {
         JPanel panel = new JPanel(new BorderLayout(0, 14));
         panel.setOpaque(false);
 
-        // Search Bar
-        JTextField txtSearch = UITheme.createTextField(20);
-        JButton btnSearch = UITheme.createButton("Search Courses", UITheme.PRIMARY_BLUE, Color.WHITE);
+        // Search and Department Filter Bar
+        cmbFilterCourseDept = new JComboBox<>();
+        cmbFilterCourseDept.setPreferredSize(new Dimension(240, 32));
+        cmbFilterCourseDept.addActionListener(e -> {
+            if (!isUpdatingDeptFilter && cmbFilterCourseDept.getSelectedIndex() >= 0) {
+                DepartmentItem item = (DepartmentItem) cmbFilterCourseDept.getSelectedItem();
+                loadCoursesData(item != null ? item.id : -1);
+            }
+        });
+
+        JTextField txtSearch = UITheme.createTextField(15);
+        JButton btnSearch = UITheme.createButton("Search", UITheme.PRIMARY_BLUE, Color.WHITE);
         JButton btnReset = UITheme.createButton("Reset", UITheme.NEUTRAL_GRAY, Color.WHITE);
         JButton btnExport = UITheme.createButton("Export CSV", UITheme.NEUTRAL_GRAY, Color.WHITE);
 
         btnSearch.addActionListener(e -> searchCoursesData(txtSearch.getText().trim()));
         btnReset.addActionListener(e -> {
             txtSearch.setText("");
-            loadCoursesData();
+            if (cmbFilterCourseDept != null && cmbFilterCourseDept.getItemCount() > 0) {
+                cmbFilterCourseDept.setSelectedIndex(0);
+            }
+            loadCoursesData(-1);
         });
         btnExport.addActionListener(e -> handleExportCSV(coursesTable, "Courses_Report.csv", "Curriculum Courses Directory"));
 
         JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         topBar.setOpaque(false);
+        topBar.add(new JLabel("Department:"));
+        topBar.add(cmbFilterCourseDept);
+        topBar.add(new JLabel("Search:"));
         topBar.add(txtSearch);
         topBar.add(btnSearch);
         topBar.add(btnReset);
@@ -804,11 +822,18 @@ public class AdminDashboardUI extends BaseDashboardUI {
         JPanel panel = new JPanel(new BorderLayout(0, 14));
         panel.setOpaque(false);
 
-        // Filter Bar
-        JComboBox<DepartmentItem> cmbFilterDept = new JComboBox<>();
+        // Filter Bar (Instant Dropdown Filter + Manual Button)
+        cmbFilterDept = new JComboBox<>();
+        cmbFilterDept.setPreferredSize(new Dimension(280, 32));
         JButton btnFilter = UITheme.createButton("Filter Department", UITheme.PRIMARY_BLUE, Color.WHITE);
         JButton btnExport = UITheme.createButton("Export CSV", UITheme.NEUTRAL_GRAY, Color.WHITE);
 
+        cmbFilterDept.addActionListener(e -> {
+            if (!isUpdatingDeptFilter && cmbFilterDept.getSelectedIndex() >= 0) {
+                DepartmentItem item = (DepartmentItem) cmbFilterDept.getSelectedItem();
+                loadTimetableData(item != null ? item.id : -1);
+            }
+        });
         btnFilter.addActionListener(e -> {
             DepartmentItem item = (DepartmentItem) cmbFilterDept.getSelectedItem();
             loadTimetableData(item != null ? item.id : -1);
@@ -886,17 +911,6 @@ public class AdminDashboardUI extends BaseDashboardUI {
         splitPane.setBorder(null);
         panel.add(splitPane, BorderLayout.CENTER);
 
-        // Load departments into filter combo
-        SwingUtilities.invokeLater(() -> {
-            try {
-                List<Department> depts = userDAO.getAllDepartments();
-                cmbFilterDept.addItem(new DepartmentItem(-1, "ALL Departments"));
-                for (Department d : depts) {
-                    cmbFilterDept.addItem(new DepartmentItem(d.getDepartmentId(), d.getDepartmentName()));
-                }
-            } catch (Exception ignored) {}
-        });
-
         return panel;
     }
 
@@ -929,11 +943,17 @@ public class AdminDashboardUI extends BaseDashboardUI {
 
     private void loadDepartments() {
         try {
+            isUpdatingDeptFilter = true;
             List<Department> depts = userDAO.getAllDepartments();
             cmbUserDepartment.removeAllItems();
             cmbCourseDepartment.removeAllItems();
             cmbTtDepartment.removeAllItems();
             if (cmbEnrollDept != null) cmbEnrollDept.removeAllItems();
+            if (cmbFilterDept != null) cmbFilterDept.removeAllItems();
+            if (cmbFilterCourseDept != null) cmbFilterCourseDept.removeAllItems();
+
+            if (cmbFilterDept != null) cmbFilterDept.addItem(new DepartmentItem(-1, "ALL Departments"));
+            if (cmbFilterCourseDept != null) cmbFilterCourseDept.addItem(new DepartmentItem(-1, "ALL Departments"));
 
             for (Department d : depts) {
                 DepartmentItem item = new DepartmentItem(d.getDepartmentId(), d.getDepartmentName());
@@ -941,9 +961,13 @@ public class AdminDashboardUI extends BaseDashboardUI {
                 cmbCourseDepartment.addItem(item);
                 cmbTtDepartment.addItem(item);
                 if (cmbEnrollDept != null) cmbEnrollDept.addItem(item);
+                if (cmbFilterDept != null) cmbFilterDept.addItem(item);
+                if (cmbFilterCourseDept != null) cmbFilterCourseDept.addItem(item);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
+        } finally {
+            isUpdatingDeptFilter = false;
         }
     }
 
@@ -990,9 +1014,18 @@ public class AdminDashboardUI extends BaseDashboardUI {
     }
 
     private void loadCoursesData() {
+        DepartmentItem item = cmbFilterCourseDept != null ? (DepartmentItem) cmbFilterCourseDept.getSelectedItem() : null;
+        loadCoursesData(item != null ? item.id : -1);
+    }
+
+    private void loadCoursesData(int deptId) {
         coursesTableModel.setRowCount(0);
         try {
-            currentCoursesList = courseDAO.getAllCourses();
+            if (deptId <= 0) {
+                currentCoursesList = courseDAO.getAllCourses();
+            } else {
+                currentCoursesList = courseDAO.getAllCourses(deptId);
+            }
             for (Course c : currentCoursesList) {
                 coursesTableModel.addRow(new Object[]{
                         c.getCourseCode(),
