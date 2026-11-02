@@ -305,10 +305,10 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private JLabel createSystemInfoLabel(String title, String description) {
         String safeDesc = description != null ? description.replace("&", "&amp;") : "";
         JLabel label = new JLabel(String.format(
-                "<html><span style='font-family:Segoe UI, sans-serif; font-size:16px; color:#1E293B;'>&bull;&nbsp;&nbsp;<b>%s:</b> <span style='color:#334155;'>%s</span></span></html>",
+                "<html><span style='font-family:Segoe UI, sans-serif; font-size:14px; color:#1E293B;'>&bull;&nbsp;&nbsp;<b>%s:</b> <span style='color:#334155;'>%s</span></span></html>",
                 title, safeDesc
         ));
-        label.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        label.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         return label;
     }
 
