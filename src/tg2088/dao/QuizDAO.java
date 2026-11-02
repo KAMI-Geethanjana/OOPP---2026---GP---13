@@ -111,10 +111,7 @@ public class QuizDAO implements IQuizDAO {
         }
     }
 
-    /**
-     * Creates a new quiz.
-     * Demonstrates JDBC Steps 1 to 5, PreparedStatement with Generated Keys.
-     */
+
     @Override
     public int createQuiz(Quiz quiz) throws QuizOperationException {
         if (quiz == null || quiz.getTitle() == null || quiz.getTitle().trim().isEmpty()) {
