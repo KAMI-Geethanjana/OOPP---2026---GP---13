@@ -25,6 +25,9 @@ import java.util.Map;
 final class ProfilePanel {
     private ProfilePanel() {}
 
+
+
+
     static JPanel createProfilePanel(UndergraduateDashboard d) {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new GridBagLayout());
@@ -33,79 +36,130 @@ final class ProfilePanel {
         gbc.insets = new Insets(8, 12, 8, 12);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JLabel lblTitle = new JLabel("My Student Profile (FR-AUTH-04)");
+        JLabel lblTitle = new JLabel("My  Profile ");
         lblTitle.setFont(UITheme.FONT_HEADER);
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
         card.add(lblTitle, gbc);
 
         gbc.gridwidth = 1;
 
-        gbc.gridx = 0; gbc.gridy = 1;
-        card.add(new JLabel("Registration No:"), gbc);
-        d.lblProfRegNo = new JLabel(d.student != null ? d.student.getRegNo() : "");
-        d.lblProfRegNo.setFont(UITheme.FONT_BODY_BOLD);
-        gbc.gridx = 1; gbc.gridy = 1;
-        card.add(d.lblProfRegNo, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 2;
-        card.add(new JLabel("Academic Department:"), gbc);
-        d.lblProfDept = new JLabel(d.student != null && d.student.getDepartmentName() != null ? d.student.getDepartmentName() : "DICT");
-        d.lblProfDept.setFont(UITheme.FONT_BODY_BOLD);
-        gbc.gridx = 1; gbc.gridy = 2;
-        card.add(d.lblProfDept, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 3;
-        card.add(new JLabel("Batch Year:"), gbc);
-        d.lblProfBatch = new JLabel(d.student != null ? String.valueOf(d.student.getBatchYear()) : "2024");
-        d.lblProfBatch.setFont(UITheme.FONT_BODY_BOLD);
-        gbc.gridx = 1; gbc.gridy = 3;
-        card.add(d.lblProfBatch, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 4;
-        card.add(new JLabel("Academic Status:"), gbc);
-        d.lblProfStatus = new JLabel(d.student != null ? d.student.getStatus() : "ACTIVE");
-        d.lblProfStatus.setFont(UITheme.FONT_BODY_BOLD);
-        gbc.gridx = 1; gbc.gridy = 4;
-        card.add(d.lblProfStatus, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 5;
-        card.add(new JLabel("Contact Number:"), gbc);
-        d.txtProfPhone = UITheme.createTextField(25);
-        gbc.gridx = 1; gbc.gridy = 5;
-        card.add(d.txtProfPhone, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 6;
-        card.add(new JLabel("Email Address:"), gbc);
-        d.txtProfEmail = UITheme.createTextField(25);
-        gbc.gridx = 1; gbc.gridy = 6;
-        card.add(d.txtProfEmail, gbc);
-
-        d.lblProfilePicture = new JLabel("No profile photo selected", SwingConstants.CENTER);
+        // Profile Picture - moved to the top
+        d.lblProfilePicture = new JLabel(
+                "No profile photo selected", SwingConstants.CENTER);
         d.lblProfilePicture.setPreferredSize(new Dimension(160, 160));
         d.lblProfilePicture.setMinimumSize(new Dimension(160, 160));
-        d.lblProfilePicture.setBorder(BorderFactory.createLineBorder(new Color(210, 215, 225)));
-        gbc.gridx = 0; gbc.gridy = 7;
+        d.lblProfilePicture.setBorder(
+                BorderFactory.createLineBorder(new Color(210, 215, 225)));
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         card.add(new JLabel("Profile Picture:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 7;
+
+        gbc.gridx = 1;
+        gbc.gridy = 1;
         card.add(d.lblProfilePicture, gbc);
 
-        JButton btnPicture = UITheme.createButton("Choose Profile Picture", UITheme.PRIMARY_BLUE, Color.WHITE);
+        JButton btnPicture = UITheme.createButton(
+                "Choose Profile Picture", UITheme.PRIMARY_BLUE, Color.WHITE);
         btnPicture.addActionListener(e -> d.handleProfilePicture());
-        gbc.gridx = 1; gbc.gridy = 8;
+
+        gbc.gridx = 1;
+        gbc.gridy = 2;
         card.add(btnPicture, gbc);
 
-        JButton btnRemove = UITheme.createButton("Remove Profile Picture", new Color(185, 48, 48), Color.WHITE);
+        JButton btnRemove = UITheme.createButton(
+                "Remove Profile Picture", new Color(185, 48, 48), Color.WHITE);
         btnRemove.addActionListener(e -> removeProfilePicture(d));
-        gbc.gridx = 1; gbc.gridy = 9;
+
+        gbc.gridx = 1;
+        gbc.gridy = 3;
         card.add(btnRemove, gbc);
 
-        JButton btnUpdate = UITheme.createButton("Update Contact Details", UITheme.PRIMARY_BLUE, Color.WHITE);
+        // Student Details
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        card.add(new JLabel("Registration No:"), gbc);
+
+        d.lblProfRegNo = new JLabel(
+                d.student != null ? d.student.getRegNo() : "");
+        d.lblProfRegNo.setFont(UITheme.FONT_BODY_BOLD);
+
+        gbc.gridx = 1;
+        gbc.gridy = 4;
+        card.add(d.lblProfRegNo, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        card.add(new JLabel("Academic Department:"), gbc);
+
+        d.lblProfDept = new JLabel(
+                d.student != null && d.student.getDepartmentName() != null
+                        ? d.student.getDepartmentName() : "DICT");
+        d.lblProfDept.setFont(UITheme.FONT_BODY_BOLD);
+
+        gbc.gridx = 1;
+        gbc.gridy = 5;
+        card.add(d.lblProfDept, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        card.add(new JLabel("Batch Year:"), gbc);
+
+        d.lblProfBatch = new JLabel(
+                d.student != null ? String.valueOf(d.student.getBatchYear()) : "2024");
+        d.lblProfBatch.setFont(UITheme.FONT_BODY_BOLD);
+
+        gbc.gridx = 1;
+        gbc.gridy = 6;
+        card.add(d.lblProfBatch, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        card.add(new JLabel("Academic Status:"), gbc);
+
+        d.lblProfStatus = new JLabel(
+                d.student != null ? d.student.getStatus() : "ACTIVE");
+        d.lblProfStatus.setFont(UITheme.FONT_BODY_BOLD);
+
+        gbc.gridx = 1;
+        gbc.gridy = 7;
+        card.add(d.lblProfStatus, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 8;
+        card.add(new JLabel("Contact Number:"), gbc);
+
+        d.txtProfPhone = UITheme.createTextField(25);
+
+        gbc.gridx = 1;
+        gbc.gridy = 8;
+        card.add(d.txtProfPhone, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 9;
+        card.add(new JLabel("Email Address:"), gbc);
+
+        d.txtProfEmail = UITheme.createTextField(25);
+
+        gbc.gridx = 1;
+        gbc.gridy = 9;
+        card.add(d.txtProfEmail, gbc);
+
+        JButton btnUpdate = UITheme.createButton(
+                "Update Contact Details", UITheme.PRIMARY_BLUE, Color.WHITE);
         btnUpdate.addActionListener(e -> d.handleUpdateProfile());
-        gbc.gridx = 1; gbc.gridy = 10;
+
+        gbc.gridx = 1;
+        gbc.gridy = 10;
         card.add(btnUpdate, gbc);
 
         return card;
     }
+
+
+
 
     static void loadProfileData(UndergraduateDashboard d) {
         if (d.student != null) {
