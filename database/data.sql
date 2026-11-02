@@ -157,8 +157,8 @@ INSERT INTO timetable (department_id, course_code, day_of_week, start_time, end_
 (1, 'ICT2152', 'Tuesday', '13:00:00', '15:00:00', 'ICT Lab 12', 'THEORY'),
 
 -- Wednesday
-(4, 'TCS2112', 'Wednesday', '08:00:00', '10:00:00', 'ICT ILT', 'THEORY'),
-(4, 'TCS2121', 'Wednesday', '10:00:00', '12:00:00', 'ICT Hardware Lab', 'PRACTICAL'),
+(1, 'TCS2112', 'Wednesday', '08:00:00', '10:00:00', 'ICT ILT', 'THEORY'),
+(1, 'TCS2121', 'Wednesday', '10:00:00', '12:00:00', 'ICT Hardware Lab', 'PRACTICAL'),
 
 -- Thursday
 (1, 'ICT2122', 'Thursday', '09:00:00', '11:00:00', 'ICT Lab 11', 'THEORY'),
@@ -166,9 +166,9 @@ INSERT INTO timetable (department_id, course_code, day_of_week, start_time, end_
 (1, 'ICT2132', 'Thursday', '14:00:00', '16:00:00', 'ICT Lab 11', 'PRACTICAL'),
 
 -- Friday
-(4, 'TCS2112', 'Friday', '08:00:00', '10:00:00', 'ICT Hardware Lab', 'THEORY'),
+(1, 'TCS2112', 'Friday', '08:00:00', '10:00:00', 'ICT Hardware Lab', 'THEORY'),
 (1, 'ICT2162', 'Friday', '10:00:00', '12:00:00', 'ICT New Lab', 'THEORY'),
-(4, 'ENG2122', 'Friday', '13:00:00', '15:00:00', 'ICT Hardware Lab', 'THEORY'),
+(1, 'ENG2122', 'Friday', '13:00:00', '15:00:00', 'ICT Hardware Lab', 'THEORY'),
 
 -- ==========================================================
 -- 2. BST (Level II Semester I) TIMETABLE
@@ -176,32 +176,32 @@ INSERT INTO timetable (department_id, course_code, day_of_week, start_time, end_
 -- Monday
 (4, 'TCS21112', 'Monday', '08:00:00', '10:00:00', 'LH125', 'THEORY'),
 (4, 'TCS2112', 'Monday', '10:00:00', '12:00:00', 'LH125', 'THEORY'),
-(2, 'BST2132', 'Monday', '13:00:00', '15:00:00', 'Phase 02 Lab', 'PRACTICAL'),
+(4, 'BST2132', 'Monday', '13:00:00', '15:00:00', 'Phase 02 Lab', 'PRACTICAL'),
 
 -- Tuesday
-(2, 'BST2112', 'Tuesday', '08:00:00', '10:00:00', 'P1 lab', 'PRACTICAL'),
-(2, 'BST2112', 'Tuesday', '10:00:00', '12:00:00', 'LLH', 'THEORY'),
+(4, 'BST2112', 'Tuesday', '08:00:00', '10:00:00', 'P1 lab', 'PRACTICAL'),
+(4, 'BST2112', 'Tuesday', '10:00:00', '12:00:00', 'LLH', 'THEORY'),
 (4, 'TCS2121', 'Tuesday', '13:00:00', '14:00:00', 'LH125', 'THEORY'),
-(2, 'BST2112', 'Tuesday', '14:00:00', '16:00:00', 'P2 lab', 'PRACTICAL'),
+(4, 'BST2112', 'Tuesday', '14:00:00', '16:00:00', 'P2 lab', 'PRACTICAL'),
 (4, 'TCS2212', 'Tuesday', '16:00:00', '17:00:00', 'LH125', 'THEORY'),
 
 -- Wednesday
 (4, 'TCS2222', 'Wednesday', '08:00:00', '10:00:00', 'LH125', 'THEORY'),
-(2, 'BST2112', 'Wednesday', '10:00:00', '12:00:00', 'LH125', 'THEORY'),
+(4, 'BST2112', 'Wednesday', '10:00:00', '12:00:00', 'LH125', 'THEORY'),
 (4, 'TCS4232', 'Wednesday', '14:00:00', '16:00:00', 'LLH', 'THEORY'),
 
 -- Thursday
-(2, 'BST2123', 'Thursday', '08:00:00', '10:00:00', 'LH125', 'THEORY'),
-(2, 'BST2132', 'Thursday', '10:00:00', '11:00:00', 'LH125', 'THEORY'),
-(2, 'BST2152', 'Thursday', '12:00:00', '13:00:00', 'LH125', 'THEORY'),
+(4, 'BST2123', 'Thursday', '08:00:00', '10:00:00', 'LH125', 'THEORY'),
+(4, 'BST2132', 'Thursday', '10:00:00', '11:00:00', 'LH125', 'THEORY'),
+(4, 'BST2152', 'Thursday', '12:00:00', '13:00:00', 'LH125', 'THEORY'),
 (4, 'TCS2112', 'Thursday', '13:00:00', '14:00:00', 'LH125', 'THEORY'),
 (4, 'TCS1112', 'Thursday', '14:00:00', '16:00:00', 'LH125', 'PRACTICAL'),
 
 -- Friday
-(2, 'BST2142', 'Friday', '08:00:00', '10:00:00', 'LH125', 'THEORY'),
-(2, 'BST2123', 'Friday', '10:00:00', '12:00:00', 'Phase 1 lab', 'PRACTICAL'),
+(4, 'BST2142', 'Friday', '08:00:00', '10:00:00', 'LH125', 'THEORY'),
+(4, 'BST2123', 'Friday', '10:00:00', '12:00:00', 'Phase 1 lab', 'PRACTICAL'),
 (4, 'TCS22112', 'Friday', '13:00:00', '14:00:00', 'LH125', 'THEORY'),
-(2, 'BST2123', 'Friday', '14:00:00', '16:00:00', 'Phase 1 lab', 'PRACTICAL'),
+(4, 'BST2123', 'Friday', '14:00:00', '16:00:00', 'Phase 1 lab', 'PRACTICAL'),
 (4, 'TCS2212', 'Friday', '16:00:00', '17:00:00', 'LH125', 'THEORY'),
 
 -- ==========================================================
@@ -209,7 +209,7 @@ INSERT INTO timetable (department_id, course_code, day_of_week, start_time, end_
 -- ==========================================================
 -- Monday
 (3, 'ENT2143', 'Monday', '08:00:00', '11:00:00', 'Engineering Lab', 'PRACTICAL'),
-(4, 'TMS2112', 'Monday', '12:00:00', '14:00:00', '3301', 'THEORY'),
+(3, 'TMS2112', 'Monday', '12:00:00', '14:00:00', '3301', 'THEORY'),
 (3, 'ENT2112', 'Monday', '14:00:00', '15:00:00', '3301', 'THEORY'),
 (3, 'ENT2162', 'Monday', '15:00:00', '18:00:00', 'Computer Lab', 'PRACTICAL'),
 
@@ -232,9 +232,9 @@ INSERT INTO timetable (department_id, course_code, day_of_week, start_time, end_
 
 -- Friday
 (3, 'ENT2152', 'Friday', '08:00:00', '10:00:00', '3301', 'THEORY'),
-(4, 'TCS2112', 'Friday', '10:00:00', '11:00:00', '3301', 'THEORY'),
+(3, 'TCS2112', 'Friday', '10:00:00', '11:00:00', '3301', 'THEORY'),
 (3, 'ENT2143', 'Friday', '13:00:00', '14:00:00', '6001', 'THEORY'),
-(4, 'TCS2112', 'Friday', '14:00:00', '15:00:00', '6001', 'THEORY');
+(3, 'TCS2112', 'Friday', '14:00:00', '15:00:00', '6001', 'THEORY');
 
 -- 10. Notices
 INSERT INTO notice (notice_id, title, content, target_audience, created_date, posted_by) VALUES

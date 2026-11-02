@@ -107,6 +107,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private JComboBox<String> cmbTtSessionType;
     private JComboBox<String> cmbTtDayOfWeek;
     private int selectedTimetableId = -1;
+    private List<Timetable> currentTimetableList = new ArrayList<>();
 
     // Course Enrollment Components (TG2086)
     private JComboBox<DepartmentItem> cmbEnrollDept;
@@ -1051,8 +1052,8 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private void loadTimetableData(int deptId) {
         timetablesTableModel.setRowCount(0);
         try {
-            List<Timetable> list = timetableDAO.getAllTimetables(deptId);
-            for (Timetable t : list) {
+            currentTimetableList = timetableDAO.getAllTimetables(deptId);
+            for (Timetable t : currentTimetableList) {
                 timetablesTableModel.addRow(new Object[]{
                         t.getTimetableId(),
                         t.getCourseCode(),
@@ -1776,13 +1777,34 @@ public class AdminDashboardUI extends BaseDashboardUI {
     // =========================================================================
 
     private void populateTimetableForm(int row) {
-        selectedTimetableId = (int) timetablesTableModel.getValueAt(row, 0);
-        txtTtCourseCode.setText((String) timetablesTableModel.getValueAt(row, 1));
-        cmbTtSessionType.setSelectedItem(timetablesTableModel.getValueAt(row, 4));
-        cmbTtDayOfWeek.setSelectedItem(timetablesTableModel.getValueAt(row, 5));
-        txtTtStartTime.setText(String.valueOf(timetablesTableModel.getValueAt(row, 6)));
-        txtTtEndTime.setText(String.valueOf(timetablesTableModel.getValueAt(row, 7)));
-        txtTtVenue.setText((String) timetablesTableModel.getValueAt(row, 8));
+        if (row < 0) return;
+        int modelRow = timetablesTable.convertRowIndexToModel(row);
+        if (modelRow < 0 || modelRow >= timetablesTableModel.getRowCount()) return;
+
+        selectedTimetableId = (int) timetablesTableModel.getValueAt(modelRow, 0);
+        txtTtCourseCode.setText((String) timetablesTableModel.getValueAt(modelRow, 1));
+
+        // Auto-select Department
+        int deptId = -1;
+        if (modelRow < currentTimetableList.size()) {
+            deptId = currentTimetableList.get(modelRow).getDepartmentId();
+        }
+        String deptName = (String) timetablesTableModel.getValueAt(modelRow, 3);
+        if (cmbTtDepartment != null) {
+            for (int i = 0; i < cmbTtDepartment.getItemCount(); i++) {
+                DepartmentItem item = cmbTtDepartment.getItemAt(i);
+                if (item != null && (item.id == deptId || (deptName != null && deptName.equalsIgnoreCase(item.name)))) {
+                    cmbTtDepartment.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+
+        cmbTtSessionType.setSelectedItem(timetablesTableModel.getValueAt(modelRow, 4));
+        cmbTtDayOfWeek.setSelectedItem(timetablesTableModel.getValueAt(modelRow, 5));
+        txtTtStartTime.setText(String.valueOf(timetablesTableModel.getValueAt(modelRow, 6)));
+        txtTtEndTime.setText(String.valueOf(timetablesTableModel.getValueAt(modelRow, 7)));
+        txtTtVenue.setText((String) timetablesTableModel.getValueAt(modelRow, 8));
     }
 
     private void handleAddTimetable() {
@@ -1868,6 +1890,9 @@ public class AdminDashboardUI extends BaseDashboardUI {
         txtTtStartTime.setText("");
         txtTtEndTime.setText("");
         txtTtVenue.setText("");
+        if (cmbTtDepartment != null && cmbTtDepartment.getItemCount() > 0) {
+            cmbTtDepartment.setSelectedIndex(0);
+        }
         timetablesTable.clearSelection();
     }
 
