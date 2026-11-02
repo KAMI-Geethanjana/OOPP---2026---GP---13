@@ -322,6 +322,7 @@ public class LecturerDashboard extends JFrame {
         JButton[] buttons = {btnNavMarks, btnNavEligibility, btnNavMaterials, btnNavQuizzes, btnNavAttendance, btnNavNotices, btnNavProfile};
         for (JButton b : buttons) {
             boolean isActive = (b == activeBtn);
+            b.setSelected(isActive);
             b.setFont(new Font("Segoe UI", isActive ? Font.BOLD : Font.PLAIN, 14));
             b.setForeground(isActive ? UITheme.SIDEBAR_TEXT_ACTIVE : UITheme.SIDEBAR_TEXT);
             b.repaint();

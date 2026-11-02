@@ -1,8 +1,6 @@
+
 package common.model;
 
-/**
- * Course entity representing academic courses.
- */
 public class Course {
     private String courseCode;
     private String courseTitle;
@@ -15,7 +13,10 @@ public class Course {
 
     public Course() {}
 
-    public Course(String courseCode, String courseTitle, int creditTheory, int creditPractical, int departmentId, Integer lecturerId) {
+    // Existing constructor - retained for compatibility
+    public Course(String courseCode, String courseTitle,
+                  int creditTheory, int creditPractical,
+                  int departmentId, Integer lecturerId) {
         this.courseCode = courseCode;
         this.courseTitle = courseTitle;
         this.creditTheory = creditTheory;
@@ -24,10 +25,18 @@ public class Course {
         this.lecturerId = lecturerId;
     }
 
-    public Course(String courseCode, String courseTitle, int creditTheory, int creditPractical,
-                  int departmentId, String departmentName, Integer lecturerId, String lecturerName) {
-        this(courseCode, courseTitle, creditTheory, creditPractical, departmentId, lecturerId);
+    // New constructor for the Admin module
+    public Course(String courseCode, String courseTitle,
+                  int creditTheory, int creditPractical,
+                  int departmentId, String departmentName,
+                  Integer lecturerId, String lecturerName) {
+        this.courseCode = courseCode;
+        this.courseTitle = courseTitle;
+        this.creditTheory = creditTheory;
+        this.creditPractical = creditPractical;
+        this.departmentId = departmentId;
         this.departmentName = departmentName;
+        this.lecturerId = lecturerId;
         this.lecturerName = lecturerName;
     }
 

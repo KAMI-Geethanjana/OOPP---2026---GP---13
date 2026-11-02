@@ -3,6 +3,7 @@ package common.auth;
 import common.config.DBConnection;
 import common.exception.AccountLockedException;
 import common.model.User;
+import tg2123.dao.TechnicalOfficerDAO;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -82,7 +83,7 @@ public class AuthDAO {
             case "LECTURER":
                 return loadRoleUser("tg2088.dao.LecturerDAO", "getLecturerByUserId", userId);
             case "TECH_OFFICER":
-                return loadRoleUser("tg2123.dao.TechnicalOfficerDAO", "getTechnicalOfficerByUserId", userId);
+                return new TechnicalOfficerDAO().getTechnicalOfficerByUserId(userId);
             case "UNDERGRADUATE":
                 return loadRoleUser("tg2082.dao.UndergraduateDAO", "getUndergraduateByUserId", userId);
             default:

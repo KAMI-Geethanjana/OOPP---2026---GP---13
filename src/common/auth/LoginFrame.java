@@ -10,7 +10,10 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * LoginFrame - Central Authentication Portal for FTMS.
@@ -84,9 +87,7 @@ public class LoginFrame extends JFrame {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBorder(new EmptyBorder(30, 40, 30, 40));
 
-        // Faculty Crest / University Logo
-        JLabel lblLogo = createLogoLabel();
-        card.add(lblLogo);
+        card.add(createLogoLabel());
 
         card.add(Box.createVerticalStrut(12));
 
@@ -158,6 +159,51 @@ public class LoginFrame extends JFrame {
         getRootPane().setDefaultButton(btnLogin);
     }
 
+    private JLabel createLogoLabel() {
+        BufferedImage logo = null;
+        URL logoResource = getClass().getResource("/logo.jpg");
+        if (logoResource == null) {
+            logoResource = getClass().getResource("/resources/logo.jpg");
+        }
+
+        if (logoResource != null) {
+            try {
+                logo = ImageIO.read(logoResource);
+            } catch (IOException ex) {
+                System.err.println("Could not read login logo from " + logoResource + ": " + ex.getMessage());
+            }
+        }
+
+        Path logoPath = Path.of("resources", "logo.jpg");
+        if (logo == null && Files.isRegularFile(logoPath)) {
+            try {
+                logo = ImageIO.read(logoPath.toFile());
+            } catch (IOException ex) {
+                System.err.println("Could not read login logo from " + logoPath.toAbsolutePath() + ": " + ex.getMessage());
+            }
+        }
+
+        JLabel label = new JLabel();
+        label.setPreferredSize(new Dimension(80, 80));
+        label.setMaximumSize(new Dimension(80, 80));
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        if (logo != null) {
+            Image scaledLogo = logo.getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+            label.setIcon(new ImageIcon(scaledLogo));
+        } else {
+            System.err.println("Login logo not found. Expected /logo.jpg or " + logoPath.toAbsolutePath());
+            label.setText("FoT");
+            label.setFont(new Font("Segoe UI", Font.BOLD, 18));
+            label.setForeground(Color.WHITE);
+            label.setOpaque(true);
+            label.setBackground(new Color(30, 58, 138));
+            label.setHorizontalAlignment(SwingConstants.CENTER);
+        }
+
+        return label;
+    }
+
     private void handleLogin() {
         String username = txtUsername.getText().trim();
         String password = new String(txtPassword.getPassword()).trim();
@@ -186,66 +232,5 @@ public class LoginFrame extends JFrame {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Database Connection Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    private JLabel createLogoLabel() {
-        int logoSize = 82;
-        BufferedImage logoImg = null;
-
-        String[] paths = {
-                "resources/logo.jpg",
-                "resources/logo.png"
-        };
-
-        for (String path : paths) {
-            File f = new File(path);
-            if (f.exists()) {
-                try {
-                    logoImg = ImageIO.read(f);
-                    if (logoImg != null) break;
-                } catch (Exception ignored) {}
-            }
-        }
-
-        if (logoImg == null) {
-            try {
-                java.net.URL res = getClass().getResource("/resources/logo.jpg");
-                if (res != null) {
-                    logoImg = ImageIO.read(res);
-                }
-            } catch (Exception ignored) {}
-        }
-
-        if (logoImg != null) {
-            Image scaled = logoImg.getScaledInstance(logoSize, logoSize, Image.SCALE_SMOOTH);
-            JLabel label = new JLabel(new ImageIcon(scaled));
-            label.setAlignmentX(Component.CENTER_ALIGNMENT);
-            return label;
-        }
-
-        // Elegant Dynamic Vector Emblem Fallback
-        JLabel fallback = new JLabel(new Icon() {
-            @Override
-            public void paintIcon(Component c, Graphics g, int x, int y) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(30, 58, 138));
-                g2.fillOval(x + 10, y, 60, 60);
-                g2.setColor(new Color(239, 68, 68));
-                g2.drawOval(x + 14, y + 4, 52, 52);
-                g2.setColor(Color.WHITE);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 18));
-                g2.drawString("FoT", x + 25, y + 36);
-                g2.dispose();
-            }
-
-            @Override
-            public int getIconWidth() { return 80; }
-
-            @Override
-            public int getIconHeight() { return 65; }
-        });
-        fallback.setAlignmentX(Component.CENTER_ALIGNMENT);
-        return fallback;
     }
 }
