@@ -17,10 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Data Access Object for the Technical Officer module.
- * Keeps SQL/database code separate from the Swing user interface.
- */
+
 public class TechnicalOfficerDAO implements TechnicalOfficerRepository {
 
     public TechnicalOfficer getTechnicalOfficerByUserId(int userId) {
@@ -79,7 +76,7 @@ public class TechnicalOfficerDAO implements TechnicalOfficerRepository {
         return courses;
     }
 
-    /** Loads students enrolled in a course belonging to this officer's department. */
+    //Loads students enrolled in a course belonging to this officer's department.
     public List<Map<String, Object>> getStudentsForAttendance(String courseCode, Date sessionDate,
                                                               String sessionType, int departmentId) {
         List<Map<String, Object>> students = new ArrayList<>();
@@ -118,10 +115,9 @@ public class TechnicalOfficerDAO implements TechnicalOfficerRepository {
         return students;
     }
 
-    /**
-     * Inserts or updates one attendance record. The SQL verifies that the officer and
-     * course belong to the same department and that the student is enrolled in the course.
-     */
+    //Inserts or updates one attendance record. The SQL verifies that the officer and
+    // course belong to the same department and that the student is enrolled in the course.
+
     public boolean saveAttendance(int studentId, String courseCode, Date sessionDate,
                                   String sessionType, String status, int toId) {
         if (studentId <= 0 || toId <= 0 || courseCode == null || sessionDate == null
@@ -153,7 +149,6 @@ public class TechnicalOfficerDAO implements TechnicalOfficerRepository {
         }
     }
 
-    /** Returns medical requests only for courses in the officer's own department. */
     public List<Medical> getMedicalRequestsByDepartment(int departmentId) {
         List<Medical> medicals = new ArrayList<>();
         String sql = "SELECT m.*, ug.reg_no, u.full_name FROM medical m " +
@@ -182,7 +177,6 @@ public class TechnicalOfficerDAO implements TechnicalOfficerRepository {
         return medicals;
     }
 
-    /** Changes only a pending request belonging to this officer's department. */
     public boolean updateMedicalStatus(int medicalId, String newStatus, int toId, int departmentId) {
         if (medicalId <= 0 || toId <= 0 || !isMedicalStatus(newStatus)) return false;
         String sql = "UPDATE medical m JOIN course c ON c.course_code = m.course_code " +
@@ -226,7 +220,6 @@ public class TechnicalOfficerDAO implements TechnicalOfficerRepository {
         return timetable;
     }
 
-    /** Updates permitted profile fields only; username and password are not changed here. */
     public boolean updateProfile(int userId, String fullName, String email, String phoneNo) {
         if (userId <= 0 || fullName == null || fullName.trim().isEmpty()) return false;
         String sql = "UPDATE users SET full_name = ?, email = ?, phone_no = ? " +

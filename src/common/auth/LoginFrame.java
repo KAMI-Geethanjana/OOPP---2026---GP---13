@@ -146,11 +146,11 @@ public class LoginFrame extends JFrame {
         card.add(Box.createVerticalStrut(15));
 
         // Quick Demo Accounts Hint
-        JLabel lblDemo = new JLabel("<html><center><font color='#94A3B8' size='2'>Demo Accounts (PW: 1234)<br>" +
+       /* JLabel lblDemo = new JLabel("<html><center><font color='#94A3B8' size='2'>Demo Accounts (PW: 1234)<br>" +
                 "Admin: <b>admin</b> | Lecturer: <b>wosada</b><br>" +
                 "TO: <b>to_weera</b> | Student: <b>tg2088</b> / <b>tg2082</b></font></center></html>", SwingConstants.CENTER);
         lblDemo.setAlignmentX(Component.CENTER_ALIGNMENT);
-        card.add(lblDemo);
+        card.add(lblDemo);*/
 
         bgPanel.add(card);
         add(bgPanel);

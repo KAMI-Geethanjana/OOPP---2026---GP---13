@@ -102,12 +102,21 @@ public class LecturerDashboard extends JFrame {
     private JTable tblNotices;
     private DefaultTableModel noticesTableModel;
 
-    // Profile Components
+    // Profile Components (Enhanced to match Image 2)
     private JTextField txtProfFullName;
+    private JTextField txtProfFirstName;
+    private JTextField txtProfLastName;
     private JTextField txtProfEmail;
     private JTextField txtProfPhone;
+    private JTextField txtProfNic;
+    private JTextField txtProfDob;
+    private JTextField txtProfStreet;
+    private JTextField txtProfCity;
+    private JTextField txtProfPostal;
+    private JTextField txtProfCountry;
     private JLabel lblProfUsername;
     private JLabel lblProfEmpId;
+    private JLabel lblProfileAvatar;
 
     /**
      * Parameterized Constructor (Lesson 02, Slide 38)
@@ -133,8 +142,9 @@ public class LecturerDashboard extends JFrame {
 
     private void initUI() {
         setTitle("Faculty of Technology Management System - Lecturer Portal (" + (lecturer != null ? lecturer.getFullName() : "") + ")");
-        setSize(1200, 740);
+        setSize(1280, 760);
         setMinimumSize(new Dimension(1000, 620));
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         getContentPane().setBackground(UITheme.CONTENT_BG);
@@ -336,35 +346,29 @@ public class LecturerDashboard extends JFrame {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
 
-        // Top Toolbar
-        JPanel topToolbar = new JPanel(new BorderLayout());
+        // Top Toolbar (Structured in 2 clean rows to prevent overlapping on any resolution)
+        JPanel topToolbar = new JPanel();
+        topToolbar.setLayout(new BoxLayout(topToolbar, BoxLayout.Y_AXIS));
         topToolbar.setOpaque(false);
 
-        JPanel leftFilters = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        leftFilters.setOpaque(false);
-
+        // Row 1: Section Title
         JLabel lblTitle = new JLabel("Undergraduate Marks Management (UGC 12-2024)");
         lblTitle.setFont(UITheme.FONT_HEADER);
         lblTitle.setForeground(UITheme.TEXT_DARK);
+        lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Row 2: Controls Toolbar using FlowLayout so controls NEVER overlap on ANY resolution
+        JPanel controlRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        controlRow.setOpaque(false);
+        controlRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel lblCourse = new JLabel("Select Course:");
         lblCourse.setFont(UITheme.FONT_BODY_BOLD);
 
         cbMarksCourse = new JComboBox<>();
         cbMarksCourse.setFont(UITheme.FONT_BODY);
-        cbMarksCourse.setPreferredSize(new Dimension(160, 34));
+        cbMarksCourse.setPreferredSize(new Dimension(150, 34));
         cbMarksCourse.addActionListener(e -> loadMarksData());
-
-        leftFilters.add(lblTitle);
-        leftFilters.add(Box.createHorizontalStrut(15));
-        leftFilters.add(lblCourse);
-        leftFilters.add(cbMarksCourse);
-
-        topToolbar.add(leftFilters, BorderLayout.WEST);
-
-        // Action Buttons
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        actionPanel.setOpaque(false);
 
         JButton btnCalc = UITheme.createButton("Calculate Grades", UITheme.PRIMARY_BLUE, Color.WHITE);
         btnCalc.addActionListener(e -> calculateMarksOnTable());
@@ -377,10 +381,16 @@ public class LecturerDashboard extends JFrame {
         btnExport.setToolTipText("Export marks to a character stream text report (Lesson 06)");
         btnExport.addActionListener(e -> handleExportMarksReport());
 
-        actionPanel.add(btnCalc);
-        actionPanel.add(btnSave);
-        actionPanel.add(btnExport);
-        topToolbar.add(actionPanel, BorderLayout.EAST);
+        controlRow.add(lblCourse);
+        controlRow.add(cbMarksCourse);
+        controlRow.add(Box.createHorizontalStrut(15));
+        controlRow.add(btnCalc);
+        controlRow.add(btnSave);
+        controlRow.add(btnExport);
+
+        topToolbar.add(lblTitle);
+        topToolbar.add(Box.createVerticalStrut(10));
+        topToolbar.add(controlRow);
 
         card.add(topToolbar, BorderLayout.NORTH);
 
@@ -682,61 +692,212 @@ public class LecturerDashboard extends JFrame {
     }
 
     // ========================================================================
-    // 6. PROFILE PANEL
+    // 6. ENHANCED PROFILE PANEL (Matches Image 2 - Avatar, Account, Personal & Address)
     // ========================================================================
     private JPanel createProfilePanel() {
         JPanel card = UITheme.createCardPanel();
-        card.setLayout(new GridBagLayout());
+        card.setLayout(new BorderLayout());
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 12, 8, 12);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        JPanel container = new JPanel();
+        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+        container.setOpaque(false);
+        container.setBorder(new EmptyBorder(10, 15, 20, 15));
 
-        JLabel lblTitle = new JLabel("Lecturer Profile Details");
-        lblTitle.setFont(UITheme.FONT_HEADER);
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
-        card.add(lblTitle, gbc);
+        // 0. Title Header
+        JLabel lblTitle = new JLabel("Edit Profile");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        lblTitle.setForeground(UITheme.TEXT_DARK);
+        lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        container.add(lblTitle);
+        container.add(Box.createVerticalStrut(15));
 
-        gbc.gridwidth = 1;
+        // 1. Header with Avatar & "Change Picture"
+        JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 0));
+        headerPanel.setOpaque(false);
+        headerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        gbc.gridx = 0; gbc.gridy = 1;
-        card.add(new JLabel("Username (Read-Only):"), gbc);
-        lblProfUsername = new JLabel(lecturer != null ? lecturer.getUsername() : "");
-        lblProfUsername.setFont(UITheme.FONT_BODY_BOLD);
-        gbc.gridx = 1; gbc.gridy = 1;
-        card.add(lblProfUsername, gbc);
+        lblProfileAvatar = new JLabel("L", SwingConstants.CENTER);
+        lblProfileAvatar.setPreferredSize(new Dimension(85, 85));
+        lblProfileAvatar.setMinimumSize(new Dimension(85, 85));
+        lblProfileAvatar.setBorder(BorderFactory.createLineBorder(new Color(203, 213, 225), 2));
+        lblProfileAvatar.setOpaque(true);
+        lblProfileAvatar.setBackground(new Color(224, 231, 255));
+        lblProfileAvatar.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        lblProfileAvatar.setForeground(UITheme.PRIMARY_BLUE);
 
-        gbc.gridx = 0; gbc.gridy = 2;
-        card.add(new JLabel("Employee ID:"), gbc);
-        lblProfEmpId = new JLabel(lecturer != null ? lecturer.getEmployeeId() : "");
-        lblProfEmpId.setFont(UITheme.FONT_BODY_BOLD);
-        gbc.gridx = 1; gbc.gridy = 2;
-        card.add(lblProfEmpId, gbc);
+        JPanel avatarTextPanel = new JPanel();
+        avatarTextPanel.setLayout(new BoxLayout(avatarTextPanel, BoxLayout.Y_AXIS));
+        avatarTextPanel.setOpaque(false);
 
-        gbc.gridx = 0; gbc.gridy = 3;
-        card.add(new JLabel("Full Name:"), gbc);
-        txtProfFullName = UITheme.createTextField(25);
-        gbc.gridx = 1; gbc.gridy = 3;
-        card.add(txtProfFullName, gbc);
+        JLabel lblNameTitle = new JLabel(lecturer != null ? lecturer.getFullName() : "Mr. T.H.D. Wosada");
+        lblNameTitle.setFont(new Font("Segoe UI", Font.BOLD, 17));
+        lblNameTitle.setForeground(UITheme.TEXT_DARK);
 
-        gbc.gridx = 0; gbc.gridy = 4;
-        card.add(new JLabel("Email Address:"), gbc);
-        txtProfEmail = UITheme.createTextField(25);
-        gbc.gridx = 1; gbc.gridy = 4;
-        card.add(txtProfEmail, gbc);
+        JLabel lblEmpSub = new JLabel((lecturer != null ? lecturer.getEmployeeId() : "LEC-0002") + " | Lecturer");
+        lblEmpSub.setFont(UITheme.FONT_SMALL);
+        lblEmpSub.setForeground(UITheme.TEXT_MUTED);
 
-        gbc.gridx = 0; gbc.gridy = 5;
-        card.add(new JLabel("Phone Number:"), gbc);
-        txtProfPhone = UITheme.createTextField(25);
-        gbc.gridx = 1; gbc.gridy = 5;
-        card.add(txtProfPhone, gbc);
+        JButton btnChangePic = new JButton("Change Picture");
+        btnChangePic.setFont(UITheme.FONT_SMALL);
+        btnChangePic.setFocusPainted(false);
+        btnChangePic.addActionListener(e -> handleChangeProfilePicture());
 
-        JButton btnSaveProfile = UITheme.createButton("Update Profile", UITheme.PRIMARY_BLUE, Color.WHITE);
-        btnSaveProfile.addActionListener(e -> handleUpdateProfile());
-        gbc.gridx = 1; gbc.gridy = 6;
-        card.add(btnSaveProfile, gbc);
+        avatarTextPanel.add(lblNameTitle);
+        avatarTextPanel.add(Box.createVerticalStrut(3));
+        avatarTextPanel.add(lblEmpSub);
+        avatarTextPanel.add(Box.createVerticalStrut(8));
+        avatarTextPanel.add(btnChangePic);
+
+        headerPanel.add(lblProfileAvatar);
+        headerPanel.add(avatarTextPanel);
+        container.add(headerPanel);
+        container.add(Box.createVerticalStrut(20));
+
+        // 2. Account (cannot be changed here)
+        container.add(createProfileSectionTitle("Account (cannot be changed here)"));
+        container.add(Box.createVerticalStrut(6));
+
+        JPanel accountGrid = new JPanel(new GridLayout(1, 3, 15, 0));
+        accountGrid.setOpaque(false);
+        accountGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        lblProfUsername = new JLabel(lecturer != null ? lecturer.getUsername() : "wosada");
+        lblProfEmpId = new JLabel(lecturer != null ? lecturer.getEmployeeId() : "LEC-0002");
+
+        JTextField tfUser = createReadOnlyField(lblProfUsername.getText());
+        JTextField tfRole = createReadOnlyField("Lecturer");
+        JTextField tfPass = createReadOnlyField("Changed by the administrator");
+
+        accountGrid.add(createLabeledField("Username", tfUser));
+        accountGrid.add(createLabeledField("Role", tfRole));
+        accountGrid.add(createLabeledField("Password", tfPass));
+        container.add(accountGrid);
+        container.add(Box.createVerticalStrut(20));
+
+        // 3. Personal Details
+        container.add(createProfileSectionTitle("Personal Details"));
+        container.add(Box.createVerticalStrut(6));
+
+        JPanel personalGrid = new JPanel(new GridLayout(2, 3, 15, 12));
+        personalGrid.setOpaque(false);
+        personalGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        String full = (lecturer != null && lecturer.getFullName() != null) ? lecturer.getFullName() : "T.H.D. Wosada";
+        String[] nameParts = full.split(" ", 2);
+
+        txtProfFirstName = UITheme.createTextField(15);
+        txtProfFirstName.setText(nameParts.length > 0 ? nameParts[0] : "T.H.D.");
+
+        txtProfLastName = UITheme.createTextField(15);
+        txtProfLastName.setText(nameParts.length > 1 ? nameParts[1] : "Wosada");
+
+        txtProfEmail = UITheme.createTextField(15);
+        txtProfEmail.setText(lecturer != null && lecturer.getEmail() != null ? lecturer.getEmail() : "wosada@faculty.local");
+
+        txtProfNic = UITheme.createTextField(15);
+        txtProfNic.setText("199512345678");
+
+        txtProfDob = UITheme.createTextField(15);
+        txtProfDob.setText("1990-05-15");
+
+        txtProfPhone = UITheme.createTextField(15);
+        txtProfPhone.setText(lecturer != null && lecturer.getPhoneNo() != null ? lecturer.getPhoneNo() : "0713000001");
+
+        txtProfFullName = new JTextField();
+        txtProfFullName.setText(full);
+
+        personalGrid.add(createLabeledField("First name", txtProfFirstName));
+        personalGrid.add(createLabeledField("Last name", txtProfLastName));
+        personalGrid.add(createLabeledField("E-mail", txtProfEmail));
+        personalGrid.add(createLabeledField("NIC", txtProfNic));
+        personalGrid.add(createLabeledField("Date of birth", txtProfDob));
+        personalGrid.add(createLabeledField("Phone", txtProfPhone));
+        container.add(personalGrid);
+        container.add(Box.createVerticalStrut(20));
+
+        // 4. Address
+        container.add(createProfileSectionTitle("Address"));
+        container.add(Box.createVerticalStrut(6));
+
+        JPanel addressGrid = new JPanel(new GridLayout(1, 4, 15, 0));
+        addressGrid.setOpaque(false);
+        addressGrid.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        txtProfStreet = UITheme.createTextField(15);
+        txtProfStreet.setText("Faculty Road");
+
+        txtProfCity = UITheme.createTextField(15);
+        txtProfCity.setText("Matara");
+
+        txtProfPostal = UITheme.createTextField(15);
+        txtProfPostal.setText("81000");
+
+        txtProfCountry = UITheme.createTextField(15);
+        txtProfCountry.setText("Sri Lanka");
+
+        addressGrid.add(createLabeledField("Street", txtProfStreet));
+        addressGrid.add(createLabeledField("City", txtProfCity));
+        addressGrid.add(createLabeledField("Postal code", txtProfPostal));
+        addressGrid.add(createLabeledField("Country", txtProfCountry));
+        container.add(addressGrid);
+        container.add(Box.createVerticalStrut(25));
+
+        // 5. Action Buttons (Save Changes & Reset)
+        JPanel actionRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        actionRow.setOpaque(false);
+        actionRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JButton btnSave = UITheme.createButton("Save Changes", new Color(30, 41, 59), Color.WHITE);
+        btnSave.setPreferredSize(new Dimension(140, 38));
+        btnSave.addActionListener(e -> handleUpdateProfile());
+
+        JButton btnReset = UITheme.createButton("Reset", new Color(241, 245, 249), UITheme.TEXT_DARK);
+        btnReset.setPreferredSize(new Dimension(100, 38));
+        btnReset.addActionListener(e -> loadProfileData());
+
+        actionRow.add(btnSave);
+        actionRow.add(btnReset);
+        container.add(actionRow);
+
+        JScrollPane scroll = new JScrollPane(container);
+        scroll.setBorder(null);
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
+        card.add(scroll, BorderLayout.CENTER);
+
+        loadProfileAvatar();
 
         return card;
+    }
+
+    private JLabel createProfileSectionTitle(String title) {
+        JLabel lbl = new JLabel(title);
+        lbl.setFont(UITheme.FONT_BODY_BOLD);
+        lbl.setForeground(UITheme.TEXT_DARK);
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return lbl;
+    }
+
+    private JTextField createReadOnlyField(String text) {
+        JTextField tf = UITheme.createTextField(15);
+        tf.setText(text);
+        tf.setEditable(false);
+        tf.setBackground(new Color(241, 245, 249));
+        tf.setForeground(new Color(71, 85, 105));
+        return tf;
+    }
+
+    private JPanel createLabeledField(String label, JComponent field) {
+        JPanel p = new JPanel();
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        p.setOpaque(false);
+        JLabel l = new JLabel(label);
+        l.setFont(UITheme.FONT_SMALL);
+        l.setForeground(UITheme.TEXT_MUTED);
+        p.add(l);
+        p.add(Box.createVerticalStrut(4));
+        p.add(field);
+        return p;
     }
 
     // ========================================================================
@@ -1080,21 +1241,73 @@ public class LecturerDashboard extends JFrame {
 
     private void loadProfileData() {
         if (lecturer != null) {
-            lblProfUsername.setText(lecturer.getUsername());
-            lblProfEmpId.setText(lecturer.getEmployeeId());
-            txtProfFullName.setText(lecturer.getFullName());
-            txtProfEmail.setText(lecturer.getEmail());
-            txtProfPhone.setText(lecturer.getPhoneNo());
+            lblProfUsername.setText(lecturer.getUsername() != null ? lecturer.getUsername() : "");
+            lblProfEmpId.setText(lecturer.getEmployeeId() != null ? lecturer.getEmployeeId() : "");
+            String full = lecturer.getFullName() != null ? lecturer.getFullName() : "";
+            txtProfFullName.setText(full);
+            String[] parts = full.split(" ", 2);
+            if (txtProfFirstName != null) txtProfFirstName.setText(parts.length > 0 ? parts[0] : "");
+            if (txtProfLastName != null) txtProfLastName.setText(parts.length > 1 ? parts[1] : "");
+            if (txtProfEmail != null) txtProfEmail.setText(lecturer.getEmail() != null ? lecturer.getEmail() : "");
+            if (txtProfPhone != null) txtProfPhone.setText(lecturer.getPhoneNo() != null ? lecturer.getPhoneNo() : "");
+            loadProfileAvatar();
+        }
+    }
+
+    private void handleChangeProfilePicture() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Select Profile Picture");
+        chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Images (JPG, PNG)", "jpg", "jpeg", "png"));
+
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = chooser.getSelectedFile();
+            try {
+                File destDir = new File("resources/profile_photos");
+                if (!destDir.exists()) destDir.mkdirs();
+
+                File destFile = new File(destDir, "lecturer_" + (lecturer != null ? lecturer.getUserId() : 1) + ".png");
+                java.nio.file.Files.copy(selectedFile.toPath(), destFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+                loadProfileAvatar();
+                JOptionPane.showMessageDialog(this, "Profile picture updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error saving picture: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void loadProfileAvatar() {
+        if (lblProfileAvatar == null) return;
+        try {
+            File photoFile = new File("resources/profile_photos/lecturer_" + (lecturer != null ? lecturer.getUserId() : 1) + ".png");
+            if (photoFile.exists()) {
+                ImageIcon icon = new ImageIcon(photoFile.getAbsolutePath());
+                Image scaled = icon.getImage().getScaledInstance(85, 85, Image.SCALE_SMOOTH);
+                lblProfileAvatar.setText("");
+                lblProfileAvatar.setIcon(new ImageIcon(scaled));
+            } else {
+                lblProfileAvatar.setIcon(null);
+                lblProfileAvatar.setText(lecturer != null && lecturer.getFullName() != null && !lecturer.getFullName().isEmpty() ? lecturer.getFullName().substring(0, 1).toUpperCase() : "L");
+                lblProfileAvatar.setFont(new Font("Segoe UI", Font.BOLD, 28));
+                lblProfileAvatar.setForeground(UITheme.PRIMARY_BLUE);
+            }
+        } catch (Exception e) {
+            // Ignore
         }
     }
 
     private void handleUpdateProfile() {
-        String name = txtProfFullName.getText().trim();
-        String email = txtProfEmail.getText().trim();
-        String phone = txtProfPhone.getText().trim();
+        String fName = txtProfFirstName != null ? txtProfFirstName.getText().trim() : "";
+        String lName = txtProfLastName != null ? txtProfLastName.getText().trim() : "";
+        String name = (fName + " " + lName).trim();
+        if (name.isEmpty() && txtProfFullName != null) {
+            name = txtProfFullName.getText().trim();
+        }
+        String email = txtProfEmail != null ? txtProfEmail.getText().trim() : "";
+        String phone = txtProfPhone != null ? txtProfPhone.getText().trim() : "";
 
         if (name.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Full name cannot be empty!", "Warning", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Name cannot be empty!", "Warning", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -1103,6 +1316,7 @@ public class LecturerDashboard extends JFrame {
             lecturer.setFullName(name);
             lecturer.setEmail(email);
             lecturer.setPhoneNo(phone);
+            txtProfFullName.setText(name);
             JOptionPane.showMessageDialog(this, "Profile updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
         } else {
             JOptionPane.showMessageDialog(this, "Failed to update profile.", "Error", JOptionPane.ERROR_MESSAGE);

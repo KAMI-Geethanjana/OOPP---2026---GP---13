@@ -16,30 +16,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * ============================================================================
- * Lesson 04 (Interfaces) & Lesson 07 (JDBC Connectivity)
- * ============================================================================
- * Reference:
- * - Lesson 04, Slide 17-18: 'class LecturerDAO implements ILecturerDAO'
- * - Lesson 07, Slide 25: 05 Basic Steps to Use a Database in Java
- *   1. Register the Driver Class
- *   2. Create a Connection
- *   3. Create a Statement (PreparedStatement)
- *   4. Execute Queries (executeQuery, executeUpdate)
- *   5. Close the Connection and Resources
- * - Lesson 07, Slide 33-34: Parameterized Queries with PreparedStatement (?)
- * - Lesson 07, Slide 35-36: ResultSet traversal & Column Index / Column Name access
- * - Lesson 03 Part 02, Slide 13-17: Method Overloading (Compile-Time Polymorphism)
- * - Lesson 05, Slide 25-37: Exception Handling (try-catch-finally, custom exceptions)
- * ============================================================================
- */
+
 public class LecturerDAO implements ILecturerDAO {
 
-    // ========================================================================
-    // Static Initializer Block (Lesson 02 Part 02, Slide 29-30)
-    // Ensures JDBC Driver is loaded when class is first referenced
-    // ========================================================================
+
     static {
         try {
             // Step 1: Register the Driver Class (Lesson 07, Slide 26)
@@ -54,10 +34,7 @@ public class LecturerDAO implements ILecturerDAO {
         printModuleStatus();
     }
 
-    /**
-     * Retrieves Lecturer by user ID.
-     * Demonstrates JDBC Steps 1 to 5 clearly.
-     */
+
     @Override
     public Lecturer getLecturerByUserId(int userId) {
         String sql = "SELECT l.lecturer_id, l.employee_id, l.department_id, d.department_name, " +
@@ -72,19 +49,19 @@ public class LecturerDAO implements ILecturerDAO {
         ResultSet rs = null;
 
         try {
-            // Step 2: Create a Connection (Lesson 07, Slide 27)
+
             conn = DBConnection.getConnection();
 
-            // Step 3: Create a PreparedStatement (Lesson 07, Slide 29 & 34)
+
             ps = conn.prepareStatement(sql);
             ps.setInt(1, userId);
 
-            // Step 4: Execute Query (Lesson 07, Slide 30-31)
+
             rs = ps.executeQuery();
 
-            // Step 4b: Traverse through ResultSet (Lesson 07, Slide 35-36)
+
             if (rs.next()) {
-                // Accessing columns using Column Name (Lesson 07, Slide 36)
+
                 Lecturer lec = new Lecturer(
                         rs.getInt("user_id"),
                         rs.getString("username"),
@@ -101,20 +78,18 @@ public class LecturerDAO implements ILecturerDAO {
             }
 
         } catch (SQLException e) {
-            // Lesson 05 Slide 22 & Lesson 07 Slide 37: Printing stack trace on SQLException
+
             System.err.println("SQLException in getLecturerByUserId: " + e.getMessage());
             e.printStackTrace();
         } finally {
-            // Step 5: Close Resources in finally block (Lesson 05 Slide 33 & Lesson 07 Slide 32)
+
             closeQuietly(rs);
             closeQuietly(ps);
         }
         return null;
     }
 
-    /**
-     * Retrieves all courses assigned to this lecturer.
-     */
+
     @Override
     public List<Course> getCoursesByLecturer(int lecturerId) {
         List<Course> list = new ArrayList<>();
@@ -131,7 +106,7 @@ public class LecturerDAO implements ILecturerDAO {
             rs = ps.executeQuery();
 
             while (rs.next()) {
-                // Demonstrates Column Index access as well as Column Name access (Lesson 07, Slide 36)
+
                 list.add(new Course(
                         rs.getString("course_code"),
                         rs.getString("course_title"),
@@ -151,19 +126,13 @@ public class LecturerDAO implements ILecturerDAO {
         return list;
     }
 
-    /**
-     * Retrieves results for a course.
-     * Method 1 of Overloaded pair (Lesson 03 Part 02, Slide 13-15).
-     */
+
     @Override
     public List<Result> getResultsByCourse(String courseCode) {
         return getResultsByCourse(courseCode, null);
     }
 
-    /**
-     * Overloaded method: Retrieves results for a course filtered by eligibility status.
-     * Method 2 of Overloaded pair (Static Polymorphism - Lesson 03 Part 02, Slide 14-17).
-     */
+
     @Override
     public List<Result> getResultsByCourse(String courseCode, String eligibilityFilter) {
         List<Result> list = new ArrayList<>();
@@ -229,10 +198,7 @@ public class LecturerDAO implements ILecturerDAO {
         return list;
     }
 
-    /**
-     * Persists calculated marks and UGC grades into database.
-     * Demonstrates 'throws LecturerOperationException' (Lesson 05, Slide 40-42).
-     */
+
     @Override
     public boolean saveOrUpdateResult(int enrollmentId, double caMark, double finalExamMark,
                                       double totalMark, String eligibilityStatus, String grade,
@@ -284,9 +250,7 @@ public class LecturerDAO implements ILecturerDAO {
         }
     }
 
-    /**
-     * Retrieves course materials for a given course.
-     */
+
     @Override
     public List<CourseMaterial> getCourseMaterials(String courseCode) {
         List<CourseMaterial> list = new ArrayList<>();
@@ -322,9 +286,7 @@ public class LecturerDAO implements ILecturerDAO {
         return list;
     }
 
-    /**
-     * Uploads new course material record.
-     */
+
     @Override
     public boolean addCourseMaterial(CourseMaterial material) throws LecturerOperationException {
         if (material == null || material.getTitle() == null || material.getTitle().trim().isEmpty()) {
@@ -356,9 +318,7 @@ public class LecturerDAO implements ILecturerDAO {
         }
     }
 
-    /**
-     * Deletes course material record by ID.
-     */
+
     @Override
     public boolean deleteCourseMaterial(int materialId) {
         String sql = "DELETE FROM course_material WHERE material_id = ?";
@@ -379,9 +339,7 @@ public class LecturerDAO implements ILecturerDAO {
         }
     }
 
-    /**
-     * Retrieves aggregated student attendance and approved medical records.
-     */
+
     @Override
     public List<Map<String, Object>> getStudentAttendanceSummary(String courseCode) {
         List<Map<String, Object>> list = new ArrayList<>();
@@ -441,9 +399,7 @@ public class LecturerDAO implements ILecturerDAO {
         return list;
     }
 
-    /**
-     * Updates profile information for the lecturer user.
-     */
+
     @Override
     public boolean updateProfile(int userId, String fullName, String email, String phoneNo) {
         String sql = "UPDATE users SET full_name = ?, email = ?, phone_no = ? WHERE user_id = ?";
