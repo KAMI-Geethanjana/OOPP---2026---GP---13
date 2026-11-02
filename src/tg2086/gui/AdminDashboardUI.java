@@ -92,8 +92,10 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private List<Map<String, Object>> currentUsersList = new ArrayList<>();
     private int selectedUserId = -1;
 
-    private JTextField txtCourseCode, txtCourseTitle, txtTheoryCredits, txtPracticalCredits, txtLecturerId;
+    private JTextField txtCourseCode, txtCourseTitle, txtTheoryCredits, txtPracticalCredits;
     private JComboBox<DepartmentItem> cmbCourseDepartment;
+    private JComboBox<LecturerItem> cmbCourseLecturer;
+    private List<Course> currentCoursesList = new ArrayList<>();
 
     private JTextField txtNoticeTitle;
     private JTextArea txtNoticeContent;
@@ -128,7 +130,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
 
     private void initAdminUI() {
         // 1. Live Digital Clock in Top Header (Method 2: Runnable)
-        lblLiveClock = new JLabel("🕒 Initializing clock...", SwingConstants.RIGHT);
+        lblLiveClock = new JLabel("ðŸ•’ Initializing clock...", SwingConstants.RIGHT);
         lblLiveClock.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblLiveClock.setForeground(UITheme.PRIMARY_BLUE);
         lblLiveClock.setToolTipText("Multithreaded Real-Time System Clock (Runnable)");
@@ -146,11 +148,11 @@ public class AdminDashboardUI extends BaseDashboardUI {
         footerPanel.setBackground(UITheme.SIDEBAR_BG);
         footerPanel.setBorder(new EmptyBorder(8, 20, 8, 20));
 
-        lblNoticeTicker = new JLabel("📢 Announcements: Initializing notice ticker...");
+        lblNoticeTicker = new JLabel("ðŸ“¢ Announcements: Initializing notice ticker...");
         lblNoticeTicker.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblNoticeTicker.setForeground(new Color(226, 232, 240));
 
-        JLabel lblThreadStatus = new JLabel("⚡ System Online | Background Services Active");
+        JLabel lblThreadStatus = new JLabel("âš¡ System Online | Background Services Active");
         lblThreadStatus.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblThreadStatus.setForeground(UITheme.SUCCESS_GREEN);
 
@@ -186,12 +188,12 @@ public class AdminDashboardUI extends BaseDashboardUI {
                     String displayMessage;
                     synchronized (noticeLock) {
                         if (latestNoticeTitles.isEmpty()) {
-                            displayMessage = "📢 Faculty Announcements: No active notices published yet.";
+                            displayMessage = "ðŸ“¢ Faculty Announcements: No active notices published yet.";
                         } else {
                             if (noticeIndex >= latestNoticeTitles.size()) {
                                 noticeIndex = 0;
                             }
-                            displayMessage = "📢 Faculty Announcements [" + (noticeIndex + 1) + "/" +
+                            displayMessage = "ðŸ“¢ Faculty Announcements [" + (noticeIndex + 1) + "/" +
                                     latestNoticeTitles.size() + "]: " + latestNoticeTitles.get(noticeIndex);
                             noticeIndex++;
                         }
@@ -219,7 +221,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
         public void run() {
             while (isClockRunning) {
                 try {
-                    final String timeStr = "🕒 " + dateFormat.format(new Date());
+                    final String timeStr = "ðŸ•’ " + dateFormat.format(new Date());
                     SwingUtilities.invokeLater(() -> {
                         if (lblLiveClock != null) {
                             lblLiveClock.setText(timeStr);
@@ -289,15 +291,25 @@ public class AdminDashboardUI extends BaseDashboardUI {
         panel.add(metricsGrid, BorderLayout.NORTH);
 
         // System Overview Info Card
-        JPanel infoContent = new JPanel(new GridLayout(5, 1, 0, 10));
+        JPanel infoContent = new JPanel();
+        infoContent.setLayout(new BoxLayout(infoContent, BoxLayout.Y_AXIS));
         infoContent.setOpaque(false);
+        infoContent.setBorder(new EmptyBorder(12, 12, 12, 12));
         infoContent.add(createSystemInfoLabel("System Architecture", "MVC with Singleton Connection & Shared common base"));
+        infoContent.add(Box.createVerticalStrut(14));
         infoContent.add(createSystemInfoLabel("Active Session", currentAdminUser.getFullName() + " (" + currentAdminUser.getRoleDisplayName() + ")"));
+        infoContent.add(Box.createVerticalStrut(14));
         infoContent.add(createSystemInfoLabel("Multithreading Services", "Notice Ticker (Thread) and Live Clock (Runnable) running smoothly"));
+        infoContent.add(Box.createVerticalStrut(14));
         infoContent.add(createSystemInfoLabel("Security Policy", "Automatic lock after 5 consecutive failed login attempts"));
+        infoContent.add(Box.createVerticalStrut(14));
         infoContent.add(createSystemInfoLabel("Database", "ftms_db running on MySQL localhost"));
 
-        JPanel card = createSectionCard("System Status & Architecture Summary", infoContent);
+        JPanel cardWrapper = new JPanel(new BorderLayout());
+        cardWrapper.setOpaque(false);
+        cardWrapper.add(infoContent, BorderLayout.NORTH);
+
+        JPanel card = createSectionCard("System Status & Architecture Summary", cardWrapper);
         panel.add(card, BorderLayout.CENTER);
 
         return panel;
@@ -306,10 +318,10 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private JLabel createSystemInfoLabel(String title, String description) {
         String safeDesc = description != null ? description.replace("&", "&amp;") : "";
         JLabel label = new JLabel(String.format(
-                "<html><span style='font-family:Segoe UI, sans-serif; font-size:14px; color:#1E293B;'>&bull;&nbsp;&nbsp;<b>%s:</b> <span style='color:#334155;'>%s</span></span></html>",
+                "<html><div style='font-family:Segoe UI, sans-serif; font-size:14pt; color:#1E293B; line-height:1.5;'>&bull;&nbsp;&nbsp;<b>%s:</b> <span style='color:#334155;'>%s</span></div></html>",
                 title, safeDesc
         ));
-        label.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        label.setFont(new Font("Segoe UI", Font.PLAIN, 15));
         return label;
     }
 
@@ -506,15 +518,16 @@ public class AdminDashboardUI extends BaseDashboardUI {
         txtCourseTitle = UITheme.createTextField(15);
         txtTheoryCredits = UITheme.createTextField(5);
         txtPracticalCredits = UITheme.createTextField(5);
-        txtLecturerId = UITheme.createTextField(5);
         cmbCourseDepartment = new JComboBox<>();
+        cmbCourseLecturer = new JComboBox<>();
+        cmbCourseLecturer.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 
         formGrid.add(createFormRow("Course Code (e.g. ICT1122)", txtCourseCode));
         formGrid.add(createFormRow("Course Title", txtCourseTitle));
         formGrid.add(createFormRow("Theory Credits", txtTheoryCredits));
         formGrid.add(createFormRow("Practical Credits", txtPracticalCredits));
         formGrid.add(createFormRow("Department", cmbCourseDepartment));
-        formGrid.add(createFormRow("Lecturer ID (Optional)", txtLecturerId));
+        formGrid.add(createFormRow("Assigned Lecturer", cmbCourseLecturer));
 
         JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         btnRow.setOpaque(false);
@@ -741,6 +754,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
     public void refreshAllData() {
         loadMetrics();
         loadDepartments();
+        loadLecturersForCourses();
         loadUsersData("ALL");
         loadCoursesData();
         loadNoticesData("ALL");
@@ -775,6 +789,25 @@ public class AdminDashboardUI extends BaseDashboardUI {
         }
     }
 
+    private void loadLecturersForCourses() {
+        if (cmbCourseLecturer == null) return;
+        try {
+            List<Map<String, Object>> lecturers = courseDAO.getLecturersForAssignment();
+            cmbCourseLecturer.removeAllItems();
+            cmbCourseLecturer.addItem(new LecturerItem(0, "-- None / Unassigned --"));
+            for (Map<String, Object> lec : lecturers) {
+                int lecId = (int) lec.get("lecturerId");
+                String fullName = (String) lec.get("fullName");
+                String username = (String) lec.get("username");
+                String empId = (String) lec.get("employeeId");
+                String display = fullName + " (" + (empId != null && !empId.isEmpty() ? empId : username) + ")";
+                cmbCourseLecturer.addItem(new LecturerItem(lecId, display));
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
     private void loadUsersData(String roleFilter) {
         usersTableModel.setRowCount(0);
         try {
@@ -801,8 +834,8 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private void loadCoursesData() {
         coursesTableModel.setRowCount(0);
         try {
-            List<Course> list = courseDAO.getAllCourses();
-            for (Course c : list) {
+            currentCoursesList = courseDAO.getAllCourses();
+            for (Course c : currentCoursesList) {
                 coursesTableModel.addRow(new Object[]{
                         c.getCourseCode(),
                         c.getCourseTitle(),
@@ -821,8 +854,8 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private void searchCoursesData(String keyword) {
         coursesTableModel.setRowCount(0);
         try {
-            List<Course> list = courseDAO.searchCourses(keyword);
-            for (Course c : list) {
+            currentCoursesList = courseDAO.searchCourses(keyword);
+            for (Course c : currentCoursesList) {
                 coursesTableModel.addRow(new Object[]{
                         c.getCourseCode(),
                         c.getCourseTitle(),
@@ -924,6 +957,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
                 JOptionPane.showMessageDialog(this, "User [" + username + "] registered successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 clearUserForm();
                 loadUsersData("ALL");
+                loadLecturersForCourses();
                 loadMetrics();
             }
         } catch (AdminOperationException ex) {
@@ -952,6 +986,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
                 JOptionPane.showMessageDialog(this, "User updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 clearUserForm();
                 loadUsersData("ALL");
+                loadLecturersForCourses();
             }
         } catch (AdminOperationException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Operation Failed", JOptionPane.ERROR_MESSAGE);
@@ -972,6 +1007,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
                     JOptionPane.showMessageDialog(this, "User deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                     clearUserForm();
                     loadUsersData("ALL");
+                    loadLecturersForCourses();
                     loadMetrics();
                 }
             } catch (AdminOperationException ex) {
@@ -1095,16 +1131,51 @@ public class AdminDashboardUI extends BaseDashboardUI {
     // =========================================================================
 
     private void populateCourseForm(int row) {
-        txtCourseCode.setText((String) coursesTableModel.getValueAt(row, 0));
-        txtCourseTitle.setText((String) coursesTableModel.getValueAt(row, 1));
-        txtTheoryCredits.setText(String.valueOf(coursesTableModel.getValueAt(row, 2)));
-        txtPracticalCredits.setText(String.valueOf(coursesTableModel.getValueAt(row, 3)));
+        if (row < 0) return;
+        int modelRow = coursesTable.convertRowIndexToModel(row);
+        if (modelRow < 0 || modelRow >= currentCoursesList.size()) return;
+        Course c = currentCoursesList.get(modelRow);
+
+        txtCourseCode.setText(c.getCourseCode());
+        txtCourseTitle.setText(c.getCourseTitle());
+        txtTheoryCredits.setText(String.valueOf(c.getCreditTheory()));
+        txtPracticalCredits.setText(String.valueOf(c.getCreditPractical()));
+
+        // Auto-select department
+        int deptId = c.getDepartmentId();
+        if (cmbCourseDepartment != null) {
+            for (int i = 0; i < cmbCourseDepartment.getItemCount(); i++) {
+                DepartmentItem d = cmbCourseDepartment.getItemAt(i);
+                if (d != null && d.id == deptId) {
+                    cmbCourseDepartment.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+
+        // Auto-select assigned lecturer
+        int targetLecId = (c.getLecturerId() != null) ? c.getLecturerId() : 0;
+        if (cmbCourseLecturer != null) {
+            boolean matched = false;
+            for (int i = 0; i < cmbCourseLecturer.getItemCount(); i++) {
+                LecturerItem item = cmbCourseLecturer.getItemAt(i);
+                if (item != null && item.id == targetLecId) {
+                    cmbCourseLecturer.setSelectedIndex(i);
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched && cmbCourseLecturer.getItemCount() > 0) {
+                cmbCourseLecturer.setSelectedIndex(0);
+            }
+        }
     }
 
     private void handleAddCourse() {
         String code = txtCourseCode.getText().trim();
         String title = txtCourseTitle.getText().trim();
         DepartmentItem dept = (DepartmentItem) cmbCourseDepartment.getSelectedItem();
+        LecturerItem selectedLec = (LecturerItem) cmbCourseLecturer.getSelectedItem();
 
         if (code.isEmpty() || title.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Course code and title are required!", "Validation Error", JOptionPane.WARNING_MESSAGE);
@@ -1114,10 +1185,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
         try {
             int tc = Integer.parseInt(txtTheoryCredits.getText().trim());
             int pc = Integer.parseInt(txtPracticalCredits.getText().trim());
-            Integer lecId = null;
-            if (!txtLecturerId.getText().trim().isEmpty()) {
-                lecId = Integer.parseInt(txtLecturerId.getText().trim());
-            }
+            Integer lecId = (selectedLec != null && selectedLec.id > 0) ? selectedLec.id : null;
 
             boolean success = courseDAO.addCourse(code, title, tc, pc, dept != null ? dept.id : 1, lecId);
             if (success) {
@@ -1127,7 +1195,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
                 loadMetrics();
             }
         } catch (NumberFormatException nfe) {
-            JOptionPane.showMessageDialog(this, "Credits and Lecturer ID must be valid integers.", "Number Format Error", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Credits must be valid integers.", "Number Format Error", JOptionPane.WARNING_MESSAGE);
         } catch (AdminOperationException ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Operation Failed", JOptionPane.ERROR_MESSAGE);
         }
@@ -1137,6 +1205,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
         String code = txtCourseCode.getText().trim();
         String title = txtCourseTitle.getText().trim();
         DepartmentItem dept = (DepartmentItem) cmbCourseDepartment.getSelectedItem();
+        LecturerItem selectedLec = (LecturerItem) cmbCourseLecturer.getSelectedItem();
 
         if (code.isEmpty() || title.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Select a course to update.", "Validation Error", JOptionPane.WARNING_MESSAGE);
@@ -1146,10 +1215,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
         try {
             int tc = Integer.parseInt(txtTheoryCredits.getText().trim());
             int pc = Integer.parseInt(txtPracticalCredits.getText().trim());
-            Integer lecId = null;
-            if (!txtLecturerId.getText().trim().isEmpty()) {
-                lecId = Integer.parseInt(txtLecturerId.getText().trim());
-            }
+            Integer lecId = (selectedLec != null && selectedLec.id > 0) ? selectedLec.id : null;
 
             boolean success = courseDAO.updateCourse(code, title, tc, pc, dept != null ? dept.id : 1, lecId);
             if (success) {
@@ -1157,6 +1223,8 @@ public class AdminDashboardUI extends BaseDashboardUI {
                 clearCourseForm();
                 loadCoursesData();
             }
+        } catch (NumberFormatException nfe) {
+            JOptionPane.showMessageDialog(this, "Credits must be valid integers.", "Number Format Error", JOptionPane.WARNING_MESSAGE);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Operation Failed", JOptionPane.ERROR_MESSAGE);
         }
@@ -1190,7 +1258,12 @@ public class AdminDashboardUI extends BaseDashboardUI {
         txtCourseTitle.setText("");
         txtTheoryCredits.setText("");
         txtPracticalCredits.setText("");
-        txtLecturerId.setText("");
+        if (cmbCourseDepartment != null && cmbCourseDepartment.getItemCount() > 0) {
+            cmbCourseDepartment.setSelectedIndex(0);
+        }
+        if (cmbCourseLecturer != null && cmbCourseLecturer.getItemCount() > 0) {
+            cmbCourseLecturer.setSelectedIndex(0);
+        }
         coursesTable.clearSelection();
     }
 
@@ -1415,6 +1488,47 @@ public class AdminDashboardUI extends BaseDashboardUI {
         @Override
         public String toString() {
             return name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            DepartmentItem that = (DepartmentItem) o;
+            return id == that.id;
+        }
+
+        @Override
+        public int hashCode() {
+            return Integer.hashCode(id);
+        }
+    }
+
+    private static class LecturerItem {
+        final int id;
+        final String name;
+
+        public LecturerItem(int id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            LecturerItem that = (LecturerItem) o;
+            return id == that.id;
+        }
+
+        @Override
+        public int hashCode() {
+            return Integer.hashCode(id);
         }
     }
 

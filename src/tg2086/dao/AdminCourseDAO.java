@@ -6,7 +6,9 @@ import tg2086.exception.AdminOperationException;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * AdminCourseDAO - Data Access Object for Academic Course Modules.
@@ -193,6 +195,75 @@ public class AdminCourseDAO {
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new AdminOperationException("Database error deleting course: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Retrieves all registered lecturers to populate the lecturer assignment dropdown.
+     * Includes automatic fallback healing to ensure any user registered with role 'LECTURER'
+     * has a corresponding entry in the lecturer table.
+     */
+    public List<Map<String, Object>> getLecturersForAssignment() throws AdminOperationException {
+        List<Map<String, Object>> list = new ArrayList<>();
+
+        // Auto-heal: Ensure any users with role 'LECTURER' have a record in lecturer table
+        String healSql = "INSERT INTO lecturer (user_id, employee_id, department_id) " +
+                         "SELECT u.user_id, CONCAT('EMP/LEC/', u.user_id), 1 " +
+                         "FROM users u " +
+                         "LEFT JOIN lecturer l ON u.user_id = l.user_id " +
+                         "WHERE u.role = 'LECTURER' AND l.lecturer_id IS NULL";
+
+        String querySql = "SELECT l.lecturer_id, u.user_id, u.username, u.full_name, " +
+                          "COALESCE(l.employee_id, '') AS employee_id, " +
+                          "COALESCE(d.department_name, '') AS department_name " +
+                          "FROM users u " +
+                          "JOIN lecturer l ON u.user_id = l.user_id " +
+                          "LEFT JOIN department d ON l.department_id = d.department_id " +
+                          "WHERE u.role = 'LECTURER' AND u.is_active = 1 " +
+                          "ORDER BY u.full_name ASC";
+
+        try (Connection conn = DBConnection.getConnection()) {
+            try (Statement st = conn.createStatement()) {
+                st.executeUpdate(healSql);
+            } catch (SQLException ignored) {
+                // If unique constraint or department FK prevents heal, continue with existing records
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement(querySql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("lecturerId", rs.getInt("lecturer_id"));
+                    map.put("userId", rs.getInt("user_id"));
+                    map.put("username", rs.getString("username"));
+                    map.put("fullName", rs.getString("full_name"));
+                    map.put("employeeId", rs.getString("employee_id"));
+                    map.put("departmentName", rs.getString("department_name"));
+                    list.add(map);
+                }
+            }
+        } catch (SQLException e) {
+            throw new AdminOperationException("Database error retrieving lecturers for assignment: " + e.getMessage(), e);
+        }
+        return list;
+    }
+
+    /**
+     * Directly assign or unassign a lecturer to a specific course code.
+     */
+    public boolean assignLecturerToCourse(String courseCode, Integer lecturerId) throws AdminOperationException {
+        String sql = "UPDATE course SET lecturer_id = ? WHERE course_code = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (lecturerId != null && lecturerId > 0) {
+                ps.setInt(1, lecturerId);
+            } else {
+                ps.setNull(1, Types.INTEGER);
+            }
+            ps.setString(2, courseCode.trim().toUpperCase());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new AdminOperationException("Failed to assign lecturer to course: " + e.getMessage(), e);
         }
     }
 }
