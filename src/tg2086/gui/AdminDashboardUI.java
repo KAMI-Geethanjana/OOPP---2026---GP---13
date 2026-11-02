@@ -108,6 +108,22 @@ public class AdminDashboardUI extends BaseDashboardUI {
     private JComboBox<String> cmbTtDayOfWeek;
     private int selectedTimetableId = -1;
 
+    // Course Enrollment Components (TG2086)
+    private JComboBox<DepartmentItem> cmbEnrollDept;
+    private JComboBox<StudentItem> cmbEnrollStudent;
+    private JTextField txtEnrollYear;
+    private JComboBox<String> cmbEnrollSemester;
+    private JComboBox<String> cmbEnrollAttempt;
+    private DefaultTableModel enrolledCoursesTableModel;
+    private JTable enrolledCoursesTable;
+    private DefaultTableModel deptAvailableCoursesTableModel;
+    private JTable deptAvailableCoursesTable;
+    private JLabel lblEnrolledBadge;
+    private JLabel lblAvailableBadge;
+    private List<Map<String, Object>> currentEnrolledList = new ArrayList<>();
+    private List<Map<String, Object>> currentDeptCoursesList = new ArrayList<>();
+    private boolean isUpdatingEnrollCombos = false;
+
     public AdminDashboardUI() {
         this(new Admin(1, "admin", "1234", "K.A.M.I. Geethanjana", "admin@fot.ruh.ac.lk", "0771234567", 1, "SUPER_ADMIN"));
     }
@@ -140,6 +156,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
         addNavItem("dashboard", "Dashboard Overview", buildDashboardOverviewPanel());
         addNavItem("users", "User Management", buildUsersPanel());
         addNavItem("courses", "Course Management", buildCoursesPanel());
+        addNavItem("enrollment", "Course Enrollment", buildEnrollmentPanel());
         addNavItem("notices", "Notices", buildNoticesPanel());
         addNavItem("timetables", "Timetables", buildTimetablePanel());
 
@@ -419,16 +436,20 @@ public class AdminDashboardUI extends BaseDashboardUI {
         JButton btnUpdate = UITheme.createButton("Update User", UITheme.PRIMARY_BLUE, Color.WHITE);
         JButton btnDelete = UITheme.createButton("Delete User", UITheme.DANGER_RED, Color.WHITE);
         JButton btnClear = UITheme.createButton("Clear Form", UITheme.NEUTRAL_GRAY, Color.WHITE);
+        JButton btnEnrollments = UITheme.createButton("Course Enrollments", UITheme.ACCENT_PURPLE, Color.WHITE);
+        btnEnrollments.setToolTipText("Manage course enrollments for selected undergraduate");
 
         btnAdd.addActionListener(e -> handleAddUser());
         btnUpdate.addActionListener(e -> handleUpdateUser());
         btnDelete.addActionListener(e -> handleDeleteUser());
         btnClear.addActionListener(e -> clearUserForm());
+        btnEnrollments.addActionListener(e -> navigateToEnrollmentForSelectedUser());
 
         btnRow.add(btnAdd);
         btnRow.add(btnUpdate);
         btnRow.add(btnDelete);
         btnRow.add(btnClear);
+        btnRow.add(btnEnrollments);
 
         // Photo Preview Panel
         avatarCard = new JPanel(new BorderLayout(0, 6));
@@ -554,6 +575,137 @@ public class AdminDashboardUI extends BaseDashboardUI {
         splitPane.setResizeWeight(0.65);
         splitPane.setBorder(null);
         panel.add(splitPane, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private JPanel buildEnrollmentPanel() {
+        JPanel panel = new JPanel(new BorderLayout(0, 14));
+        panel.setOpaque(false);
+
+        // 1. Top Control Bar: Department & Student Selection + Academic Term Info
+        JPanel topBar = UITheme.createCardPanel();
+        topBar.setLayout(new BorderLayout(10, 10));
+
+        JPanel filterRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 5));
+        filterRow.setOpaque(false);
+
+        cmbEnrollDept = new JComboBox<>();
+        cmbEnrollDept.setPreferredSize(new Dimension(280, 32));
+        cmbEnrollStudent = new JComboBox<>();
+        cmbEnrollStudent.setPreferredSize(new Dimension(260, 32));
+
+        txtEnrollYear = UITheme.createTextField(6);
+        txtEnrollYear.setText("2026");
+
+        cmbEnrollSemester = UITheme.createComboBox(new String[]{"1", "2"});
+        cmbEnrollAttempt = UITheme.createComboBox(new String[]{"PROPER", "REPEAT", "BATCH_MISSED"});
+
+        JButton btnRefresh = UITheme.createButton("Refresh", UITheme.NEUTRAL_GRAY, Color.WHITE);
+        btnRefresh.addActionListener(e -> {
+            DepartmentItem d = (DepartmentItem) cmbEnrollDept.getSelectedItem();
+            if (d != null) onEnrollDepartmentChanged();
+        });
+
+        filterRow.add(new JLabel("Department:"));
+        filterRow.add(cmbEnrollDept);
+        filterRow.add(new JLabel("Undergraduate:"));
+        filterRow.add(cmbEnrollStudent);
+        filterRow.add(new JLabel("Year:"));
+        filterRow.add(txtEnrollYear);
+        filterRow.add(new JLabel("Semester:"));
+        filterRow.add(cmbEnrollSemester);
+        filterRow.add(new JLabel("Attempt:"));
+        filterRow.add(cmbEnrollAttempt);
+        filterRow.add(btnRefresh);
+
+        topBar.add(filterRow, BorderLayout.CENTER);
+        panel.add(topBar, BorderLayout.NORTH);
+
+        // 2. Currently Registered Courses Panel (Upper Card)
+        JPanel enrolledCard = UITheme.createCardPanel();
+        enrolledCard.setLayout(new BorderLayout(0, 8));
+
+        JPanel enrolledHeader = new JPanel(new BorderLayout());
+        enrolledHeader.setOpaque(false);
+        JLabel lblEnrolledTitle = new JLabel("Currently Registered Courses for Selected Student");
+        lblEnrolledTitle.setFont(UITheme.FONT_CARD_TITLE);
+        lblEnrolledBadge = new JLabel("0 Modules Registered");
+        lblEnrolledBadge.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblEnrolledBadge.setForeground(UITheme.PRIMARY_BLUE);
+        enrolledHeader.add(lblEnrolledTitle, BorderLayout.WEST);
+        enrolledHeader.add(lblEnrolledBadge, BorderLayout.EAST);
+        enrolledCard.add(enrolledHeader, BorderLayout.NORTH);
+
+        String[] colsEnrolled = {"Enrollment ID", "Course Code", "Course Title", "Credits", "Lecturer", "Academic Year", "Semester", "Attempt"};
+        enrolledCoursesTableModel = new DefaultTableModel(colsEnrolled, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        enrolledCoursesTable = new JTable(enrolledCoursesTableModel);
+        JScrollPane scrollEnrolled = createTableScrollPane(enrolledCoursesTable);
+        enrolledCard.add(scrollEnrolled, BorderLayout.CENTER);
+
+        JPanel enrolledBtnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        enrolledBtnRow.setOpaque(false);
+        JButton btnDrop = UITheme.createButton("Drop / Unregister Course", UITheme.DANGER_RED, Color.WHITE);
+        btnDrop.addActionListener(e -> handleDropEnrolledCourse());
+        JButton btnExport = UITheme.createButton("Export Registrations", UITheme.NEUTRAL_GRAY, Color.WHITE);
+        btnExport.addActionListener(e -> handleExportCSV(enrolledCoursesTable, "Student_Registrations.csv", "Student Course Registrations"));
+        enrolledBtnRow.add(btnExport);
+        enrolledBtnRow.add(btnDrop);
+        enrolledCard.add(enrolledBtnRow, BorderLayout.SOUTH);
+
+        // 3. Available Department Courses Panel (Lower Card)
+        JPanel availableCard = UITheme.createCardPanel();
+        availableCard.setLayout(new BorderLayout(0, 8));
+
+        JPanel availableHeader = new JPanel(new BorderLayout());
+        availableHeader.setOpaque(false);
+        JLabel lblAvailableTitle = new JLabel("Available Department Courses for Registration");
+        lblAvailableTitle.setFont(UITheme.FONT_CARD_TITLE);
+        lblAvailableBadge = new JLabel("Department Modules");
+        lblAvailableBadge.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblAvailableBadge.setForeground(UITheme.ACCENT_PURPLE);
+        availableHeader.add(lblAvailableTitle, BorderLayout.WEST);
+        availableHeader.add(lblAvailableBadge, BorderLayout.EAST);
+        availableCard.add(availableHeader, BorderLayout.NORTH);
+
+        String[] colsAvailable = {"Course Code", "Course Title", "Theory Cr", "Practical Cr", "Total Credits", "Assigned Lecturer", "Status"};
+        deptAvailableCoursesTableModel = new DefaultTableModel(colsAvailable, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        deptAvailableCoursesTable = new JTable(deptAvailableCoursesTableModel);
+        JScrollPane scrollAvailable = createTableScrollPane(deptAvailableCoursesTable);
+        availableCard.add(scrollAvailable, BorderLayout.CENTER);
+
+        JPanel availableBtnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        availableBtnRow.setOpaque(false);
+        JButton btnEnrollSelected = UITheme.createButton("Register Selected Course", UITheme.SUCCESS_GREEN, Color.WHITE);
+        JButton btnEnrollAll = UITheme.createButton("Register All Department Courses", UITheme.PRIMARY_BLUE, Color.WHITE);
+        btnEnrollSelected.addActionListener(e -> handleEnrollSelectedCourse());
+        btnEnrollAll.addActionListener(e -> handleEnrollAllDepartmentCourses());
+        availableBtnRow.add(btnEnrollAll);
+        availableBtnRow.add(btnEnrollSelected);
+        availableCard.add(availableBtnRow, BorderLayout.SOUTH);
+
+        // Split Pane (Upper: Currently Enrolled, Lower: Available in Dept)
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, enrolledCard, availableCard);
+        splitPane.setResizeWeight(0.5);
+        splitPane.setBorder(null);
+        panel.add(splitPane, BorderLayout.CENTER);
+
+        // Combo Listeners
+        cmbEnrollDept.addActionListener(e -> {
+            if (!isUpdatingEnrollCombos && cmbEnrollDept.getSelectedIndex() >= 0) {
+                onEnrollDepartmentChanged();
+            }
+        });
+
+        cmbEnrollStudent.addActionListener(e -> {
+            if (!isUpdatingEnrollCombos && cmbEnrollStudent.getSelectedIndex() >= 0) {
+                onEnrollStudentChanged();
+            }
+        });
 
         return panel;
     }
@@ -759,6 +911,9 @@ public class AdminDashboardUI extends BaseDashboardUI {
         loadCoursesData();
         loadNoticesData("ALL");
         loadTimetableData(-1);
+        if (cmbEnrollDept != null && cmbEnrollDept.getItemCount() > 0) {
+            onEnrollDepartmentChanged();
+        }
     }
 
     private void loadMetrics() {
@@ -777,12 +932,14 @@ public class AdminDashboardUI extends BaseDashboardUI {
             cmbUserDepartment.removeAllItems();
             cmbCourseDepartment.removeAllItems();
             cmbTtDepartment.removeAllItems();
+            if (cmbEnrollDept != null) cmbEnrollDept.removeAllItems();
 
             for (Department d : depts) {
                 DepartmentItem item = new DepartmentItem(d.getDepartmentId(), d.getDepartmentName());
                 cmbUserDepartment.addItem(item);
                 cmbCourseDepartment.addItem(item);
                 cmbTtDepartment.addItem(item);
+                if (cmbEnrollDept != null) cmbEnrollDept.addItem(item);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -1268,6 +1425,268 @@ public class AdminDashboardUI extends BaseDashboardUI {
     }
 
     // =========================================================================
+    // UNDERGRADUATE COURSE ENROLLMENT ACTIONS (TG2086)
+    // =========================================================================
+
+    private void onEnrollDepartmentChanged() {
+        if (cmbEnrollDept == null || cmbEnrollStudent == null) return;
+        DepartmentItem selectedDept = (DepartmentItem) cmbEnrollDept.getSelectedItem();
+        int deptId = selectedDept != null ? selectedDept.id : -1;
+
+        isUpdatingEnrollCombos = true;
+        try {
+            cmbEnrollStudent.removeAllItems();
+            List<Map<String, Object>> students = courseDAO.getUndergraduatesByDepartment(deptId);
+            for (Map<String, Object> s : students) {
+                int stuId = (int) s.get("studentId");
+                int uId = (int) s.get("userId");
+                String regNo = (String) s.get("regNo");
+                String fullName = (String) s.get("fullName");
+                int dId = (int) s.get("departmentId");
+                cmbEnrollStudent.addItem(new StudentItem(stuId, uId, regNo, fullName, dId));
+            }
+            if (cmbEnrollStudent.getItemCount() > 0) {
+                cmbEnrollStudent.setSelectedIndex(0);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            isUpdatingEnrollCombos = false;
+        }
+
+        onEnrollStudentChanged();
+    }
+
+    private void onEnrollStudentChanged() {
+        if (cmbEnrollDept == null) return;
+        DepartmentItem selectedDept = (DepartmentItem) cmbEnrollDept.getSelectedItem();
+        int deptId = selectedDept != null ? selectedDept.id : -1;
+        StudentItem selectedStudent = cmbEnrollStudent != null ? (StudentItem) cmbEnrollStudent.getSelectedItem() : null;
+        int studentId = selectedStudent != null ? selectedStudent.studentId : -1;
+
+        loadStudentEnrolledCourses(selectedStudent);
+        loadDeptAvailableCourses(deptId, studentId);
+    }
+
+    private void loadStudentEnrolledCourses(StudentItem student) {
+        if (enrolledCoursesTableModel == null) return;
+        enrolledCoursesTableModel.setRowCount(0);
+        if (student == null) {
+            if (lblEnrolledBadge != null) lblEnrolledBadge.setText("0 Modules Registered");
+            return;
+        }
+
+        try {
+            currentEnrolledList = courseDAO.getStudentEnrolledCourses(student.studentId);
+            int totalCredits = 0;
+            for (Map<String, Object> m : currentEnrolledList) {
+                int tc = (int) m.get("totalCredits");
+                totalCredits += tc;
+                enrolledCoursesTableModel.addRow(new Object[]{
+                        m.get("enrollmentId"),
+                        m.get("courseCode"),
+                        m.get("courseTitle"),
+                        tc + " (" + m.get("creditTheory") + "+" + m.get("creditPractical") + ")",
+                        m.get("lecturerName"),
+                        m.get("academicYear"),
+                        "Sem " + m.get("semester"),
+                        m.get("attemptType")
+                });
+            }
+            if (lblEnrolledBadge != null) {
+                lblEnrolledBadge.setText(currentEnrolledList.size() + " Module(s) Enrolled | Total: " + totalCredits + " Credits");
+            }
+        } catch (AdminOperationException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error Loading Enrollments", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void loadDeptAvailableCourses(int deptId, int studentId) {
+        if (deptAvailableCoursesTableModel == null) return;
+        deptAvailableCoursesTableModel.setRowCount(0);
+        try {
+            currentDeptCoursesList = courseDAO.getDepartmentCoursesWithEnrollment(deptId, studentId);
+            for (Map<String, Object> c : currentDeptCoursesList) {
+                boolean isEnrolled = Boolean.TRUE.equals(c.get("isEnrolled"));
+                String status = isEnrolled ? "✓ REGISTERED" : "AVAILABLE";
+                deptAvailableCoursesTableModel.addRow(new Object[]{
+                        c.get("courseCode"),
+                        c.get("courseTitle"),
+                        c.get("creditTheory"),
+                        c.get("creditPractical"),
+                        c.get("totalCredits"),
+                        c.get("lecturerName"),
+                        status
+                });
+            }
+            DepartmentItem d = (DepartmentItem) cmbEnrollDept.getSelectedItem();
+            String deptName = d != null ? d.name : "Department";
+            if (lblAvailableBadge != null) {
+                lblAvailableBadge.setText(currentDeptCoursesList.size() + " Modules in " + deptName);
+            }
+        } catch (AdminOperationException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error Loading Department Courses", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void handleEnrollSelectedCourse() {
+        StudentItem student = (StudentItem) cmbEnrollStudent.getSelectedItem();
+        if (student == null) {
+            JOptionPane.showMessageDialog(this, "Please select an undergraduate student.", "Selection Required", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int selectedRow = deptAvailableCoursesTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a course module from the table below to register.", "Selection Required", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int modelRow = deptAvailableCoursesTable.convertRowIndexToModel(selectedRow);
+        if (modelRow < 0 || modelRow >= currentDeptCoursesList.size()) return;
+        Map<String, Object> course = currentDeptCoursesList.get(modelRow);
+        String courseCode = (String) course.get("courseCode");
+        String courseTitle = (String) course.get("courseTitle");
+        boolean isEnrolled = Boolean.TRUE.equals(course.get("isEnrolled"));
+
+        if (isEnrolled) {
+            JOptionPane.showMessageDialog(this, "Student [" + student.regNo + "] is ALREADY registered for course " + courseCode + "!", "Already Registered", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int year = 2026;
+        try {
+            year = Integer.parseInt(txtEnrollYear.getText().trim());
+        } catch (Exception ignored) {}
+
+        int sem = 1;
+        try {
+            sem = Integer.parseInt((String) cmbEnrollSemester.getSelectedItem());
+        } catch (Exception ignored) {}
+
+        String attempt = (String) cmbEnrollAttempt.getSelectedItem();
+
+        try {
+            boolean success = courseDAO.enrollStudentInCourse(student.studentId, courseCode, year, sem, attempt);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Student [" + student.regNo + " - " + student.fullName + "]\nsuccessfully registered for:\n" + courseCode + " - " + courseTitle, "Registration Successful", JOptionPane.INFORMATION_MESSAGE);
+                onEnrollStudentChanged();
+            }
+        } catch (AdminOperationException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Registration Failed", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void handleEnrollAllDepartmentCourses() {
+        StudentItem student = (StudentItem) cmbEnrollStudent.getSelectedItem();
+        DepartmentItem dept = (DepartmentItem) cmbEnrollDept.getSelectedItem();
+        if (student == null || dept == null) {
+            JOptionPane.showMessageDialog(this, "Please select both a department and an undergraduate student.", "Selection Required", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int year = 2026;
+        try {
+            year = Integer.parseInt(txtEnrollYear.getText().trim());
+        } catch (Exception ignored) {}
+
+        int sem = 1;
+        try {
+            sem = Integer.parseInt((String) cmbEnrollSemester.getSelectedItem());
+        } catch (Exception ignored) {}
+
+        String attempt = (String) cmbEnrollAttempt.getSelectedItem();
+
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to register student [" + student.regNo + " - " + student.fullName + "]\ninto all available modules in " + dept.name + "\nfor Academic Year " + year + " (Semester " + sem + ")?",
+                "Confirm Batch Registration",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                int count = courseDAO.enrollStudentInAllDepartmentCourses(student.studentId, dept.id, year, sem, attempt);
+                if (count > 0) {
+                    JOptionPane.showMessageDialog(this, "Successfully registered " + count + " new course module(s) for student [" + student.regNo + "]!", "Batch Registration Complete", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Student is already registered for all available modules in this department.", "Information", JOptionPane.INFORMATION_MESSAGE);
+                }
+                onEnrollStudentChanged();
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Registration Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void handleDropEnrolledCourse() {
+        int selectedRow = enrolledCoursesTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an enrolled course from the upper table to drop.", "Selection Required", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int modelRow = enrolledCoursesTable.convertRowIndexToModel(selectedRow);
+        if (modelRow < 0 || modelRow >= currentEnrolledList.size()) return;
+        Map<String, Object> enrolled = currentEnrolledList.get(modelRow);
+        int enrollmentId = (int) enrolled.get("enrollmentId");
+        String courseCode = (String) enrolled.get("courseCode");
+        String courseTitle = (String) enrolled.get("courseTitle");
+        StudentItem student = (StudentItem) cmbEnrollStudent.getSelectedItem();
+        String studentName = student != null ? student.regNo : "student";
+
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to unregister/drop " + courseCode + " (" + courseTitle + ")\nfor " + studentName + "?",
+                "Confirm Course Drop",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                boolean success = courseDAO.unenrollStudentFromCourse(enrollmentId);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Course module [" + courseCode + "] dropped successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    onEnrollStudentChanged();
+                }
+            } catch (AdminOperationException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Drop Failed", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void navigateToEnrollmentForSelectedUser() {
+        if (selectedUserId == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an undergraduate user from the table first.", "Selection Required", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String role = (String) cmbUserRole.getSelectedItem();
+        if (!"UNDERGRADUATE".equalsIgnoreCase(role)) {
+            JOptionPane.showMessageDialog(this, "Course enrollment is only applicable to UNDERGRADUATE students.", "Invalid Role", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        DepartmentItem dept = (DepartmentItem) cmbUserDepartment.getSelectedItem();
+        setActiveTab("enrollment");
+
+        if (dept != null && cmbEnrollDept != null) {
+            cmbEnrollDept.setSelectedItem(dept);
+            onEnrollDepartmentChanged();
+        }
+
+        if (cmbEnrollStudent != null) {
+            for (int i = 0; i < cmbEnrollStudent.getItemCount(); i++) {
+                StudentItem s = cmbEnrollStudent.getItemAt(i);
+                if (s != null && s.userId == selectedUserId) {
+                    cmbEnrollStudent.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+    }
+
+    // =========================================================================
     // NOTICE FORM ACTIONS
     // =========================================================================
 
@@ -1529,6 +1948,40 @@ public class AdminDashboardUI extends BaseDashboardUI {
         @Override
         public int hashCode() {
             return Integer.hashCode(id);
+        }
+    }
+
+    private static class StudentItem {
+        final int studentId;
+        final int userId;
+        final String regNo;
+        final String fullName;
+        final int departmentId;
+
+        public StudentItem(int studentId, int userId, String regNo, String fullName, int departmentId) {
+            this.studentId = studentId;
+            this.userId = userId;
+            this.regNo = regNo;
+            this.fullName = fullName;
+            this.departmentId = departmentId;
+        }
+
+        @Override
+        public String toString() {
+            return regNo + " - " + fullName;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            StudentItem that = (StudentItem) o;
+            return studentId == that.studentId;
+        }
+
+        @Override
+        public int hashCode() {
+            return Integer.hashCode(studentId);
         }
     }
 
