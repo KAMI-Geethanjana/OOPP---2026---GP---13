@@ -288,18 +288,28 @@ public class AdminDashboardUI extends BaseDashboardUI {
         panel.add(metricsGrid, BorderLayout.NORTH);
 
         // System Overview Info Card
-        JPanel infoContent = new JPanel(new GridLayout(5, 1, 0, 8));
+        JPanel infoContent = new JPanel(new GridLayout(5, 1, 0, 10));
         infoContent.setOpaque(false);
-        infoContent.add(new JLabel("• System Architecture: MVC with Singleton Connection & Shared common base"));
-        infoContent.add(new JLabel("• Active Session: " + currentAdminUser.getFullName() + " (" + currentAdminUser.getRoleDisplayName() + ")"));
-        infoContent.add(new JLabel("• Multithreading Services: Notice Ticker (Thread) and Live Clock (Runnable) running smoothly"));
-        infoContent.add(new JLabel("• Security Policy: Automatic lock after 5 consecutive failed login attempts"));
-        infoContent.add(new JLabel("• Database: ftms_db running on MySQL localhost"));
+        infoContent.add(createSystemInfoLabel("System Architecture", "MVC with Singleton Connection & Shared common base"));
+        infoContent.add(createSystemInfoLabel("Active Session", currentAdminUser.getFullName() + " (" + currentAdminUser.getRoleDisplayName() + ")"));
+        infoContent.add(createSystemInfoLabel("Multithreading Services", "Notice Ticker (Thread) and Live Clock (Runnable) running smoothly"));
+        infoContent.add(createSystemInfoLabel("Security Policy", "Automatic lock after 5 consecutive failed login attempts"));
+        infoContent.add(createSystemInfoLabel("Database", "ftms_db running on MySQL localhost"));
 
         JPanel card = createSectionCard("System Status & Architecture Summary", infoContent);
         panel.add(card, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    private JLabel createSystemInfoLabel(String title, String description) {
+        String safeDesc = description != null ? description.replace("&", "&amp;") : "";
+        JLabel label = new JLabel(String.format(
+                "<html><span style='font-family:Segoe UI, sans-serif; font-size:16px; color:#1E293B;'>&bull;&nbsp;&nbsp;<b>%s:</b> <span style='color:#334155;'>%s</span></span></html>",
+                title, safeDesc
+        ));
+        label.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        return label;
     }
 
     private JPanel buildUsersPanel() {

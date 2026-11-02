@@ -13,7 +13,7 @@ public final class DBConnection {
     private static final String URL = "jdbc:mysql://localhost:3306/ftms_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
     private static final String USER = "root";
     // Set this to your local MySQL password before running the project.
-    private static final String PASSWORD = "";
+    private static final String PASSWORD = "3909";
 
     private DBConnection() {
         // Prevent objects of this utility class from being created.
@@ -25,7 +25,17 @@ public final class DBConnection {
         } catch (ClassNotFoundException ex) {
             throw new SQLException("MySQL JDBC driver was not found. Add Connector/J to the project libraries.", ex);
         }
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+        try {
+            return DriverManager.getConnection(URL, USER, PASSWORD);
+        } catch (SQLException ex) {
+            if (!PASSWORD.isEmpty()) {
+                try {
+                    return DriverManager.getConnection(URL, USER, "");
+                } catch (SQLException ignored) {
+                }
+            }
+            throw ex;
+        }
     }
 
     /** Kept for compatibility; individual DAO methods close their own connections. */

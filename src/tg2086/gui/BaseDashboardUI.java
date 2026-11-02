@@ -324,7 +324,7 @@ public abstract class BaseDashboardUI extends JFrame {
 
         if (cardTitle != null && !cardTitle.trim().isEmpty()) {
             JLabel lblTitle = new JLabel(cardTitle);
-            lblTitle.setFont(UITheme.FONT_CARD_TITLE);
+            lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 17));
             lblTitle.setForeground(UITheme.TEXT_DARK);
             lblTitle.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createMatteBorder(0, 0, 1, 0, UITheme.CARD_BORDER),
