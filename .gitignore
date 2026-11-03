@@ -37,3 +37,6 @@ Desktop.ini
 ### Log files ###
 *.log
 resources/profile_photos/*
+
+### Project documentation / extra local folders ###
+OOP Group 13 Project/
