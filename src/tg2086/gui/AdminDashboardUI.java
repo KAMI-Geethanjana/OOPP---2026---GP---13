@@ -1109,20 +1109,44 @@ public class AdminDashboardUI extends BaseDashboardUI {
     // =========================================================================
 
     private void populateUserForm(int row) {
-        selectedUserId = (int) usersTableModel.getValueAt(row, 0);
-        txtUserUsername.setText((String) usersTableModel.getValueAt(row, 1));
-        txtUserFullName.setText((String) usersTableModel.getValueAt(row, 2));
-        txtUserEmail.setText((String) usersTableModel.getValueAt(row, 3));
-        txtUserPhone.setText((String) usersTableModel.getValueAt(row, 4));
-        cmbUserRole.setSelectedItem(usersTableModel.getValueAt(row, 5));
-        chkUserActive.setSelected("ACTIVE".equals(usersTableModel.getValueAt(row, 6)));
-        txtUserExtraId.setText((String) usersTableModel.getValueAt(row, 8));
+        if (row < 0) return;
+        int modelRow = usersTable.convertRowIndexToModel(row);
+        if (modelRow < 0 || modelRow >= usersTableModel.getRowCount()) return;
 
-        if (row >= 0 && row < currentUsersList.size()) {
-            Map<String, Object> u = currentUsersList.get(row);
+        selectedUserId = (int) usersTableModel.getValueAt(modelRow, 0);
+        txtUserUsername.setText((String) usersTableModel.getValueAt(modelRow, 1));
+        txtUserFullName.setText((String) usersTableModel.getValueAt(modelRow, 2));
+        txtUserEmail.setText((String) usersTableModel.getValueAt(modelRow, 3));
+        txtUserPhone.setText((String) usersTableModel.getValueAt(modelRow, 4));
+        cmbUserRole.setSelectedItem(usersTableModel.getValueAt(modelRow, 5));
+        chkUserActive.setSelected("ACTIVE".equals(usersTableModel.getValueAt(modelRow, 6)));
+        txtUserExtraId.setText((String) usersTableModel.getValueAt(modelRow, 8));
+
+        // Auto-select Department & Batch in form
+        String deptName = (String) usersTableModel.getValueAt(modelRow, 9);
+        int deptId = -1;
+        String batchVal = "";
+        if (modelRow >= 0 && modelRow < currentUsersList.size()) {
+            Map<String, Object> u = currentUsersList.get(modelRow);
+            Object dIdObj = u.get("departmentId");
+            if (dIdObj instanceof Number) {
+                deptId = ((Number) dIdObj).intValue();
+            }
+            batchVal = (String) u.getOrDefault("batch", "");
             String picPath = (String) u.get("profilePic");
             String role = (String) u.get("role");
             updateAvatarPreview(picPath, role);
+        }
+        txtUserBatch.setText(batchVal != null ? batchVal : "");
+
+        if (cmbUserDepartment != null) {
+            for (int i = 0; i < cmbUserDepartment.getItemCount(); i++) {
+                DepartmentItem item = cmbUserDepartment.getItemAt(i);
+                if (item != null && (item.id == deptId || (deptName != null && deptName.equalsIgnoreCase(item.name)))) {
+                    cmbUserDepartment.setSelectedIndex(i);
+                    break;
+                }
+            }
         }
     }
 
@@ -1147,7 +1171,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
             if (success) {
                 JOptionPane.showMessageDialog(this, "User [" + username + "] registered successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 clearUserForm();
-                loadUsersData("ALL");
+                loadUsersData(cmbFilterRole != null ? (String) cmbFilterRole.getSelectedItem() : "ALL");
                 loadLecturersForCourses();
                 loadMetrics();
             }
@@ -1176,7 +1200,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
             if (success) {
                 JOptionPane.showMessageDialog(this, "User updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 clearUserForm();
-                loadUsersData("ALL");
+                loadUsersData(cmbFilterRole != null ? (String) cmbFilterRole.getSelectedItem() : "ALL");
                 loadLecturersForCourses();
             }
         } catch (AdminOperationException ex) {
@@ -1267,6 +1291,9 @@ public class AdminDashboardUI extends BaseDashboardUI {
         chkUserActive.setSelected(true);
         usersTable.clearSelection();
         cmbUserRole.setSelectedIndex(0);
+        if (cmbUserDepartment != null && cmbUserDepartment.getItemCount() > 0) {
+            cmbUserDepartment.setSelectedIndex(0);
+        }
         if (avatarCard != null) {
             avatarCard.setVisible(true);
             if (avatarCard.getParent() != null) {
