@@ -1,3 +1,4 @@
+//database operation
 package tg2088.dao;
 
 import tg2088.exception.QuizOperationException;
