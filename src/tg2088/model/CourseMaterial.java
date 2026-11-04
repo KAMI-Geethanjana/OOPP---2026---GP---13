@@ -2,23 +2,12 @@ package tg2088.model;
 
 import java.sql.Date;
 
-/**
- * ============================================================================
- * Lessons 01, 02, 03 (Part 04): Classes, Objects, this & Encapsulation
- * ============================================================================
- * Reference:
- * - Lesson 02, Slide 12-14: Class anatomy (Fields, Initializers, Constructors, Methods)
- * - Lesson 02 Part 02, Slide 5-7: Usage of 'this' to distinguish instance variables
- * - Lesson 02 Part 02, Slide 11: Instance Initializer block
- * - Lesson 03 Part 04, Slide 9-13: Encapsulation (Private fields + Public getters/setters)
- * - Lesson 03 Part 04, Slide 20: Control over data via mutator validation
- * ============================================================================
- */
+
 public class CourseMaterial {
 
-    // ========================================================================
-    // Private Fields (Data / Information Hiding - Lesson 03 Part 04, Slide 11)
-    // ========================================================================
+
+    // Private Fields (Data / Information Hiding
+
     private int materialId;
     private String courseCode;
     private int lecturerId;
@@ -26,27 +15,28 @@ public class CourseMaterial {
     private String filePath;
     private Date uploadedDate;
 
-    // ========================================================================
-    // Instance Initializer Block (Lesson 02 Part 02, Slide 11-12)
+
+    // Instance Initializer Block
     // Runs before constructor execution every time an instance is created
-    // ========================================================================
+
     {
         this.uploadedDate = new Date(System.currentTimeMillis());
     }
 
-    // ========================================================================
-    // Default Constructor (no-arg) (Lesson 02, Slide 34)
-    // Demonstrates Constructor Chaining using 'this' keyword (Lesson 02 Part 02, Slide 8-9)
-    // ========================================================================
+
+    // Default Constructor
+    // Demonstrates Constructor Chaining using 'this' keyword
+
     public CourseMaterial() {
+
         this(0, "", 0, "Untitled Material", "", new Date(System.currentTimeMillis()));
     }
 
-    // ========================================================================
-    // Parameterized Constructor (Lesson 02, Slide 38)
-    // ========================================================================
+
+    // Parameterized Constructor
+
     public CourseMaterial(int materialId, String courseCode, int lecturerId, String title, String filePath, Date uploadedDate) {
-        // 'this' refers to the current object instance (Lesson 02 Part 02, Slide 5-7)
+        // 'this' refers to the current object instance
         this.materialId = materialId;
         this.courseCode = courseCode;
         this.lecturerId = lecturerId;
@@ -57,9 +47,9 @@ public class CourseMaterial {
         }
     }
 
-    // ========================================================================
-    // Accessors (Getters) and Mutators (Setters) with Encapsulation (Lesson 03 Part 04)
-    // ========================================================================
+
+    // Accessors (Getters) and Mutators (Setters) with Encapsulation
+
     public int getMaterialId() {
         return this.materialId;
     }
@@ -120,9 +110,8 @@ public class CourseMaterial {
         }
     }
 
-    // ========================================================================
-    // Overridden toString method (Lesson 02 Part 02, Slide 10)
-    // ========================================================================
+
+    // Overridden toString method
     @Override
     public String toString() {
         return "CourseMaterial [materialId=" + this.materialId +
@@ -132,9 +121,9 @@ public class CourseMaterial {
                 ", uploadedDate=" + this.uploadedDate + "]";
     }
 
-    // ========================================================================
-    // Methods specified in UML Class Diagram (ICT2132 Task 02)
-    // ========================================================================
+
+    // Methods specified in UML Class Diagram
+
     public void upload() {
         System.out.println("Uploading course material: " + this.title);
     }

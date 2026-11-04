@@ -5,75 +5,65 @@ import tg2088.gui.LecturerDashboard;
 
 import javax.swing.JFrame;
 
-/**
- * ============================================================================
- * Lessons 01, 02, 03 (Part 01, 02, 04): Inheritance, Polymorphism & Encapsulation
- * ============================================================================
- * Reference:
- * - Lesson 03 Part 01, Slide 6-9: Single Inheritance ('extends' User)
- * - Lesson 03 Part 01, Slide 32-41: Subclass constructors calling 'super(...)'
- * - Lesson 03 Part 01, Slide 26-28: Method Overriding with @Override annotation
- * - Lesson 03 Part 02, Slide 23-26: Dynamic Polymorphism (Dynamic Binding of openDashboard)
- * - Lesson 03 Part 04, Slide 11-20: Data Hiding & Setters validation
- * ============================================================================
- */
+
 public class Lecturer extends User {
 
-    // ========================================================================
-    // Private Subclass Fields (Encapsulation - Lesson 03 Part 04, Slide 11)
-    // ========================================================================
+    //private variables(attributes)-This is a Encapsulation method
     private int lecturerId;
     private String employeeId;
     private int departmentId;
     private String departmentName;
 
-    // ========================================================================
-    // Instance Initializer Block (Lesson 02 Part 02, Slide 11)
-    // Runs before constructor to ensure consistent initialization
-    // ========================================================================
+
+    // Instance Initializer Block
+    //Instance Initializer Block runs before the constructor.
+
     {
         this.departmentName = "Faculty of Technology";
     }
 
-    // ========================================================================
-    // Default Constructor (no-arg) (Lesson 02, Slide 34)
-    // Constructor Chaining within the same class using 'this(...)' (Lesson 02 Part 02, Slide 8-9)
-    // ========================================================================
+
+    // Default Constructor
+    // Constructor Chaining within the same class using 'this(...)'
+
     public Lecturer() {
+
         this(0, "lecturer_temp", "", "New Lecturer", "", "", 0, "EMP000", 1);
     }
 
-    // ========================================================================
-    // Parameterized Constructor (Lesson 02, Slide 38)
-    // super(...) must be the very first statement (Lesson 03 Part 01, Slide 35 & 41)
-    // ========================================================================
+
+    // Parameterized Constructor
+    // super(...) must be the very first statement
+
     public Lecturer(int userId, String username, String passwordHash, String fullName,
                     String email, String phoneNo, int lecturerId, String employeeId, int departmentId) {
         // Explicitly calling superclass (User) constructor
         super(userId, username, passwordHash, fullName, email, phoneNo, "LECTURER");
         
-        // 'this' refers to current class instance fields (Lesson 02 Part 02, Slide 5-7)
+        // 'this' refers to current class instance fields
+        // assign  parameter instance variable
         this.lecturerId = lecturerId;
         this.employeeId = employeeId;
         this.departmentId = departmentId;
     }
 
-    // ========================================================================
-    // Method Overriding (Dynamic Polymorphism - Lesson 03 Part 01 Slide 26, Part 02 Slide 23-26)
-    // ========================================================================
+
+    // Method Overriding Dynamic Polymorphism
+    //Method Overriding means redefining a parent class method in a child class
+
     @Override
     public String getRoleDisplayName() {
+
         return "Lecturer";
     }
 
-    /**
-     * Pure Dynamic Binding / Runtime Polymorphism:
-     * When LoginFrame calls user.openDashboard(this), the JVM resolves and invokes
-     * this specific Lecturer method at runtime! (Lesson 03 Part 02, Slide 23-26)
-     */
+
     @Override
+    //It receives the parent window as a parameter.
+    //open the lecture dashboard
     public void openDashboard(JFrame parent) {
-        // Lesson 03 Part 01, Slide 49: 'instanceof' operator check
+
+        //Checking whether an object is an instance of the relevant class.
         if (parent != null && parent instanceof JFrame) {
             parent.dispose();
         }
@@ -81,52 +71,64 @@ public class Lecturer extends User {
         dashboard.setVisible(true);
     }
 
-    // ========================================================================
-    // Getters and Setters with Encapsulation & Validation (Lesson 03 Part 04, Slide 20)
-    // ========================================================================
+
+    // Getters and Setters with Encapsulation & Validation
+    //Get the lecture id
+    //A getter method is used to read a private variable.
+
     public int getLecturerId() {
+
         return this.lecturerId;
     }
 
+    //A setter method is used to update a private variable with validation.
     public void setLecturerId(int lecturerId) {
         if (lecturerId >= 0) {
             this.lecturerId = lecturerId;
         }
     }
 
+    //It returns the employee ID.
     public String getEmployeeId() {
+
         return this.employeeId;
     }
 
+
     public void setEmployeeId(String employeeId) {
+        //It checks whether the employee ID is not null or empty before updating.
         if (employeeId != null && !employeeId.trim().isEmpty()) {
             this.employeeId = employeeId.trim();
         }
     }
 
+    //het the department id
     public int getDepartmentId() {
+
         return this.departmentId;
     }
-
+    //It updates the department ID only if it is greater than zero.
     public void setDepartmentId(int departmentId) {
         if (departmentId > 0) {
             this.departmentId = departmentId;
         }
     }
 
+    //Get the department name
     public String getDepartmentName() {
+
         return this.departmentName;
     }
-
+    //It updates the department name after validation.
     public void setDepartmentName(String departmentName) {
         if (departmentName != null && !departmentName.trim().isEmpty()) {
             this.departmentName = departmentName.trim();
         }
     }
 
-    // ========================================================================
+
     // Overriding toString() method (Lesson 02 Part 02, Slide 10)
-    // ========================================================================
+
     @Override
     public String toString() {
         return "Lecturer [lecturerId=" + this.lecturerId +
@@ -135,9 +137,9 @@ public class Lecturer extends User {
                 ", dept=" + this.departmentName + "]";
     }
 
-    // ========================================================================
+
     // Methods specified in UML Class Diagram (ICT2132 Task 02)
-    // ========================================================================
+
     public void addCourseMeterial() {
         System.out.println("Course material addition initiated by lecturer: " + getFullName());
     }
@@ -145,12 +147,14 @@ public class Lecturer extends User {
     public void updateCourseMaterial() {
         System.out.println("Course material update initiated by lecturer: " + getFullName());
     }
-
+    //This method is used to upload student marks.
     public void uploadMarks() {
+
         System.out.println("Marks upload initiated by lecturer: " + getFullName());
     }
 
     public void viewStudentDetails() {
+
         System.out.println("Viewing student details for lecturer: " + getFullName());
     }
 
@@ -160,14 +164,17 @@ public class Lecturer extends User {
     }
 
     public void viewMarks() {
+
         System.out.println("Viewing marks table for lecturer: " + getFullName());
     }
 
     public void viewGrades() {
+
         System.out.println("Viewing calculated UGC grades for lecturer: " + getFullName());
     }
 
     public double viewGPA() {
+
         return 4.0;
     }
 
@@ -180,6 +187,7 @@ public class Lecturer extends User {
     }
 
     public void viewNotices() {
+
         System.out.println("Viewing notices for lecturer: " + getFullName());
     }
 }
