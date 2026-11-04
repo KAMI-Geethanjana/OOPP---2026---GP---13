@@ -2,13 +2,7 @@ package common.model;
 
 import javax.swing.JFrame;
 
-/**
- * User - Abstract Base Class for all system actors.
- * Demonstrates:
- * 1. Abstraction (cannot be instantiated directly, defines core contracts)
- * 2. Encapsulation (private fields, controlled access via getters/setters)
- * 3. Polymorphic dashboard opening via openDashboard()
- */
+
 public abstract class User {
 
     private int userId;
