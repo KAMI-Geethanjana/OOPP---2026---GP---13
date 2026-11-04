@@ -2,25 +2,12 @@ package tg2088.model;
 
 import java.io.Serializable;
 
-/**
- * ============================================================================
- * Lessons 01, 02, 03 (Part 04): Classes, Objects, this & Encapsulation
- * ============================================================================
- * Reference:
- * - Lesson 02, Slide 12-14: Class anatomy
- * - Lesson 02 Part 02, Slide 5-7: Usage of 'this' keyword
- * - Lesson 02 Part 02, Slide 11: Instance Initializer block
- * - Lesson 03 Part 04, Slide 9-13: Encapsulation (Private fields + Public getters/setters)
- * - Lesson 03 Part 04, Slide 20: Mutator input validation
- * ============================================================================
- */
+
 public class QuizQuestion implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    // ========================================================================
-    // Private Fields (Encapsulation - Lesson 03 Part 04)
-    // ========================================================================
+
     private int questionId;
     private int quizId;
     private String questionText;
@@ -31,25 +18,24 @@ public class QuizQuestion implements Serializable {
     private char correctOption; // 'A', 'B', 'C', or 'D'
     private double points;
 
-    // ========================================================================
-    // Instance Initializer Block (Lesson 02 Part 02, Slide 11-12)
-    // ========================================================================
+
     {
         this.correctOption = 'A';
         this.points = 10.0;
     }
 
-    // ========================================================================
-    // Default Constructor (Lesson 02, Slide 34)
-    // Demonstrates Constructor Chaining using 'this' (Lesson 02 Part 02, Slide 8-9)
-    // ========================================================================
+
+    // Default Constructor
+    // Demonstrates Constructor Chaining using 'this' )
+
     public QuizQuestion() {
+
         this(0, 0, "", "", "", "", "", 'A', 10.0);
     }
 
-    // ========================================================================
-    // Parameterized Constructor (Lesson 02, Slide 38)
-    // ========================================================================
+
+    // Parameterized Constructor
+
     public QuizQuestion(int questionId, int quizId, String questionText,
                         String optionA, String optionB, String optionC, String optionD,
                         char correctOption, double points) {
@@ -66,9 +52,9 @@ public class QuizQuestion implements Serializable {
         }
     }
 
-    // ========================================================================
+
     // Getters and Setters with Validation
-    // ========================================================================
+
     public int getQuestionId() {
         return this.questionId;
     }
@@ -154,9 +140,9 @@ public class QuizQuestion implements Serializable {
         }
     }
 
-    /**
-     * Helper to return the text of the correct option.
-     */
+
+     // Helper to return the text of the correct option.
+
     public String getCorrectAnswerText() {
         switch (correctOption) {
             case 'A': return optionA;

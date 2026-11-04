@@ -2,20 +2,14 @@ package tg2088.model;
 
 import java.io.Serializable;
 
-/**
- * ============================================================================
- * Lessons 01, 02, 03 (Part 04): Classes, Objects, this & Encapsulation
- * ============================================================================
- * Model representing a student's submission / attempt on a specific Quiz.
- * ============================================================================
- */
+
 public class QuizAttempt implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    // ========================================================================
-    // Private Fields (Lesson 03 Part 04)
-    // ========================================================================
+
+    // Private Fields
+
     private int attemptId;
     private int quizId;
     private String studentRegNo;
@@ -26,9 +20,9 @@ public class QuizAttempt implements Serializable {
     private String status; // "PASS", "FAIL"
     private String attemptedAt;
 
-    // ========================================================================
-    // Instance Initializer Block (Lesson 02 Part 02)
-    // ========================================================================
+
+    // Instance Initializer Block
+
     {
         this.score = 0.0;
         this.maxScore = 100.0;
@@ -36,16 +30,17 @@ public class QuizAttempt implements Serializable {
         this.status = "FAIL";
     }
 
-    // ========================================================================
-    // Default Constructor (Lesson 02, Slide 34)
-    // ========================================================================
+
+    // Default Constructor
+
     public QuizAttempt() {
+
         this(0, 0, "", "", 0.0, 100.0, 0.0, "FAIL", "");
     }
 
-    // ========================================================================
-    // Parameterized Constructor (Lesson 02, Slide 38)
-    // ========================================================================
+
+    // Parameterized Constructor
+
     public QuizAttempt(int attemptId, int quizId, String studentRegNo, String studentName,
                        double score, double maxScore, double percentage, String status, String attemptedAt) {
         this.attemptId = attemptId;
@@ -59,10 +54,11 @@ public class QuizAttempt implements Serializable {
         this.attemptedAt = attemptedAt;
     }
 
-    // ========================================================================
+
     // Getters and Setters
-    // ========================================================================
+
     public int getAttemptId() {
+
         return this.attemptId;
     }
 
@@ -73,6 +69,7 @@ public class QuizAttempt implements Serializable {
     }
 
     public int getQuizId() {
+
         return this.quizId;
     }
 
@@ -83,6 +80,7 @@ public class QuizAttempt implements Serializable {
     }
 
     public String getStudentRegNo() {
+
         return this.studentRegNo;
     }
 
@@ -91,6 +89,7 @@ public class QuizAttempt implements Serializable {
     }
 
     public String getStudentName() {
+
         return this.studentName;
     }
 
@@ -110,6 +109,7 @@ public class QuizAttempt implements Serializable {
     }
 
     public double getMaxScore() {
+
         return this.maxScore;
     }
 
@@ -121,18 +121,22 @@ public class QuizAttempt implements Serializable {
     }
 
     public double getPercentage() {
+
         return this.percentage;
     }
 
     public void setPercentage(double percentage) {
+
         this.percentage = percentage;
     }
 
     public String getStatus() {
+
         return this.status;
     }
 
     public void setStatus(String status) {
+
         this.status = status;
     }
 

@@ -2,25 +2,14 @@ package tg2088.model;
 
 import java.io.Serializable;
 
-/**
- * ============================================================================
- * Lessons 01, 02, 03 (Part 04): Classes, Objects, this & Encapsulation
- * ============================================================================
- * Reference:
- * - Lesson 02, Slide 12-14: Class anatomy (Fields, Initializers, Constructors, Methods)
- * - Lesson 02 Part 02, Slide 5-7: Usage of 'this' to distinguish instance variables
- * - Lesson 02 Part 02, Slide 11: Instance Initializer block
- * - Lesson 03 Part 04, Slide 9-13: Encapsulation (Private fields + Public getters/setters)
- * - Lesson 03 Part 04, Slide 20: Control over data via mutator validation
- * ============================================================================
- */
+
 public class Quiz implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    // ========================================================================
-    // Private Fields (Encapsulation / Information Hiding - Lesson 03 Part 04)
-    // ========================================================================
+
+    // Private Fields (Encapsulation / Information Hiding )
+
     private int quizId;
     private String courseCode;
     private int lecturerId;
@@ -32,9 +21,9 @@ public class Quiz implements Serializable {
     private String createdAt;
     private int questionCount;
 
-    // ========================================================================
-    // Instance Initializer Block (Lesson 02 Part 02, Slide 11-12)
-    // ========================================================================
+
+    // Instance Initializer Block
+
     {
         this.durationMinutes = 30;
         this.totalMarks = 100.0;
@@ -42,17 +31,18 @@ public class Quiz implements Serializable {
         this.questionCount = 0;
     }
 
-    // ========================================================================
-    // Default Constructor (no-arg) (Lesson 02, Slide 34)
-    // Demonstrates Constructor Chaining using 'this' (Lesson 02 Part 02, Slide 8-9)
-    // ========================================================================
+
+    // Default Constructor
+    // Demonstrates Constructor Chaining using 'this'
+
     public Quiz() {
+
         this(0, "", 0, "Untitled Quiz", "", 30, 100.0, true, "");
     }
 
-    // ========================================================================
-    // Parameterized Constructor (Lesson 02, Slide 38)
-    // ========================================================================
+
+    // Parameterized Constructor
+
     public Quiz(int quizId, String courseCode, int lecturerId, String title, 
                 String description, int durationMinutes, double totalMarks, 
                 boolean isActive, String createdAt) {
@@ -71,10 +61,11 @@ public class Quiz implements Serializable {
         this.createdAt = createdAt;
     }
 
-    // ========================================================================
+
     // Accessors and Mutators (Getters & Setters) with Validation
-    // ========================================================================
+
     public int getQuizId() {
+
         return this.quizId;
     }
 
@@ -85,6 +76,7 @@ public class Quiz implements Serializable {
     }
 
     public String getCourseCode() {
+
         return this.courseCode;
     }
 
@@ -95,6 +87,7 @@ public class Quiz implements Serializable {
     }
 
     public int getLecturerId() {
+
         return this.lecturerId;
     }
 
@@ -105,6 +98,7 @@ public class Quiz implements Serializable {
     }
 
     public String getTitle() {
+
         return this.title;
     }
 
@@ -115,6 +109,7 @@ public class Quiz implements Serializable {
     }
 
     public String getDescription() {
+
         return this.description;
     }
 
@@ -123,6 +118,7 @@ public class Quiz implements Serializable {
     }
 
     public int getDurationMinutes() {
+
         return this.durationMinutes;
     }
 
@@ -133,6 +129,7 @@ public class Quiz implements Serializable {
     }
 
     public double getTotalMarks() {
+
         return this.totalMarks;
     }
 
