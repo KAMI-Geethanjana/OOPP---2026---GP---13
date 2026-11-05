@@ -15,6 +15,9 @@ import tg2123.model.TechnicalOfficer;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.io.File;
@@ -23,6 +26,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -59,6 +63,10 @@ public class TechnicalOfficerDashboard extends JFrame {
     // Medicals components
     private JTable tblMedicals;
     private DefaultTableModel medicalsTableModel;
+    private TableRowSorter<DefaultTableModel> medicalsTableSorter;
+    private JComboBox<String> cbMedicalStatusFilter;
+    private JTextField txtMedicalRegSearch;
+    private JLabel lblMedicalFilterResultCount;
     private List<Medical> medicalRequests = List.of();
     private JLabel lblMedicalStudent;
     private JLabel lblMedicalRequestId;
@@ -470,18 +478,82 @@ public class TechnicalOfficerDashboard extends JFrame {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
 
-        JPanel top = new JPanel(new BorderLayout());
+        JPanel top = new JPanel(new BorderLayout(0, 8));
         top.setOpaque(false);
 
         JLabel lblTitle = new JLabel(
                 "Undergraduate Medical Certificate Requests (FR-TO-02, FR-TO-03)");
         lblTitle.setFont(UITheme.FONT_HEADER);
-        top.add(lblTitle, BorderLayout.WEST);
+        top.add(lblTitle, BorderLayout.NORTH);
+
+        JPanel filterBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        filterBar.setOpaque(false);
+
+        JLabel searchLabel = new JLabel("Registration number:");
+        searchLabel.setFont(UITheme.FONT_BODY_BOLD);
+        filterBar.add(searchLabel);
+
+        txtMedicalRegSearch = UITheme.createTextField(18);
+        txtMedicalRegSearch.setToolTipText(
+                "Enter all or part of a student registration number");
+        filterBar.add(txtMedicalRegSearch);
+
+        JButton btnClearSearch = new JButton("Clear");
+        btnClearSearch.setFont(UITheme.FONT_BODY);
+        btnClearSearch.setToolTipText("Clear the registration number search");
+        btnClearSearch.setEnabled(false);
+        btnClearSearch.addActionListener(e -> txtMedicalRegSearch.setText(""));
+        filterBar.add(btnClearSearch);
+
+        JLabel statusLabel = new JLabel("Status:");
+        statusLabel.setFont(UITheme.FONT_BODY_BOLD);
+        filterBar.add(statusLabel);
+
+        cbMedicalStatusFilter = new JComboBox<>(new String[]{
+                "All statuses", "Pending", "Approved", "Rejected"
+        });
+        cbMedicalStatusFilter.setFont(UITheme.FONT_BODY);
+        cbMedicalStatusFilter.setPreferredSize(new Dimension(140, 36));
+        cbMedicalStatusFilter.setToolTipText("Show requests with a selected status");
+        cbMedicalStatusFilter.addActionListener(e -> applyMedicalStatusFilter());
+        filterBar.add(cbMedicalStatusFilter);
 
         JButton btnRefresh = UITheme.createButton(
                 "Refresh List", UITheme.PRIMARY_BLUE, Color.WHITE);
         btnRefresh.addActionListener(e -> loadMedicalsData());
-        top.add(btnRefresh, BorderLayout.EAST);
+        filterBar.add(btnRefresh);
+
+        lblMedicalFilterResultCount = new JLabel();
+        lblMedicalFilterResultCount.setFont(UITheme.FONT_SMALL);
+        lblMedicalFilterResultCount.setForeground(UITheme.TEXT_MUTED);
+        filterBar.add(lblMedicalFilterResultCount);
+
+        txtMedicalRegSearch.getDocument().addDocumentListener(new DocumentListener() {
+            private void updateSearch() {
+                btnClearSearch.setEnabled(!txtMedicalRegSearch.getText().isEmpty());
+                applyMedicalStatusFilter();
+            }
+
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+                updateSearch();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent event) {
+                updateSearch();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent event) {
+                updateSearch();
+            }
+        });
+
+        JPanel topActions = new JPanel(new BorderLayout());
+        topActions.setOpaque(false);
+        topActions.add(filterBar, BorderLayout.WEST);
+        top.add(topActions, BorderLayout.SOUTH);
 
         card.add(top, BorderLayout.NORTH);
 
@@ -499,6 +571,8 @@ public class TechnicalOfficerDashboard extends JFrame {
 
         tblMedicals = new JTable(medicalsTableModel);
         UITheme.styleTable(tblMedicals);
+        medicalsTableSorter = new TableRowSorter<>(medicalsTableModel);
+        tblMedicals.setRowSorter(medicalsTableSorter);
         tblMedicals.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tblMedicals.setToolTipText("Select a medical record to view its details below.");
         tblMedicals.getSelectionModel().addListSelectionListener(event -> {
@@ -565,6 +639,36 @@ public class TechnicalOfficerDashboard extends JFrame {
         card.add(bottomBar, BorderLayout.SOUTH);
 
         return card;
+    }
+
+    private void applyMedicalStatusFilter() {
+        if (medicalsTableSorter == null) {
+            return;
+        }
+
+        List<RowFilter<DefaultTableModel, Integer>> filters = new java.util.ArrayList<>();
+        String selectedStatus = (String) cbMedicalStatusFilter.getSelectedItem();
+        if (selectedStatus != null && !"All statuses".equals(selectedStatus)) {
+            filters.add(RowFilter.regexFilter(
+                    "(?i)^" + Pattern.quote(selectedStatus.toUpperCase(Locale.ROOT)) + "$", 7));
+        }
+
+        String registrationSearch = txtMedicalRegSearch.getText().trim();
+        if (!registrationSearch.isEmpty()) {
+            filters.add(RowFilter.regexFilter(
+                    "(?i)" + Pattern.quote(registrationSearch), 1));
+        }
+
+        tblMedicals.clearSelection();
+        clearMedicalDetails();
+        medicalsTableSorter.setRowFilter(
+                filters.isEmpty() ? null : RowFilter.andFilter(filters));
+        int visibleCount = tblMedicals.getRowCount();
+        int totalCount = medicalsTableModel.getRowCount();
+        lblMedicalFilterResultCount.setText(
+                visibleCount == 0 && totalCount > 0
+                        ? "No matching requests"
+                        : "Showing " + visibleCount + " of " + totalCount + " requests");
     }
 
     private JPanel createMedicalDetailsPanel() {
@@ -1239,6 +1343,7 @@ public class TechnicalOfficerDashboard extends JFrame {
                     m.getStatus()
             });
         }
+        applyMedicalStatusFilter();
     }
 
     private void displayMedicalDetails(Medical medical) {
@@ -1405,6 +1510,7 @@ public class TechnicalOfficerDashboard extends JFrame {
             return;
         }
 
+        selectedRow = tblMedicals.convertRowIndexToModel(selectedRow);
         int medId = (Integer) medicalsTableModel.getValueAt(selectedRow, 0);
         if (techOfficer == null || techOfficer.getToId() <= 0) {
             JOptionPane.showMessageDialog(this, "Your Technical Officer account is not fully loaded.", "Cannot Update", JOptionPane.ERROR_MESSAGE);

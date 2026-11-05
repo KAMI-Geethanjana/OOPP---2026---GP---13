@@ -25,6 +25,7 @@ public class TestAttendanceDAO {
                             1 // Replace with a valid Technical Officer ID.
                     );
 
+
             System.out.println("Students found: " + students.size());
 
             for (String[] student : students) {
