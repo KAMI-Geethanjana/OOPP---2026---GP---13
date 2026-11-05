@@ -10,12 +10,28 @@ import tg2082.model.Undergraduate;
 import tg2088.model.CourseMaterial;
 
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class UndergraduateDAO {
+
+    // Allow medical submission from the absent date up to and including 14 days later.
+    private boolean isMedicalSubmissionAllowed(Date medicalDate) {
+        if (medicalDate == null) {
+            return false;
+        }
+
+        long days = ChronoUnit.DAYS.between(
+                medicalDate.toLocalDate(),
+                LocalDate.now()
+        );
+
+        return days >= 0 && days <= 14;
+    }
 
     public Undergraduate getUndergraduateByUserId(int userId) {
         String sql = "SELECT ug.student_id, ug.reg_no, ug.batch_year, ug.status, ug.department_id, ug.contact_no, " +
@@ -198,6 +214,10 @@ public class UndergraduateDAO {
 
     // Submit one medical record
     public boolean submitMedical(Medical m) {
+        if (m == null || !isMedicalSubmissionAllowed(m.getMedicalDate())) {
+            return false;
+        }
+
         String sql = "INSERT INTO medical " +
                 "(student_id, course_code, medical_date, reason, document_path, status) " +
                 "VALUES (?, ?, ?, ?, ?, 'PENDING')";
@@ -227,7 +247,8 @@ public class UndergraduateDAO {
             String reason,
             String documentPath) {
 
-        if (courseCodes == null || courseCodes.isEmpty()) {
+        if (courseCodes == null || courseCodes.isEmpty()
+                || !isMedicalSubmissionAllowed(medicalDate)) {
             return false;
         }
 
@@ -273,6 +294,9 @@ public class UndergraduateDAO {
 
     // Update pending medical record only
     public boolean updatePendingMedical(Medical m) {
+        if (m == null || !isMedicalSubmissionAllowed(m.getMedicalDate())) {
+            return false;
+        }
 
         String sql = "UPDATE medical SET " +
                 "course_code = ?, " +

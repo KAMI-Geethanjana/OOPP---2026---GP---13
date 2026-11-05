@@ -16,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Date;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -430,6 +432,17 @@ final class MedicalPanel {
                     d.txtMedDate.getText().trim()
             );
 
+            if (!isMedicalSubmissionAllowed(medicalDate)) {
+                JOptionPane.showMessageDialog(
+                        d,
+                        "Medical certificates must be submitted within 14 days of the absent date. " +
+                                "Future dates and submissions after 14 days are not allowed.",
+                        "Medical Submission Period Expired",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
             int studentId = d.student.getStudentId();
 
             // Update existing pending record
@@ -546,6 +559,20 @@ final class MedicalPanel {
                     d, "Error: " + ex.getMessage()
             );
         }
+    }
+
+    // Allow submission from the absent date up to and including 14 days later.
+    private static boolean isMedicalSubmissionAllowed(Date medicalDate) {
+        if (medicalDate == null) {
+            return false;
+        }
+
+        long days = ChronoUnit.DAYS.between(
+                medicalDate.toLocalDate(),
+                LocalDate.now()
+        );
+
+        return days >= 0 && days <= 14;
     }
 
     // Copy certificate into folder
