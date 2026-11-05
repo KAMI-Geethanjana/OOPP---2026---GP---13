@@ -23,11 +23,12 @@ import java.util.Map;
 public class AdminUserDAO implements UserOperations {
 
     /**
-     * Atomically creates a user and their role-specific record (Undergraduate, Lecturer, Technical Officer).
+     * Atomically creates a user with complete profile data including ID Number (NIC), Age, and Addresses.
      */
     @Override
-    public boolean createUser(String username, String password, String fullName, String email,
-                              String phoneNo, String role, String extraId, int departmentId, String batch)
+    public boolean createUser(String username, String password, String fullName, String idNumber, Integer age,
+                              String email, String phoneNo, String permAddress, String tempAddress,
+                              String role, String extraId, int departmentId, String batch)
             throws AdminOperationException {
 
         // Validate role using static method from UserOperations interface
@@ -35,8 +36,8 @@ public class AdminUserDAO implements UserOperations {
             throw new AdminOperationException("Invalid user role specified: " + role);
         }
 
-        String insertUserSql = "INSERT INTO users (username, password_hash, full_name, email, phone_no, role, is_active, failed_logins) " +
-                               "VALUES (?, ?, ?, ?, ?, ?, 1, 0)";
+        String insertUserSql = "INSERT INTO users (username, password_hash, full_name, id_number, age, email, phone_no, permanent_address, temporary_address, role, is_active, failed_logins) " +
+                               "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)";
 
         Connection conn = null;
         PreparedStatement psUser = null;
@@ -50,9 +51,29 @@ public class AdminUserDAO implements UserOperations {
             psUser.setString(1, username.trim());
             psUser.setString(2, (password != null && !password.isEmpty()) ? password.trim() : DEFAULT_PASSWORD);
             psUser.setString(3, fullName.trim());
-            psUser.setString(4, email != null ? email.trim() : "");
-            psUser.setString(5, phoneNo != null ? phoneNo.trim() : "");
-            psUser.setString(6, role.toUpperCase().trim());
+            if (idNumber != null && !idNumber.trim().isEmpty()) {
+                psUser.setString(4, idNumber.trim());
+            } else {
+                psUser.setNull(4, Types.VARCHAR);
+            }
+            if (age != null) {
+                psUser.setInt(5, age);
+            } else {
+                psUser.setNull(5, Types.INTEGER);
+            }
+            psUser.setString(6, email != null ? email.trim() : "");
+            psUser.setString(7, phoneNo != null ? phoneNo.trim() : "");
+            if (permAddress != null && !permAddress.trim().isEmpty()) {
+                psUser.setString(8, permAddress.trim());
+            } else {
+                psUser.setNull(8, Types.VARCHAR);
+            }
+            if (tempAddress != null && !tempAddress.trim().isEmpty()) {
+                psUser.setString(9, tempAddress.trim());
+            } else {
+                psUser.setNull(9, Types.VARCHAR);
+            }
+            psUser.setString(10, role.toUpperCase().trim());
 
             int affected = psUser.executeUpdate();
             if (affected == 0) {
@@ -135,14 +156,25 @@ public class AdminUserDAO implements UserOperations {
     }
 
     /**
-     * Updates an existing user and cascading role attributes.
+     * Backward-compatible 9-parameter createUser method.
      */
     @Override
-    public boolean updateUser(int userId, String fullName, String email, String phoneNo,
+    public boolean createUser(String username, String password, String fullName, String email,
+                              String phoneNo, String role, String extraId, int departmentId, String batch)
+            throws AdminOperationException {
+        return createUser(username, password, fullName, null, null, email, phoneNo, null, null, role, extraId, departmentId, batch);
+    }
+
+    /**
+     * Updates an existing user and cascading role attributes including ID Number, Age, and Addresses.
+     */
+    @Override
+    public boolean updateUser(int userId, String fullName, String idNumber, Integer age,
+                              String email, String phoneNo, String permAddress, String tempAddress,
                               String role, boolean isActive, String extraId, int departmentId, String batch)
             throws AdminOperationException {
 
-        String updateUserSql = "UPDATE users SET full_name = ?, email = ?, phone_no = ?, is_active = ? WHERE user_id = ?";
+        String updateUserSql = "UPDATE users SET full_name = ?, id_number = ?, age = ?, email = ?, phone_no = ?, permanent_address = ?, temporary_address = ?, is_active = ? WHERE user_id = ?";
 
         Connection conn = null;
         PreparedStatement psUser = null;
@@ -154,10 +186,30 @@ public class AdminUserDAO implements UserOperations {
 
             psUser = conn.prepareStatement(updateUserSql);
             psUser.setString(1, fullName.trim());
-            psUser.setString(2, email != null ? email.trim() : "");
-            psUser.setString(3, phoneNo != null ? phoneNo.trim() : "");
-            psUser.setBoolean(4, isActive);
-            psUser.setInt(5, userId);
+            if (idNumber != null && !idNumber.trim().isEmpty()) {
+                psUser.setString(2, idNumber.trim());
+            } else {
+                psUser.setNull(2, Types.VARCHAR);
+            }
+            if (age != null) {
+                psUser.setInt(3, age);
+            } else {
+                psUser.setNull(3, Types.INTEGER);
+            }
+            psUser.setString(4, email != null ? email.trim() : "");
+            psUser.setString(5, phoneNo != null ? phoneNo.trim() : "");
+            if (permAddress != null && !permAddress.trim().isEmpty()) {
+                psUser.setString(6, permAddress.trim());
+            } else {
+                psUser.setNull(6, Types.VARCHAR);
+            }
+            if (tempAddress != null && !tempAddress.trim().isEmpty()) {
+                psUser.setString(7, tempAddress.trim());
+            } else {
+                psUser.setNull(7, Types.VARCHAR);
+            }
+            psUser.setBoolean(8, isActive);
+            psUser.setInt(9, userId);
 
             int rows = psUser.executeUpdate();
             if (rows == 0) {
@@ -229,6 +281,16 @@ public class AdminUserDAO implements UserOperations {
     }
 
     /**
+     * Backward-compatible 9-parameter updateUser method.
+     */
+    @Override
+    public boolean updateUser(int userId, String fullName, String email, String phoneNo,
+                              String role, boolean isActive, String extraId, int departmentId, String batch)
+            throws AdminOperationException {
+        return updateUser(userId, fullName, null, null, email, phoneNo, null, null, role, isActive, extraId, departmentId, batch);
+    }
+
+    /**
      * Method Overloading: Delete user by integer user ID.
      */
     @Override
@@ -282,7 +344,7 @@ public class AdminUserDAO implements UserOperations {
     public List<Map<String, Object>> getAllUsers(String roleFilter) throws AdminOperationException {
         List<Map<String, Object>> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT u.user_id, u.username, u.full_name, u.email, u.phone_no, u.role, u.is_active, u.failed_logins, u.profile_pic, " +
+                "SELECT u.user_id, u.username, u.full_name, u.id_number, u.age, u.email, u.phone_no, u.permanent_address, u.temporary_address, u.role, u.is_active, u.failed_logins, u.profile_pic, " +
                 "COALESCE(ug.reg_no, l.employee_id, t.employee_id, '') AS extra_id, " +
                 "COALESCE(ug.department_id, l.department_id, t.department_id, 0) AS department_id, " +
                 "COALESCE(d.department_name, 'N/A') AS department_name, " +
@@ -311,7 +373,11 @@ public class AdminUserDAO implements UserOperations {
                     Map<String, Object> map = new HashMap<>();
                     map.put("userId", rs.getInt("user_id"));
                     map.put("username", rs.getString("username"));
-                    map.put("fullName", rs.getString("full_name"));
+                    map.put("fullName", rs.getString("full_name"));
+                    map.put("idNumber", rs.getString("id_number"));
+                    map.put("age", rs.getObject("age"));
+                    map.put("permanentAddress", rs.getString("permanent_address"));
+                    map.put("temporaryAddress", rs.getString("temporary_address"));
                     map.put("email", rs.getString("email"));
                     map.put("phoneNo", rs.getString("phone_no"));
                     map.put("role", rs.getString("role"));

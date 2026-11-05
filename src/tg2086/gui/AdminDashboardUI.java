@@ -82,6 +82,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
 
     // Form inputs
     private JTextField txtUserUsername, txtUserFullName, txtUserEmail, txtUserPhone, txtUserExtraId, txtUserBatch;
+    private JTextField txtUserIdNumber, txtUserAge, txtUserPermAddress, txtUserTempAddress;
     private JPasswordField txtUserPassword;
     private JComboBox<String> cmbUserRole;
     private JComboBox<String> cmbFilterRole;
@@ -392,7 +393,8 @@ public class AdminDashboardUI extends BaseDashboardUI {
         JPanel formCard = UITheme.createCardPanel();
         formCard.setLayout(new BorderLayout(0, 10));
 
-        JPanel formGrid = new JPanel(new GridLayout(4, 3, 12, 10));
+        // Expand form grid to 5x3 to accommodate new fields
+        JPanel formGrid = new JPanel(new GridLayout(5, 3, 12, 10));
         formGrid.setOpaque(false);
 
         txtUserUsername = UITheme.createTextField(10);
@@ -402,6 +404,23 @@ public class AdminDashboardUI extends BaseDashboardUI {
         txtUserPhone = UITheme.createTextField(10);
         txtUserExtraId = UITheme.createTextField(10);
         txtUserBatch = UITheme.createTextField(10);
+
+        // New fields: ID Number (NIC), Age, Permanent and Temporary Addresses
+        txtUserIdNumber = UITheme.createTextField(15);
+        txtUserAge = UITheme.createTextField(10);
+        txtUserAge.setEditable(false); // Read-only because it is auto-calculated from NIC
+        txtUserAge.setBackground(new Color(241, 245, 249));
+
+        txtUserPermAddress = UITheme.createTextField(15);
+        txtUserTempAddress = UITheme.createTextField(15);
+
+        // Real-time Age calculation listener when ID Number (NIC) is typed
+        txtUserIdNumber.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { calculateAndSetAge(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { calculateAndSetAge(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { calculateAndSetAge(); }
+        });
+
         cmbUserRole = UITheme.createComboBox(new String[]{"UNDERGRADUATE", "LECTURER", "TECH_OFFICER", "ADMIN"});
         cmbUserRole.addActionListener(e -> {
             String selectedRole = (String) cmbUserRole.getSelectedItem();
@@ -421,16 +440,26 @@ public class AdminDashboardUI extends BaseDashboardUI {
         chkUserActive = new JCheckBox("Active Account", true);
         chkUserActive.setOpaque(false);
 
+        // Add form rows in clean sequence
         formGrid.add(createFormRow("Username", txtUserUsername));
         formGrid.add(createFormRow("Password (default 1234)", txtUserPassword));
         formGrid.add(createFormRow("Full Name", txtUserFullName));
+
+        formGrid.add(createFormRow("ID Number (NIC)", txtUserIdNumber));
+        formGrid.add(createFormRow("Age (Auto-Calculated)", txtUserAge));
+        formGrid.add(createFormRow("Role", cmbUserRole));
+
         formGrid.add(createFormRow("Email Address", txtUserEmail));
         formGrid.add(createFormRow("Phone Number", txtUserPhone));
-        formGrid.add(createFormRow("Role", cmbUserRole));
         formGrid.add(createFormRow("Reg No / Employee ID", txtUserExtraId));
+
         formGrid.add(createFormRow("Department", cmbUserDepartment));
         formGrid.add(createFormRow("Batch (Students)", txtUserBatch));
+        formGrid.add(createFormRow("Permanent Address", txtUserPermAddress));
+
+        formGrid.add(createFormRow("Temporary Address", txtUserTempAddress));
         formGrid.add(chkUserActive);
+        formGrid.add(new JLabel("")); // Spacer to balance 5x3 grid
 
         // Form Buttons
         JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
@@ -1122,12 +1151,28 @@ public class AdminDashboardUI extends BaseDashboardUI {
         chkUserActive.setSelected("ACTIVE".equals(usersTableModel.getValueAt(modelRow, 6)));
         txtUserExtraId.setText((String) usersTableModel.getValueAt(modelRow, 8));
 
+        txtUserIdNumber.setText("");
+        txtUserAge.setText("");
+        txtUserPermAddress.setText("");
+        txtUserTempAddress.setText("");
+
         // Auto-select Department & Batch in form
         String deptName = (String) usersTableModel.getValueAt(modelRow, 9);
         int deptId = -1;
         String batchVal = "";
-        if (modelRow >= 0 && modelRow < currentUsersList.size()) {
-            Map<String, Object> u = currentUsersList.get(modelRow);
+        Map<String, Object> u = null;
+        for (Map<String, Object> userMap : currentUsersList) {
+            Object uid = userMap.get("userId");
+            if (uid instanceof Number && ((Number) uid).intValue() == selectedUserId) {
+                u = userMap;
+                break;
+            }
+        }
+        if (u == null && modelRow >= 0 && modelRow < currentUsersList.size()) {
+            u = currentUsersList.get(modelRow);
+        }
+
+        if (u != null) {
             Object dIdObj = u.get("departmentId");
             if (dIdObj instanceof Number) {
                 deptId = ((Number) dIdObj).intValue();
@@ -1136,6 +1181,24 @@ public class AdminDashboardUI extends BaseDashboardUI {
             String picPath = (String) u.get("profilePic");
             String role = (String) u.get("role");
             updateAvatarPreview(picPath, role);
+
+            String idNum = (String) u.get("idNumber");
+            txtUserIdNumber.setText(idNum != null ? idNum : "");
+
+            Object ageObj = u.get("age");
+            if (ageObj != null && !ageObj.toString().trim().isEmpty()) {
+                txtUserAge.setText(ageObj + " Years");
+            } else if (idNum != null && !idNum.isEmpty()) {
+                calculateAndSetAge();
+            } else {
+                txtUserAge.setText("");
+            }
+
+            String permAddr = (String) u.get("permanentAddress");
+            txtUserPermAddress.setText(permAddr != null ? permAddr : "");
+
+            String tempAddr = (String) u.get("temporaryAddress");
+            txtUserTempAddress.setText(tempAddr != null ? tempAddr : "");
         }
         txtUserBatch.setText(batchVal != null ? batchVal : "");
 
@@ -1154,8 +1217,11 @@ public class AdminDashboardUI extends BaseDashboardUI {
         String username = txtUserUsername.getText().trim();
         String password = new String(txtUserPassword.getPassword()).trim();
         String fullName = txtUserFullName.getText().trim();
+        String idNumber = txtUserIdNumber.getText().trim();
         String email = txtUserEmail.getText().trim();
         String phone = txtUserPhone.getText().trim();
+        String permAddress = txtUserPermAddress.getText().trim();
+        String tempAddress = txtUserTempAddress.getText().trim();
         String role = (String) cmbUserRole.getSelectedItem();
         String extraId = txtUserExtraId.getText().trim();
         String batch = txtUserBatch.getText().trim();
@@ -1166,8 +1232,26 @@ public class AdminDashboardUI extends BaseDashboardUI {
             return;
         }
 
+        if (!idNumber.isEmpty()) {
+            idNumber = idNumber.toUpperCase();
+        }
+
+        // Sri Lankan Standard NIC Validation (9 digits with 'V'/'X' or 12 digits)
+        if (!idNumber.isEmpty() && !isValidSriLankanNIC(idNumber)) {
+            JOptionPane.showMessageDialog(this,
+                    "Invalid Sri Lankan National ID (NIC) Number!\n\n" +
+                    "Must be in Sri Lankan standard format:\n" +
+                    "• Old Format: 9 numbers with 'V' or 'X' (e.g., 991234567V)\n" +
+                    "• New Format: 12 numbers (e.g., 200112345678)",
+                    "NIC Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtUserIdNumber.requestFocus();
+            return;
+        }
+
+        Integer age = calculateAgeFromNIC(idNumber);
+
         try {
-            boolean success = userDAO.createUser(username, password, fullName, email, phone, role, extraId, dept != null ? dept.id : 1, batch);
+            boolean success = userDAO.createUser(username, password, fullName, idNumber, age, email, phone, permAddress, tempAddress, role, extraId, dept != null ? dept.id : 1, batch);
             if (success) {
                 JOptionPane.showMessageDialog(this, "User [" + username + "] registered successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 clearUserForm();
@@ -1187,16 +1271,41 @@ public class AdminDashboardUI extends BaseDashboardUI {
         }
 
         String fullName = txtUserFullName.getText().trim();
+        String idNumber = txtUserIdNumber.getText().trim();
         String email = txtUserEmail.getText().trim();
         String phone = txtUserPhone.getText().trim();
+        String permAddress = txtUserPermAddress.getText().trim();
+        String tempAddress = txtUserTempAddress.getText().trim();
         String role = (String) cmbUserRole.getSelectedItem();
         String extraId = txtUserExtraId.getText().trim();
         String batch = txtUserBatch.getText().trim();
         boolean isActive = chkUserActive.isSelected();
         DepartmentItem dept = (DepartmentItem) cmbUserDepartment.getSelectedItem();
 
+        if (!idNumber.isEmpty()) {
+            idNumber = idNumber.toUpperCase();
+        }
+
+        if (!idNumber.isEmpty()) {
+            idNumber = idNumber.toUpperCase();
+        }
+
+        // Sri Lankan Standard NIC Validation (9 digits with 'V'/'X' or 12 digits)
+        if (!idNumber.isEmpty() && !isValidSriLankanNIC(idNumber)) {
+            JOptionPane.showMessageDialog(this,
+                    "Invalid Sri Lankan National ID (NIC) Number!\n\n" +
+                    "Must be in Sri Lankan standard format:\n" +
+                    "• Old Format: 9 numbers with 'V' or 'X' (e.g., 991234567V)\n" +
+                    "• New Format: 12 numbers (e.g., 200112345678)",
+                    "NIC Validation Error", JOptionPane.WARNING_MESSAGE);
+            txtUserIdNumber.requestFocus();
+            return;
+        }
+
+        Integer age = calculateAgeFromNIC(idNumber);
+
         try {
-            boolean success = userDAO.updateUser(selectedUserId, fullName, email, phone, role, isActive, extraId, dept != null ? dept.id : 1, batch);
+            boolean success = userDAO.updateUser(selectedUserId, fullName, idNumber, age, email, phone, permAddress, tempAddress, role, isActive, extraId, dept != null ? dept.id : 1, batch);
             if (success) {
                 JOptionPane.showMessageDialog(this, "User updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 clearUserForm();
@@ -1284,6 +1393,10 @@ public class AdminDashboardUI extends BaseDashboardUI {
         txtUserUsername.setText("");
         txtUserPassword.setText("");
         txtUserFullName.setText("");
+        txtUserIdNumber.setText("");
+        txtUserAge.setText("");
+        txtUserPermAddress.setText("");
+        txtUserTempAddress.setText("");
         txtUserEmail.setText("");
         txtUserPhone.setText("");
         txtUserExtraId.setText("");
@@ -2073,6 +2186,72 @@ public class AdminDashboardUI extends BaseDashboardUI {
     // =========================================================================
     // MAIN ENTRY POINT FOR STANDALONE MODULE TESTING
     // =========================================================================
+
+    // =========================================================================
+    // SRI LANKAN NIC VALIDATION & AUTOMATIC AGE CALCULATION
+    // =========================================================================
+
+    /**
+     * Validates Sri Lankan National Identity Card (NIC) format:
+     * - Old Format: 9 digits followed by 'V', 'v', 'X', or 'x' (e.g., 991234567V)
+     * - New Format: exactly 12 numeric digits (e.g., 200112345678)
+     */
+    private boolean isValidSriLankanNIC(String nic) {
+        if (nic == null) return false;
+        String n = nic.trim();
+        return n.matches("^[0-9]{9}[vVxX]$") || n.matches("^[0-9]{12}$");
+    }
+
+    /**
+     * Automatically calculates the user's age from their Sri Lankan NIC.
+     */
+    private Integer calculateAgeFromNIC(String nic) {
+        if (!isValidSriLankanNIC(nic)) return null;
+        String n = nic.trim();
+        int birthYear;
+        int dayOfYear;
+
+        if (n.matches("^[0-9]{9}[vVxX]$")) {
+            // Old format: First 2 digits represent birth year (1900s), next 3 represent day of year
+            birthYear = 1900 + Integer.parseInt(n.substring(0, 2));
+            dayOfYear = Integer.parseInt(n.substring(2, 5));
+        } else {
+            // New format (12 digits): First 4 digits represent birth year, next 3 represent day of year
+            birthYear = Integer.parseInt(n.substring(0, 4));
+            dayOfYear = Integer.parseInt(n.substring(4, 7));
+        }
+
+        // For female citizens, 500 is added to the day of year
+        if (dayOfYear > 500) {
+            dayOfYear -= 500;
+        }
+
+        if (dayOfYear < 1 || dayOfYear > 366) return null;
+
+        int currentYear = java.time.LocalDate.now().getYear();
+        if (birthYear > currentYear || birthYear < 1900) return null;
+
+        return currentYear - birthYear;
+    }
+
+    /**
+     * Real-time listener callback to calculate and update the Age field.
+     */
+    private void calculateAndSetAge() {
+        String nic = txtUserIdNumber.getText().trim();
+        if (nic.isEmpty()) {
+            txtUserAge.setText("");
+            return;
+        }
+        Integer age = calculateAgeFromNIC(nic);
+        if (age != null && age >= 0 && age <= 120) {
+            txtUserAge.setText(age + " Years");
+            txtUserAge.setForeground(new java.awt.Color(16, 185, 129)); // Green for valid age
+        } else {
+            txtUserAge.setText("Invalid NIC");
+            txtUserAge.setForeground(new java.awt.Color(239, 68, 68)); // Red for invalid NIC
+        }
+    }
 
     public static void main(String[] args) {
         try {

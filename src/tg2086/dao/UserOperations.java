@@ -22,6 +22,12 @@ public interface UserOperations {
     /**
      * Creates a new user record along with role-specific profile.
      */
+        default boolean createUser(String username, String password, String fullName, String idNumber, Integer age,
+                               String email, String phoneNo, String permAddress, String tempAddress,
+                               String role, String extraId, int departmentId, String batch) throws AdminOperationException {
+        return createUser(username, password, fullName, email, phoneNo, role, extraId, departmentId, batch);
+    }
+
     boolean createUser(String username, String password, String fullName, String email,
                        String phoneNo, String role, String extraId, int departmentId, String batch)
             throws AdminOperationException;
@@ -29,6 +35,12 @@ public interface UserOperations {
     /**
      * Updates an existing user record.
      */
+        default boolean updateUser(int userId, String fullName, String idNumber, Integer age,
+                               String email, String phoneNo, String permAddress, String tempAddress,
+                               String role, boolean isActive, String extraId, int departmentId, String batch) throws AdminOperationException {
+        return updateUser(userId, fullName, email, phoneNo, role, isActive, extraId, departmentId, batch);
+    }
+
     boolean updateUser(int userId, String fullName, String email, String phoneNo,
                        String role, boolean isActive, String extraId, int departmentId, String batch)
             throws AdminOperationException;
