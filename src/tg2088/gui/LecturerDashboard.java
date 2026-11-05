@@ -902,6 +902,8 @@ public class LecturerDashboard extends JFrame {
         actionRow.setOpaque(false);
         actionRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        //das
+
         JButton btnSave = UITheme.createButton("Save Changes", new Color(30, 41, 59), Color.WHITE);
         btnSave.setPreferredSize(new Dimension(140, 38));
         btnSave.addActionListener(e -> handleUpdateProfile());
