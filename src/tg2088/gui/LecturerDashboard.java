@@ -32,24 +32,12 @@ import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
-/**
- * ============================================================================
- * Lessons 02, 04, 05, 06: GUI, Interfaces, Exception Handling & File Handling
- * ============================================================================
- * Reference:
- * - Lesson 04, Slide 29: Using an Interface as a Type ('ILecturerDAO lecturerDAO')
- * - Lesson 04, Slide 30: Using Interfaces for Callbacks (ActionListener event handlers)
- * - Lesson 05, Slide 25-29: Structured try-catch blocks with custom checked exceptions
- * - Lesson 06, Slide 12-18: Character stream report export (PrintWriter, FileWriter)
- * - Lesson 06, Slide 27-33: Binary stream backup (DataOutputStream)
- * - Lesson 02 Part 02, Slide 5-7: Usage of 'this' keyword as current object reference
- * ============================================================================
- */
+
 public class LecturerDashboard extends JFrame {
 
-    // ========================================================================
-    // Instance Fields (Encapsulation - Lesson 03 Part 04, Slide 11)
-    // ========================================================================
+
+    // Instance Fields
+
     private Lecturer lecturer;
     
     // Interface as a Type (Lesson 04, Slide 29: Using an Interface as a Type)
@@ -118,10 +106,10 @@ public class LecturerDashboard extends JFrame {
     private JLabel lblProfEmpId;
     private JLabel lblProfileAvatar;
 
-    /**
-     * Parameterized Constructor (Lesson 02, Slide 38)
-     * Demonstrates 'this' keyword to initialize instance variables (Lesson 02 Part 02, Slide 5-7).
-     */
+
+     // Parameterized Constructor
+     //Demonstrates 'this' keyword to initialize instance variables
+
     public LecturerDashboard(Lecturer lecturer) {
         this.lecturer = lecturer;
         // Instantiating interface implementation (Lesson 04, Slide 10 & 29)
@@ -339,9 +327,9 @@ public class LecturerDashboard extends JFrame {
         }
     }
 
-    // ========================================================================
+
     // 1. MARKS & GRADING PANEL
-    // ========================================================================
+
     private JPanel createMarksPanel() {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
@@ -376,7 +364,7 @@ public class LecturerDashboard extends JFrame {
         JButton btnSave = UITheme.createButton("Save Results", UITheme.SUCCESS_GREEN, Color.WHITE);
         btnSave.addActionListener(e -> saveMarksToDatabase());
 
-        // Lesson 06: File Handling - Character Stream Export Button
+        //   Character Stream Export Button
         JButton btnExport = UITheme.createButton("Export Report (.txt)", new Color(79, 70, 229), Color.WHITE);
         btnExport.setToolTipText("Export marks to a character stream text report (Lesson 06)");
         btnExport.addActionListener(e -> handleExportMarksReport());
@@ -419,9 +407,9 @@ public class LecturerDashboard extends JFrame {
         return card;
     }
 
-    // ========================================================================
+
     // 2. EXAM ELIGIBILITY PANEL
-    // ========================================================================
+
     private JPanel createEligibilityPanel() {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
@@ -467,9 +455,9 @@ public class LecturerDashboard extends JFrame {
         return card;
     }
 
-    // ========================================================================
+
     // 3. COURSE MATERIALS PANEL
-    // ========================================================================
+
     private JPanel createMaterialsPanel() {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
@@ -530,9 +518,9 @@ public class LecturerDashboard extends JFrame {
         return card;
     }
 
-    // ========================================================================
+
     // 3.5. ONLINE QUIZZES & ASSESSMENTS PANEL
-    // ========================================================================
+
     private JPanel createQuizzesPanel() {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
@@ -633,9 +621,9 @@ public class LecturerDashboard extends JFrame {
         return card;
     }
 
-    // ========================================================================
+
     // 4. STUDENT ATTENDANCE PANEL
-    // ========================================================================
+
     private JPanel createAttendancePanel() {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
@@ -668,9 +656,9 @@ public class LecturerDashboard extends JFrame {
         return card;
     }
 
-    // ========================================================================
+
     // 5. NOTICES PANEL
-    // ========================================================================
+
     private JPanel createNoticesPanel() {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout(0, 15));
@@ -691,9 +679,9 @@ public class LecturerDashboard extends JFrame {
         return card;
     }
 
-    // ========================================================================
-    // 6. ENHANCED PROFILE PANEL (Matches Image 2 - Avatar, Account, Personal & Address)
-    // ========================================================================
+
+    // 6. ENHANCED PROFILE PANEL
+
     private JPanel createProfilePanel() {
         JPanel card = UITheme.createCardPanel();
         card.setLayout(new BorderLayout());
@@ -900,9 +888,9 @@ public class LecturerDashboard extends JFrame {
         return p;
     }
 
-    // ========================================================================
+
     // DATA LOADERS & ACTIONS
-    // ========================================================================
+
     private void loadLecturerCourses() {
         int lecId = lecturer != null ? lecturer.getLecturerId() : 1;
         List<Course> courses = lecturerDAO.getCoursesByLecturer(lecId);
@@ -983,7 +971,7 @@ public class LecturerDashboard extends JFrame {
                 marksTableModel.setValueAt(gpv, i, 9);
             }
 
-            // 'this' passed as parent component to dialog (Lesson 02 Part 02, Slide 10)
+            // 'this' passed as parent component to dialog
             JOptionPane.showMessageDialog(this,
                     "Marks and UGC grades calculated successfully!\nClick 'Save Results' to persist into database.",
                     "Calculated", JOptionPane.INFORMATION_MESSAGE);
@@ -1029,10 +1017,7 @@ public class LecturerDashboard extends JFrame {
         }
     }
 
-    /**
-     * Lesson 06: File Handling - Character Stream Export Handler
-     * Uses PrintWriter and BufferedWriter to write a formatted .txt report.
-     */
+
     private void handleExportMarksReport() {
         String courseCode = (String) cbMarksCourse.getSelectedItem();
         if (courseCode == null) return;
@@ -1172,10 +1157,7 @@ public class LecturerDashboard extends JFrame {
         }
     }
 
-    /**
-     * Lesson 06: Binary Stream Backup Handler
-     * Uses DataOutputStream and BufferedOutputStream to serialize materials into a .dat binary file.
-     */
+
     private void handleBackupMaterials() {
         String courseCode = (String) cbMaterialCourse.getSelectedItem();
         if (courseCode == null) return;

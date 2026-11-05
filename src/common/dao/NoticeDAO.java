@@ -7,14 +7,14 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * NoticeDAO - Handles database queries for faculty notices.
- */
+
+ //* NoticeDAO - Handles database queries for faculty notices.
+
 public class NoticeDAO {
 
-    /**
-     * Retrieves notices filtered by target audience and sorted newest first.
-     */
+
+    // * Retrieves notices filtered by target audience and sorted newest first.
+
     public List<Notice> getNoticesForRole(String role) {
         List<Notice> list = new ArrayList<>();
         String sql = "SELECT * FROM notice WHERE target_audience = 'ALL' OR target_audience = ? ORDER BY created_date DESC, notice_id DESC";
@@ -40,9 +40,9 @@ public class NoticeDAO {
         return list;
     }
 
-    /**
-     * Retrieves all notices (for Admin view).
-     */
+
+    // * Retrieves all notices (for Admin view).
+
     public List<Notice> getAllNotices() {
         List<Notice> list = new ArrayList<>();
         String sql = "SELECT * FROM notice ORDER BY created_date DESC, notice_id DESC";
@@ -67,9 +67,9 @@ public class NoticeDAO {
         return list;
     }
 
-    /**
-     * Creates a new notice.
-     */
+
+    // * Creates a new notice.
+
     public boolean addNotice(Notice notice) {
         String sql = "INSERT INTO notice (title, content, target_audience, created_date, posted_by) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
@@ -88,9 +88,9 @@ public class NoticeDAO {
         }
     }
 
-    /**
-     * Deletes a notice.
-     */
+
+    // * Deletes a notice.
+
     public boolean deleteNotice(int noticeId) {
         String sql = "DELETE FROM notice WHERE notice_id = ?";
         try (Connection conn = DBConnection.getConnection();

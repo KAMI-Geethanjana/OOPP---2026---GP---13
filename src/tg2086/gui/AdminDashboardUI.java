@@ -32,7 +32,7 @@ import java.util.Map;
  * AdminDashboardUI - Complete Graphical Desktop Management Interface.
  * Implements Module TG2086 (Administrator & Notices Module).
  * Demonstrates:
- * - Multithreading (Lesson 08 Method 1: extends Thread & Method 2: implements Runnable)
+
  * - Thread Synchronization (synchronized block protecting shared notice ticker)
  * - Pure OOP Polymorphism, Casting, and instanceof
  * - Custom Exception Handling (AdminOperationException)
@@ -52,7 +52,7 @@ public class AdminDashboardUI extends BaseDashboardUI {
     // Logged in Admin session
     private final User currentAdminUser;
 
-    // Multithreading (Lesson 08)
+    // Multithreading
     private JLabel lblLiveClock;
     private JLabel lblNoticeTicker;
     private volatile boolean isClockRunning = true;
@@ -182,9 +182,9 @@ public class AdminDashboardUI extends BaseDashboardUI {
         getContentPane().add(footerPanel, BorderLayout.SOUTH);
     }
 
-    // =========================================================================
-    // MULTITHREADING (Lesson 08 Implementation)
-    // =========================================================================
+
+    // MULTITHREADING
+
 
     private void startBackgroundThreads() {
         // Method 1: Notice Marquee Ticker (extends Thread)
@@ -283,9 +283,8 @@ public class AdminDashboardUI extends BaseDashboardUI {
         super.dispose();
     }
 
-    // =========================================================================
+
     // PANEL BUILDERS
-    // =========================================================================
 
     private JPanel buildDashboardOverviewPanel() {
         JPanel panel = new JPanel(new BorderLayout(0, 20));

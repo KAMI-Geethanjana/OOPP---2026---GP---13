@@ -14,14 +14,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
-/**
- * ============================================================================
- * Lesson 02 (OOP GUI Design), Lesson 04 (Callbacks), Lesson 05 (Exceptions)
- * ============================================================================
- * Interactive Quiz Preview / Test Runner for Lecturers.
- * Allows lecturers to test-drive their quizzes and verify grading logic live.
- * ============================================================================
- */
+
 public class QuizTestRunnerDialog extends JDialog {
 
     private final Quiz quiz;

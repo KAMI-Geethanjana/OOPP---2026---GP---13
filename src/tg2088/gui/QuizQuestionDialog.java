@@ -14,13 +14,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-/**
- * ============================================================================
- * Lesson 04 (Callbacks, Interfaces), Lesson 05 (Exceptions), Lesson 02 (OOP GUI)
- * ============================================================================
- * Dialog for managing Multiple Choice Questions for a specific Quiz.
- * ============================================================================
- */
+
 public class QuizQuestionDialog extends JDialog {
 
     private final Quiz quiz;

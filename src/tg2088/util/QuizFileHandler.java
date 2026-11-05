@@ -9,28 +9,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-/**
- * ============================================================================
- * Lesson 06: Introduction to File Handling in Java
- * ============================================================================
- * Reference: Lesson 06, Slides 3-33
- * Demonstrates:
- * 1. Character Streams - Writing (Slides 12-18):
- *    File -> FileWriter -> BufferedWriter -> PrintWriter (flush, close)
- * 2. Character Streams - Reading (Slides 6-11):
- *    File -> FileReader -> BufferedReader (readLine != null, close)
- * 3. Binary Streams - Writing (Slides 27-33):
- *    File -> FileOutputStream -> BufferedOutputStream -> DataOutputStream
- * 4. Binary Streams - Reading (Slides 19-26):
- *    File -> FileInputStream -> BufferedInputStream -> DataInputStream
- * ============================================================================
- */
+
 public class QuizFileHandler {
 
-    // ========================================================================
-    // 1. CHARACTER STREAMS - WRITING (Lesson 06, Slides 12-18)
+
+    // 1. CHARACTER STREAMS - WRITING
     // Exports formatted Quiz Question Paper to a .txt file
-    // ========================================================================
+
     public static boolean exportQuizPaper(Quiz quiz, List<QuizQuestion> questions, File targetFile, boolean includeAnswerKey) {
         if (quiz == null || questions == null || targetFile == null) {
             return false;
@@ -98,9 +83,9 @@ public class QuizFileHandler {
         }
     }
 
-    // ========================================================================
-    // 2. CHARACTER STREAMS - WRITING RESULTS SUMMARY (Lesson 06, Slides 12-18)
-    // ========================================================================
+
+    // 2. CHARACTER STREAMS - WRITING RESULTS SUMMARY
+
     public static boolean exportQuizResultsReport(Quiz quiz, List<QuizAttempt> attempts, File targetFile) {
         if (quiz == null || attempts == null || targetFile == null) {
             return false;
@@ -151,10 +136,10 @@ public class QuizFileHandler {
         }
     }
 
-    // ========================================================================
-    // 3. BINARY STREAMS - WRITING (Lesson 06, Slides 27-33)
+
+    // 3. BINARY STREAMS - WRITING
     // Backs up Quiz Header and Questions into binary .dat file using DataOutputStream
-    // ========================================================================
+
     public static boolean backupQuizToBinary(Quiz quiz, List<QuizQuestion> questions, File targetFile) {
         if (quiz == null || questions == null || targetFile == null) {
             return false;
@@ -208,10 +193,10 @@ public class QuizFileHandler {
         }
     }
 
-    // ========================================================================
-    // 4. BINARY STREAMS - READING (Lesson 06, Slides 19-26)
+
+    // 4. BINARY STREAMS - READING
     // Restores Quiz and Questions from binary .dat file using DataInputStream
-    // ========================================================================
+
     public static List<QuizQuestion> readQuestionsFromBinary(File sourceFile, Quiz targetQuizHeader) {
         List<QuizQuestion> questions = new ArrayList<>();
         if (sourceFile == null || !sourceFile.exists()) {

@@ -14,14 +14,6 @@ import java.awt.*;
 import java.io.File;
 import java.util.List;
 
-/**
- * ============================================================================
- * Lesson 04 (Interfaces), Lesson 05 (Exceptions), Lesson 06 (File Handling)
- * ============================================================================
- * Dialog to inspect student submissions / attempts for a specific quiz,
- * and export formatted results reports to text files.
- * ============================================================================
- */
 public class QuizResultsDialog extends JDialog {
 
     private final Quiz quiz;

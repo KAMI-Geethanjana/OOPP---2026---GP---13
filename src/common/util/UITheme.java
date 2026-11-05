@@ -8,10 +8,10 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-/**
- * UITheme - Consistent modern styling helper for FTMS desktop application.
- * Replicates the clean, elegant UI shown in the university portal design.
- */
+
+ // UITheme - Consistent modern styling helper for FTMS desktop application.
+ //Replicates the clean, elegant UI shown in the university portal design.
+
 public class UITheme {
 
     // Color Palette
@@ -41,9 +41,9 @@ public class UITheme {
     public static final Font FONT_BODY_BOLD = new Font("Segoe UI", Font.BOLD, 13);
     public static final Font FONT_SMALL = new Font("Segoe UI", Font.PLAIN, 11);
 
-    /**
-     * Creates a styled modern button with rounded corners and hover effect.
-     */
+
+     // Creates a styled modern button with rounded corners and hover effect.
+
     public static JButton createButton(String text, Color bgColor, Color fgColor) {
         JButton button = new JButton(text) {
             @Override
@@ -72,9 +72,9 @@ public class UITheme {
         return button;
     }
 
-    /**
-     * Creates a sidebar navigation button item.
-     */
+
+     // Creates a sidebar navigation button item.
+
     public static JButton createSidebarButton(String text, boolean isActive) {
         JButton btn = new JButton(text) {
             @Override
@@ -105,9 +105,9 @@ public class UITheme {
         return btn;
     }
 
-    /**
-     * Creates a styled modern white card panel with a subtle border.
-     */
+
+      //Creates a styled modern white card panel with a subtle border.
+
     public static JPanel createCardPanel() {
         JPanel panel = new JPanel() {
             @Override
@@ -127,9 +127,9 @@ public class UITheme {
         return panel;
     }
 
-    /**
-     * Styles a JTable to match the modern dashboard aesthetic.
-     */
+
+      //Styles a JTable to match the modern dashboard aesthetic.
+
     public static void styleTable(JTable table) {
         table.setRowHeight(32);
         table.setFont(FONT_BODY);
@@ -161,9 +161,9 @@ public class UITheme {
         });
     }
 
-    /**
-     * Creates a styled modern input text field.
-     */
+
+     // Creates a styled modern input text field.
+
     public static JTextField createTextField(int columns) {
         JTextField field = new JTextField(columns);
         field.setFont(FONT_BODY);
@@ -175,9 +175,9 @@ public class UITheme {
         return field;
     }
 
-    /**
-     * Creates a styled modern password field.
-     */
+
+     // Creates a styled modern password field.
+
     public static JPasswordField createPasswordField(int columns) {
         JPasswordField field = new JPasswordField(columns);
         field.setFont(FONT_BODY);

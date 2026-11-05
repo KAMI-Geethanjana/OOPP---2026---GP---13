@@ -4,11 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-/**
- * Creates JDBC connections for DAO operations.
- * Multi-environment connection factory supporting configured, team-member,
- * and default database passwords automatically.
- */
+
 public final class DBConnection {
 
     private static final String URL = "jdbc:mysql://localhost:3306/ftms_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
@@ -37,10 +33,7 @@ public final class DBConnection {
         // Prevent instantiation
     }
 
-    /**
-     * Obtains an active database connection.
-     * Checks cached working password first, then candidate passwords in sequence.
-     */
+
     public static Connection getConnection() throws SQLException {
         // 1. Try environment variable or system property if specified
         String envPass = System.getenv("DB_PASSWORD");

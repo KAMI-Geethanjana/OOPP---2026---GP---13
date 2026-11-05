@@ -10,30 +10,13 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * ============================================================================
- * Lesson 04 (Interfaces) & Lesson 07 (JDBC Connectivity)
- * ============================================================================
- * Reference:
- * - Lesson 04, Slide 17-18: 'class QuizDAO implements IQuizDAO'
- * - Lesson 07, Slide 25: 05 Basic Steps to Use a Database in Java
- *   1. Register the Driver Class
- *   2. Create a Connection
- *   3. Create a Statement (PreparedStatement)
- *   4. Execute Queries (executeQuery, executeUpdate)
- *   5. Close the Connection and Resources
- * - Lesson 07, Slide 33-34: Parameterized Queries with PreparedStatement (?)
- * - Lesson 07, Slide 35-36: ResultSet traversal & Column Index / Column Name access
- * - Lesson 03 Part 02, Slide 13-17: Method Overloading (Compile-Time Polymorphism)
- * - Lesson 05, Slide 25-37: Exception Handling (try-catch-finally, custom exceptions)
- * ============================================================================
- */
+
 public class QuizDAO implements IQuizDAO {
 
-    // ========================================================================
-    // Static Initializer Block (Lesson 02 Part 02, Slide 29-30)
+
+    // Static Initializer Block
     // Ensures JDBC Driver is loaded when class is first referenced
-    // ========================================================================
+
     static {
         try {
             // Step 1: Register the Driver Class (Lesson 07, Slide 26)
@@ -49,10 +32,7 @@ public class QuizDAO implements IQuizDAO {
         initTables();
     }
 
-    /**
-     * Self-healing table initialization: ensures the quiz tables exist
-     * without modifying any existing tables in the database.
-     */
+
     private void initTables() {
         String sqlQuiz = "CREATE TABLE IF NOT EXISTS quiz (" +
                 "quiz_id INT AUTO_INCREMENT PRIMARY KEY, " +
@@ -525,9 +505,9 @@ public class QuizDAO implements IQuizDAO {
         return list;
     }
 
-    // ========================================================================
+
     // Helper Methods
-    // ========================================================================
+
     private Quiz mapResultSetToQuiz(ResultSet rs) throws SQLException {
         Quiz q = new Quiz(
                 rs.getInt("quiz_id"),

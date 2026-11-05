@@ -8,28 +8,13 @@ import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * ============================================================================
- * Lesson 06: Introduction to File Handling in Java
- * ============================================================================
- * Reference: Lesson 06, Slides 3-33
- * Demonstrates:
- * 1. Character Streams - Writing (Slides 12-18):
- *    File -> FileWriter -> BufferedWriter -> PrintWriter (flush, close)
- * 2. Character Streams - Reading (Slides 6-11):
- *    File -> FileReader -> BufferedReader (readLine != null, close)
- * 3. Binary Streams - Writing (Slides 27-33):
- *    File -> FileOutputStream -> BufferedOutputStream -> DataOutputStream
- * 4. Binary Streams - Reading (Slides 19-26):
- *    File -> FileInputStream -> BufferedInputStream -> DataInputStream
- * ============================================================================
- */
+
 public class LecturerFileHandler {
 
-    // ========================================================================
-    // 1. CHARACTER STREAMS - WRITING (Lesson 06, Slides 12-18)
+
+    // 1. CHARACTER STREAMS - WRITING
     // Generates a human-readable text report of course results
-    // ========================================================================
+
     public static boolean exportMarksReport(String courseCode, List<Result> results, File targetFile) {
         if (targetFile == null || results == null) {
             return false;
@@ -40,7 +25,7 @@ public class LecturerFileHandler {
         PrintWriter out = null;
 
         try {
-            // Slide 15: Connecting a PrintWriter to a text file (Replacing)
+            //  Connecting a PrintWriter to a text file (Replacing)
             // 1. Create FileWriter object
             fw = new FileWriter(targetFile);
             // 2. Create BufferedWriter object
@@ -48,7 +33,7 @@ public class LecturerFileHandler {
             // 3. Pass BufferedWriter to PrintWriter constructor
             out = new PrintWriter(bw);
 
-            // Slide 17: Writing to character stream using print() and println()
+            //  Writing to character stream using print() and println()
             out.println("=================================================================================");
             out.println("         FACULTY OF TECHNOLOGY - UNIVERSITY OF RUHUNA");
             out.println("           STUDENT MARKS AND UGC GRADES SUMMARY REPORT");
@@ -92,10 +77,10 @@ public class LecturerFileHandler {
         }
     }
 
-    // ========================================================================
-    // 2. CHARACTER STREAMS - READING (Lesson 06, Slides 6-11)
+
+    // 2. CHARACTER STREAMS - READING
     // Reads a text file line-by-line using BufferedReader.readLine()
-    // ========================================================================
+
     public static List<String> readTextFileLines(File sourceFile) throws IOException {
         List<String> lines = new ArrayList<>();
         if (sourceFile == null || !sourceFile.exists()) {
@@ -106,13 +91,13 @@ public class LecturerFileHandler {
         BufferedReader in = null;
 
         try {
-            // Slide 9: Creating a BufferedReader
+            //  Creating a BufferedReader
             // 1. Create a FileReader object
             fr = new FileReader(sourceFile);
             // 2. Pass FileReader to BufferedReader constructor
             in = new BufferedReader(fr);
 
-            // Slide 10: Reading from character stream using readLine() method
+            //  Reading from character stream using readLine() method
             String line = in.readLine();
             while (line != null) {
                 lines.add(line);
@@ -120,7 +105,7 @@ public class LecturerFileHandler {
             }
 
         } finally {
-            // Slide 11: Don't forget to close the stream in.close()
+            //  Don't forget to close the stream in.close()
             if (in != null) {
                 try {
                     in.close();
@@ -139,10 +124,10 @@ public class LecturerFileHandler {
         return lines;
     }
 
-    // ========================================================================
-    // 3. BINARY STREAMS - WRITING (Lesson 06, Slides 27-33)
+
+    // 3. BINARY STREAMS - WRITING
     // Writes course materials backup into a binary stream using DataOutputStream
-    // ========================================================================
+
     public static boolean saveMaterialsToBinaryFile(List<CourseMaterial> materials, File targetFile) {
         if (materials == null || targetFile == null) return false;
 
@@ -151,7 +136,7 @@ public class LecturerFileHandler {
         DataOutputStream out = null;
 
         try {
-            // Slide 30: Creating a DataOutputStream
+            //  Creating a DataOutputStream
             // 1. Create FileOutputStream
             fos = new FileOutputStream(targetFile);
             // 2. Create BufferedOutputStream
@@ -162,7 +147,7 @@ public class LecturerFileHandler {
             // Write count of items
             out.writeInt(materials.size());
 
-            // Slide 32: Writing to a binary stream with primitive methods
+            //  Writing to a binary stream with primitive methods
             for (CourseMaterial cm : materials) {
                 out.writeInt(cm.getMaterialId());
                 out.writeUTF(cm.getCourseCode() != null ? cm.getCourseCode() : "");
@@ -172,7 +157,7 @@ public class LecturerFileHandler {
                 out.writeLong(cm.getUploadedDate() != null ? cm.getUploadedDate().getTime() : 0L);
             }
 
-            // Slide 33: Don't forget to flush and close
+            //  Don't forget to flush and close
             out.flush();
             return true;
 
@@ -191,10 +176,10 @@ public class LecturerFileHandler {
         }
     }
 
-    // ========================================================================
-    // 4. BINARY STREAMS - READING (Lesson 06, Slides 19-26)
+
+    // 4. BINARY STREAMS - READING
     // Reads course materials from a binary file using DataInputStream
-    // ========================================================================
+
     public static List<CourseMaterial> readMaterialsFromBinaryFile(File sourceFile) {
         List<CourseMaterial> list = new ArrayList<>();
         if (sourceFile == null || !sourceFile.exists()) return list;
@@ -204,7 +189,7 @@ public class LecturerFileHandler {
         DataInputStream in = null;
 
         try {
-            // Slide 23: Creating a DataInputStream
+            //  Creating a DataInputStream
             // 1. Create FileInputStream
             fis = new FileInputStream(sourceFile);
             // 2. Create BufferedInputStream
@@ -228,13 +213,13 @@ public class LecturerFileHandler {
             }
 
         } catch (EOFException eof) {
-            // Slide 25: EOFException handles unexpected end of file
+            //  EOFException handles unexpected end of file
             System.out.println("End of binary stream reached.");
         } catch (IOException e) {
             System.err.println("Binary Stream Read Error: " + e.getMessage());
             e.printStackTrace();
         } finally {
-            // Slide 26: Don't forget to close
+            //  Don't forget to close
             if (in != null) {
                 try {
                     in.close();

@@ -2,9 +2,9 @@ package common.util;
 
 import common.model.User;
 
-/**
- * UserSession - Stores session state of the logged-in user.
- */
+
+ //UserSession - Stores session state of the logged-in user.
+
 public class UserSession {
 
     private static User currentUser = null;

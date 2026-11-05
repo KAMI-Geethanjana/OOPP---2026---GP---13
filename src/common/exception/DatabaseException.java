@@ -1,8 +1,8 @@
 package common.exception;
 
-/**
- * Custom Exception for wrapping database connection and SQL errors.
- */
+
+ //* Custom Exception for wrapping database connection and SQL errors.
+
 public class DatabaseException extends Exception {
     public DatabaseException(String message, Throwable cause) {
         super(message, cause);
