@@ -5,6 +5,7 @@ import tg2088.model.CourseMaterial;
 
 import java.io.*;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -155,6 +156,7 @@ public class LecturerFileHandler {
                 out.writeUTF(cm.getTitle() != null ? cm.getTitle() : "");
                 out.writeUTF(cm.getFilePath() != null ? cm.getFilePath() : "");
                 out.writeLong(cm.getUploadedDate() != null ? cm.getUploadedDate().getTime() : 0L);
+                out.writeLong(cm.getExpiryDate() != null ? cm.getExpiryDate().getTime() : 0L);
             }
 
             //  Don't forget to flush and close
@@ -207,8 +209,16 @@ public class LecturerFileHandler {
                 String path = in.readUTF();
                 long dateMillis = in.readLong();
 
+                long expiryMillis = 0L;
+                try {
+                    expiryMillis = in.readLong();
+                } catch (Exception ignored) {
+                    // Backward compatible with older .dat files without expiry
+                }
+
                 Date d = dateMillis > 0 ? new Date(dateMillis) : new Date(System.currentTimeMillis());
-                CourseMaterial cm = new CourseMaterial(matId, courseCode, lecId, title, path, d);
+                Timestamp exp = expiryMillis > 0 ? new Timestamp(expiryMillis) : null;
+                CourseMaterial cm = new CourseMaterial(matId, courseCode, lecId, title, path, d, exp);
                 list.add(cm);
             }
 

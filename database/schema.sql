@@ -89,6 +89,7 @@ CREATE TABLE course_material (
                                  title VARCHAR(150) NOT NULL,
                                  file_path VARCHAR(255) NOT NULL,
                                  uploaded_date DATE NOT NULL,
+                                 expiry_date DATETIME NULL,
                                  FOREIGN KEY (course_code) REFERENCES course(course_code) ON DELETE CASCADE,
                                  FOREIGN KEY (lecturer_id) REFERENCES lecturer(lecturer_id) ON DELETE CASCADE
 );

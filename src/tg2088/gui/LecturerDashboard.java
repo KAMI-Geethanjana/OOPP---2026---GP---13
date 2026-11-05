@@ -33,6 +33,11 @@ import java.util.List;
 import java.util.Map;
 
 
+// =========================================================================
+// OOP CONCEPT: INHERITANCE (GUI Subclassing)
+// 'LecturerDashboard' extends javax.swing.JFrame to inherit all top-level
+// window management, event dispatching, and lifecycle capabilities.
+// =========================================================================
 public class LecturerDashboard extends JFrame {
 
 
@@ -40,7 +45,11 @@ public class LecturerDashboard extends JFrame {
 
     private Lecturer lecturer;
     
-    // Interface as a Type (Lesson 04, Slide 29: Using an Interface as a Type)
+    // =====================================================================
+    // OOP CONCEPT: ABSTRACTION (Programming to an Interface)
+    // Using interface type 'ILecturerDAO' instead of concrete 'LecturerDAO'.
+    // Enables Loose Coupling and Abstraction of database operations.
+    // =====================================================================
     private ILecturerDAO lecturerDAO;
     private IQuizDAO quizDAO;
     private NoticeDAO noticeDAO;
@@ -80,6 +89,7 @@ public class LecturerDashboard extends JFrame {
     private DefaultTableModel materialsTableModel;
     private JTextField txtMaterialTitle;
     private JTextField txtMaterialPath;
+    private JComboBox<String> cbMaterialDuration;
 
     // Attendance View Components
     private JComboBox<String> cbAttCourse;
@@ -478,42 +488,99 @@ public class LecturerDashboard extends JFrame {
         topToolbar.add(cbMaterialCourse);
         card.add(topToolbar, BorderLayout.NORTH);
 
-        String[] cols = {"Material ID", "Course Code", "Title", "File / Resource Path", "Uploaded Date"};
+        String[] cols = {"Material ID", "Course Code", "Title", "File / Resource Path", "Uploaded Date", "Expiry Date", "Student Access Status"};
+        // =================================================================
+        // OOP CONCEPT: POLYMORPHISM - RUNTIME (Method Overriding via Anonymous Subclass)
+        // Subclassing DefaultTableModel on the fly and overriding isCellEditable
+        // to make table cells read-only.
+        // =================================================================
         materialsTableModel = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int r, int c) { return false; }
         };
         tblMaterials = new JTable(materialsTableModel);
         UITheme.styleTable(tblMaterials);
+
+        // Double click to open lecture note
+        tblMaterials.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    handleOpenMaterial();
+                }
+            }
+        });
+
         card.add(new JScrollPane(tblMaterials), BorderLayout.CENTER);
 
-        // Upload Form Panel at bottom
-        JPanel formPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 5));
+        // Upload Form Panel at bottom - 2-row layout so all buttons are clearly visible
+        JPanel formPanel = new JPanel(new BorderLayout());
         formPanel.setOpaque(false);
-        formPanel.setBorder(BorderFactory.createTitledBorder("Upload & Backup Lecture Materials"));
+        formPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Upload & Manage Lecture Materials (With Student Visibility Expiry)"),
+                BorderFactory.createEmptyBorder(6, 10, 8, 10)
+        ));
 
-        formPanel.add(new JLabel("Title:"));
-        txtMaterialTitle = UITheme.createTextField(16);
-        formPanel.add(txtMaterialTitle);
+        // Row 1: Input Fields
+        JPanel rowInputs = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 4));
+        rowInputs.setOpaque(false);
 
-        formPanel.add(new JLabel("File Path:"));
-        txtMaterialPath = UITheme.createTextField(18);
-        formPanel.add(txtMaterialPath);
+        rowInputs.add(new JLabel("Title:"));
+        txtMaterialTitle = UITheme.createTextField(14);
+        rowInputs.add(txtMaterialTitle);
+
+        rowInputs.add(new JLabel("File Path:"));
+        txtMaterialPath = UITheme.createTextField(16);
+        rowInputs.add(txtMaterialPath);
+
+        JButton btnBrowse = UITheme.createButton("Browse...", new Color(71, 85, 105), Color.WHITE);
+        btnBrowse.setToolTipText("Browse PDF or lecture material from computer");
+        btnBrowse.addActionListener(e -> handleBrowseMaterialFile());
+        rowInputs.add(btnBrowse);
+
+        rowInputs.add(new JLabel("Visibility:"));
+        cbMaterialDuration = new JComboBox<>(new String[]{
+                "3 Days (Standard)",
+                "7 Days (1 Week)",
+                "14 Days (2 Weeks)",
+                "30 Days (1 Month)",
+                "1 Day (24 Hours)",
+                "Demo: 2 Minutes (Viva Testing)",
+                "Permanent (No Expiry)"
+        });
+        cbMaterialDuration.setFont(UITheme.FONT_BODY);
+        cbMaterialDuration.setPreferredSize(new Dimension(170, 32));
+        rowInputs.add(cbMaterialDuration);
+
+        // Row 2: Action Buttons
+        JPanel rowButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 4));
+        rowButtons.setOpaque(false);
 
         JButton btnUpload = UITheme.createButton("Upload Material", UITheme.SUCCESS_GREEN, Color.WHITE);
         btnUpload.addActionListener(e -> handleAddMaterial());
-        formPanel.add(btnUpload);
+        rowButtons.add(btnUpload);
+
+        JButton btnOpen = UITheme.createButton("Open / View Material", new Color(37, 99, 235), Color.WHITE);
+        btnOpen.setToolTipText("Lecturer can open and view this material anytime, even if student access has expired");
+        btnOpen.addActionListener(e -> handleOpenMaterial());
+        rowButtons.add(btnOpen);
 
         JButton btnDelete = UITheme.createButton("Delete Selected", UITheme.DANGER_RED, Color.WHITE);
         btnDelete.addActionListener(e -> handleDeleteMaterial());
-        formPanel.add(btnDelete);
+        rowButtons.add(btnDelete);
 
         // Lesson 06: Binary Stream Backup Button (DataOutputStream)
         JButton btnBinaryBackup = UITheme.createButton("Binary Backup (.dat)", new Color(13, 148, 136), Color.WHITE);
         btnBinaryBackup.setToolTipText("Backup materials list to a binary stream file (Lesson 06)");
         btnBinaryBackup.addActionListener(e -> handleBackupMaterials());
-        formPanel.add(btnBinaryBackup);
+        rowButtons.add(btnBinaryBackup);
 
+        JPanel innerForm = new JPanel(new GridLayout(2, 1, 0, 6));
+        innerForm.setOpaque(false);
+        innerForm.add(rowInputs);
+        innerForm.add(rowButtons);
+
+        formPanel.add(innerForm, BorderLayout.CENTER);
         card.add(formPanel, BorderLayout.SOUTH);
         return card;
     }
@@ -932,7 +999,7 @@ public class LecturerDashboard extends JFrame {
             });
         }
     }
-
+    //Butten handle
     private void calculateMarksOnTable() {
         if (tblMarks.isEditing()) {
             tblMarks.getCellEditor().stopCellEditing();
@@ -941,7 +1008,7 @@ public class LecturerDashboard extends JFrame {
         int rows = marksTableModel.getRowCount();
         if (rows == 0) return;
 
-        // Structured Exception Handling (Lesson 05, Slide 25-29)
+        // Structured Exception Handling
         try {
             for (int i = 0; i < rows; i++) {
                 String attempt = marksTableModel.getValueAt(i, 3).toString();
@@ -1101,14 +1168,89 @@ public class LecturerDashboard extends JFrame {
         List<CourseMaterial> materials = lecturerDAO.getCourseMaterials(courseCode);
         materialsTableModel.setRowCount(0);
 
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm");
         for (CourseMaterial m : materials) {
+            String expiryStr = (m.getExpiryDate() != null) ? sdf.format(m.getExpiryDate()) : "Permanent";
+            String statusStr;
+            if (m.getExpiryDate() == null) {
+                statusStr = "Permanent";
+            } else if (m.isExpired()) {
+                statusStr = "Expired (Hidden from Students)";
+            } else {
+                statusStr = "Active (" + m.getRemainingTimeFormatted() + ")";
+            }
+
             materialsTableModel.addRow(new Object[]{
                     m.getMaterialId(),
                     m.getCourseCode(),
                     m.getTitle(),
                     m.getFilePath(),
-                    m.getUploadedDate()
+                    m.getUploadedDate(),
+                    expiryStr,
+                    statusStr
             });
+        }
+    }
+
+    private void handleBrowseMaterialFile() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Select Lecture Note / PDF");
+        int res = chooser.showOpenDialog(this);
+        if (res == JFileChooser.APPROVE_OPTION) {
+            File selected = chooser.getSelectedFile();
+            txtMaterialPath.setText(selected.getAbsolutePath());
+            if (txtMaterialTitle.getText().trim().isEmpty()) {
+                String name = selected.getName();
+                int dotIdx = name.lastIndexOf('.');
+                txtMaterialTitle.setText(dotIdx > 0 ? name.substring(0, dotIdx) : name);
+            }
+        }
+    }
+
+    private void handleOpenMaterial() {
+        int selectedRow = tblMaterials.getSelectedRow();
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(this, "Please select a material row to open / view!", "Select Material", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        String title = String.valueOf(materialsTableModel.getValueAt(selectedRow, 2));
+        String filePath = String.valueOf(materialsTableModel.getValueAt(selectedRow, 3));
+        String status = String.valueOf(materialsTableModel.getValueAt(selectedRow, 6));
+
+        if (filePath == null || filePath.trim().isEmpty() || "null".equalsIgnoreCase(filePath.trim())) {
+            JOptionPane.showMessageDialog(this, "File path is empty for: " + title, "File Not Available", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            File file = new File(filePath.trim());
+            if (!file.isAbsolute()) {
+                file = new File(System.getProperty("user.dir"), filePath.trim());
+            }
+
+            if (!file.exists()) {
+                File alt = new File(System.getProperty("user.dir"), "materials/" + new File(filePath.trim()).getName());
+                if (alt.exists()) {
+                    file = alt;
+                }
+            }
+
+            if (!file.exists() || !file.isFile()) {
+                JOptionPane.showMessageDialog(this,
+                        "Lecture note file was not found on disk.\n\nPath:\n" + file.getAbsolutePath() +
+                        "\n\nStatus: " + status + "\n(Note: Even if student access is expired, lecturer can always view this material if file exists).",
+                        "File Not Found", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                Desktop.getDesktop().open(file);
+            } else {
+                JOptionPane.showMessageDialog(this, "Automatic file opening not supported on this operating system.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error opening material: " + ex.getMessage(), "Open Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -1116,19 +1258,39 @@ public class LecturerDashboard extends JFrame {
         String courseCode = (String) cbMaterialCourse.getSelectedItem();
         String title = txtMaterialTitle.getText().trim();
         String path = txtMaterialPath.getText().trim();
+        String duration = cbMaterialDuration != null ? (String) cbMaterialDuration.getSelectedItem() : "7 Days (1 Week)";
 
         if (title.isEmpty() || path.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please enter both title and file path!", "Warning", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
+        java.sql.Timestamp expiryDate = null;
+        long now = System.currentTimeMillis();
+        if (duration != null) {
+            if (duration.startsWith("Demo: 2 Minutes")) {
+                expiryDate = new java.sql.Timestamp(now + 2L * 60 * 1000); // 2 minutes for testing
+            } else if (duration.startsWith("1 Day")) {
+                expiryDate = new java.sql.Timestamp(now + 1L * 24 * 60 * 60 * 1000);
+            } else if (duration.startsWith("3 Days")) {
+                expiryDate = new java.sql.Timestamp(now + 3L * 24 * 60 * 60 * 1000);
+            } else if (duration.startsWith("7 Days")) {
+                expiryDate = new java.sql.Timestamp(now + 7L * 24 * 60 * 60 * 1000);
+            } else if (duration.startsWith("14 Days")) {
+                expiryDate = new java.sql.Timestamp(now + 14L * 24 * 60 * 60 * 1000);
+            } else if (duration.startsWith("30 Days")) {
+                expiryDate = new java.sql.Timestamp(now + 30L * 24 * 60 * 60 * 1000);
+            }
+        }
+
         int lecId = lecturer != null ? lecturer.getLecturerId() : 1;
-        CourseMaterial cm = new CourseMaterial(0, courseCode, lecId, title, path, new Date(System.currentTimeMillis()));
+        CourseMaterial cm = new CourseMaterial(0, courseCode, lecId, title, path, new Date(now), expiryDate);
 
         try {
             boolean ok = lecturerDAO.addCourseMaterial(cm);
             if (ok) {
-                JOptionPane.showMessageDialog(this, "Course material uploaded successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                String expMsg = expiryDate != null ? "\nStudent visibility expires: " + duration : "\nPermanent access (No Expiry)";
+                JOptionPane.showMessageDialog(this, "Course material uploaded successfully!" + expMsg, "Success", JOptionPane.INFORMATION_MESSAGE);
                 txtMaterialTitle.setText("");
                 txtMaterialPath.setText("");
                 loadMaterialsData();

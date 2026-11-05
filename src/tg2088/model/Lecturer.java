@@ -6,64 +6,74 @@ import tg2088.gui.LecturerDashboard;
 import javax.swing.JFrame;
 
 
+// =========================================================================
+// OOP CONCEPT: INHERITANCE (Subclassing / Code Reusability)
+// 'Lecturer' is a subclass that extends the abstract superclass 'User'.
+// It inherits common user fields (userId, username, passwordHash, email, etc.)
+// and adds lecturer-specific attributes (lecturerId, employeeId, departmentId).
+// =========================================================================
 public class Lecturer extends User {
 
-    //private variables(attributes)-This is a Encapsulation method
+    // =========================================================================
+    // OOP CONCEPT: ENCAPSULATION (Data Hiding)
+    // Attributes are declared 'private' to prevent direct unauthorized access.
+    // =========================================================================
     private int lecturerId;
     private String employeeId;
     private int departmentId;
     private String departmentName;
 
 
-    // Instance Initializer Block
-    //Instance Initializer Block runs before the constructor.
-
+    // Instance Initializer Block: Runs before constructor
     {
         this.departmentName = "Faculty of Technology";
     }
 
 
-    // Default Constructor
-    // Constructor Chaining within the same class using 'this(...)'
-
+    // =========================================================================
+    // OOP CONCEPT: POLYMORPHISM - COMPILE-TIME (Constructor Overloading #1)
+    // Default constructor chaining to parameterized constructor via 'this(...)'
+    // =========================================================================
     public Lecturer() {
-
         this(0, "lecturer_temp", "", "New Lecturer", "", "", 0, "EMP000", 1);
     }
 
 
-    // Parameterized Constructor
-    // super(...) must be the very first statement
-
+    // =========================================================================
+    // OOP CONCEPT: POLYMORPHISM - COMPILE-TIME (Constructor Overloading #2)
+    // Parameterized constructor invoking superclass constructor via 'super(...)'
+    // =========================================================================
     public Lecturer(int userId, String username, String passwordHash, String fullName,
                     String email, String phoneNo, int lecturerId, String employeeId, int departmentId) {
-        // Explicitly calling superclass (User) constructor
+        // Explicitly calling superclass (User) constructor (Inheritance)
         super(userId, username, passwordHash, fullName, email, phoneNo, "LECTURER");
         
         // 'this' refers to current class instance fields
-        // assign  parameter instance variable
         this.lecturerId = lecturerId;
         this.employeeId = employeeId;
         this.departmentId = departmentId;
     }
 
 
-    // Method Overriding Dynamic Polymorphism
-    //Method Overriding means redefining a parent class method in a child class
-
+    // =========================================================================
+    // OOP CONCEPT: POLYMORPHISM - RUNTIME (Method Overriding / Dynamic Binding #1)
+    // Overriding the abstract method defined in superclass 'User'.
+    // Provides role-specific display name at runtime.
+    // =========================================================================
     @Override
     public String getRoleDisplayName() {
-
         return "Lecturer";
     }
 
 
+    // =========================================================================
+    // OOP CONCEPT: POLYMORPHISM - RUNTIME (Method Overriding / Dynamic Binding #2)
+    // Overriding abstract method 'openDashboard' from superclass 'User'.
+    // At runtime, user.openDashboard(parent) will execute this specific
+    // LecturerDashboard creation when the logged-in user is a Lecturer.
+    // =========================================================================
     @Override
-    //It receives the parent window as a parameter.
-    //open the lecture dashboard
     public void openDashboard(JFrame parent) {
-
-        //Checking whether an object is an instance of the relevant class.
         if (parent != null && parent instanceof JFrame) {
             parent.dispose();
         }
@@ -72,54 +82,45 @@ public class Lecturer extends User {
     }
 
 
-    // Getters and Setters with Encapsulation & Validation
-    //Get the lecture id
-    //A getter method is used to read a private variable.
+    // =========================================================================
+    // OOP CONCEPT: ENCAPSULATION (Getters and Setters with Validation)
+    // Mutators validate input values before updating the private attributes.
+    // =========================================================================
 
     public int getLecturerId() {
-
         return this.lecturerId;
     }
 
-    //A setter method is used to update a private variable with validation.
     public void setLecturerId(int lecturerId) {
         if (lecturerId >= 0) {
             this.lecturerId = lecturerId;
         }
     }
 
-    //It returns the employee ID.
     public String getEmployeeId() {
-
         return this.employeeId;
     }
 
-
     public void setEmployeeId(String employeeId) {
-        //It checks whether the employee ID is not null or empty before updating.
         if (employeeId != null && !employeeId.trim().isEmpty()) {
             this.employeeId = employeeId.trim();
         }
     }
 
-    //het the department id
     public int getDepartmentId() {
-
         return this.departmentId;
     }
-    //It updates the department ID only if it is greater than zero.
+
     public void setDepartmentId(int departmentId) {
         if (departmentId > 0) {
             this.departmentId = departmentId;
         }
     }
 
-    //Get the department name
     public String getDepartmentName() {
-
         return this.departmentName;
     }
-    //It updates the department name after validation.
+
     public void setDepartmentName(String departmentName) {
         if (departmentName != null && !departmentName.trim().isEmpty()) {
             this.departmentName = departmentName.trim();
@@ -127,8 +128,10 @@ public class Lecturer extends User {
     }
 
 
-    // Overriding toString() method (Lesson 02 Part 02, Slide 10)
-
+    // =========================================================================
+    // OOP CONCEPT: POLYMORPHISM - RUNTIME (Method Overriding #3)
+    // Overriding java.lang.Object.toString()
+    // =========================================================================
     @Override
     public String toString() {
         return "Lecturer [lecturerId=" + this.lecturerId +
@@ -147,34 +150,28 @@ public class Lecturer extends User {
     public void updateCourseMaterial() {
         System.out.println("Course material update initiated by lecturer: " + getFullName());
     }
-    //This method is used to upload student marks.
-    public void uploadMarks() {
 
+    public void uploadMarks() {
         System.out.println("Marks upload initiated by lecturer: " + getFullName());
     }
 
     public void viewStudentDetails() {
-
         System.out.println("Viewing student details for lecturer: " + getFullName());
     }
 
     public double viewEligibility() {
-        // Minimum attendance percentage threshold (80.0%)
         return 80.0;
     }
 
     public void viewMarks() {
-
         System.out.println("Viewing marks table for lecturer: " + getFullName());
     }
 
     public void viewGrades() {
-
         System.out.println("Viewing calculated UGC grades for lecturer: " + getFullName());
     }
 
     public double viewGPA() {
-
         return 4.0;
     }
 
@@ -187,7 +184,6 @@ public class Lecturer extends User {
     }
 
     public void viewNotices() {
-
         System.out.println("Viewing notices for lecturer: " + getFullName());
     }
 }

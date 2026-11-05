@@ -376,14 +376,26 @@ public class UndergraduateDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    list.add(new CourseMaterial(
+                    Timestamp expiry = null;
+                    try {
+                        expiry = rs.getTimestamp("expiry_date");
+                    } catch (SQLException ignored) {}
+
+                    CourseMaterial cm = new CourseMaterial(
                             rs.getInt("material_id"),
                             rs.getString("course_code"),
                             rs.getInt("lecturer_id"),
                             rs.getString("title"),
                             rs.getString("file_path"),
-                            rs.getDate("uploaded_date")
-                    ));
+                            rs.getDate("uploaded_date"),
+                            expiry
+                    );
+
+                    // Requirement: Students can ONLY view materials that have not expired.
+                    // Expired materials are hidden from students, but lecturer can still see them.
+                    if (!cm.isExpired()) {
+                        list.add(cm);
+                    }
                 }
             }
 

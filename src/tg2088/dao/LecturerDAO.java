@@ -11,12 +11,20 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 
+// =========================================================================
+// OOP CONCEPT: ABSTRACTION (Interface Implementation)
+// 'LecturerDAO' implements the abstract interface contract 'ILecturerDAO'.
+// The GUI layer depends on ILecturerDAO interface, achieving loose coupling
+// and hiding all JDBC/SQL database implementation details.
+// =========================================================================
 public class LecturerDAO implements ILecturerDAO {
 
 
@@ -32,6 +40,27 @@ public class LecturerDAO implements ILecturerDAO {
     public LecturerDAO() {
         // Invoking interface default method (Lesson 04, Slide 32)
         printModuleStatus();
+        // Ensure database table has expiry_date column for lecture materials
+        ensureExpiryColumnExists();
+    }
+
+    /**
+     * Ensures course_material table contains the expiry_date column.
+     * Automatically alters table if running against an older schema.
+     */
+    private void ensureExpiryColumnExists() {
+        Connection conn = null;
+        Statement stmt = null;
+        try {
+            conn = DBConnection.getConnection();
+            stmt = conn.createStatement();
+            stmt.executeUpdate("ALTER TABLE course_material ADD COLUMN expiry_date DATETIME NULL");
+        } catch (SQLException ignored) {
+            // Ignored if column already exists
+        } finally {
+            closeQuietly(stmt);
+            closeQuietly(conn);
+        }
     }
 
 
@@ -127,12 +156,22 @@ public class LecturerDAO implements ILecturerDAO {
     }
 
 
+    // =====================================================================
+    // OOP CONCEPT: POLYMORPHISM - COMPILE-TIME (Method Overloading #1)
+    // Same method name with different parameters (overloading).
+    // Delegates to the 2-parameter version with null filter.
+    // =====================================================================
     @Override
     public List<Result> getResultsByCourse(String courseCode) {
         return getResultsByCourse(courseCode, null);
     }
 
 
+    // =====================================================================
+    // OOP CONCEPT: POLYMORPHISM - COMPILE-TIME (Method Overloading #2)
+    // Overloaded method accepting courseCode and eligibilityFilter.
+    // Also demonstrates Runtime Polymorphism via @Override of ILecturerDAO.
+    // =====================================================================
     @Override
     public List<Result> getResultsByCourse(String courseCode, String eligibilityFilter) {
         List<Result> list = new ArrayList<>();
@@ -251,6 +290,11 @@ public class LecturerDAO implements ILecturerDAO {
     }
 
 
+    // =====================================================================
+    // OOP CONCEPT: POLYMORPHISM - RUNTIME (Method Overriding)
+    // Implementing ILecturerDAO interface contract method.
+    // Retrieves both active and expired materials so lecturer retains access.
+    // =====================================================================
     @Override
     public List<CourseMaterial> getCourseMaterials(String courseCode) {
         List<CourseMaterial> list = new ArrayList<>();
@@ -267,13 +311,19 @@ public class LecturerDAO implements ILecturerDAO {
             rs = ps.executeQuery();
 
             while (rs.next()) {
+                Timestamp expiry = null;
+                try {
+                    expiry = rs.getTimestamp("expiry_date");
+                } catch (SQLException ignored) {}
+
                 list.add(new CourseMaterial(
                         rs.getInt("material_id"),
                         rs.getString("course_code"),
                         rs.getInt("lecturer_id"),
                         rs.getString("title"),
                         rs.getString("file_path"),
-                        rs.getDate("uploaded_date")
+                        rs.getDate("uploaded_date"),
+                        expiry
                 ));
             }
         } catch (SQLException e) {
@@ -293,7 +343,8 @@ public class LecturerDAO implements ILecturerDAO {
             throw new LecturerOperationException("Course Material Title cannot be empty!");
         }
 
-        String sql = "INSERT INTO course_material (course_code, lecturer_id, title, file_path, uploaded_date) VALUES (?, ?, ?, ?, ?)";
+        ensureExpiryColumnExists();
+        String sql = "INSERT INTO course_material (course_code, lecturer_id, title, file_path, uploaded_date, expiry_date) VALUES (?, ?, ?, ?, ?, ?)";
         Connection conn = null;
         PreparedStatement ps = null;
 
@@ -306,6 +357,7 @@ public class LecturerDAO implements ILecturerDAO {
             ps.setString(3, material.getTitle());
             ps.setString(4, material.getFilePath());
             ps.setDate(5, material.getUploadedDate());
+            ps.setTimestamp(6, material.getExpiryDate());
 
             return ps.executeUpdate() > 0;
 
