@@ -327,6 +327,8 @@ public class QuizQuestionDialog extends JDialog {
         }
     }
 
+    // i add to the new
+
     private void deleteQuestion() {
         if (selectedQuestionId <= 0) return;
 
